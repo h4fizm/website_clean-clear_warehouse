@@ -22,3 +22,7 @@ Route::get('/dashboard', function () {
     return view('dashboard_page.menu.dashboard');
 });
 
+Route::get('/spbe-bpt', function () {
+    return view('dashboard_page.menu.list_spbe-bpt');
+});
+

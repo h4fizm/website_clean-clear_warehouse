@@ -49,7 +49,7 @@
                   <input type="password" class="form-control" placeholder="Password" aria-label="Password">
                 </div>
                 <div class="text-center">
-                  <button type="submit" class="btn btn-primary w-100 my-4 mb-2">Login</button>
+                  <a href="/dashboard" class="btn btn-primary w-100 my-4 mb-2">Login</a>
                 </div>
                 <p class="text-sm mt-3 mb-0 text-center">
                   Belum Punya Akun ? Silahkan Registrasi 
