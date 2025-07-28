@@ -17,3 +17,8 @@ Route::get('/login', function () {
 Route::get('/register', function () {
     return view('dashboard_page.auth.register');
 });
+
+Route::get('/dashboard', function () {
+    return view('dashboard_page.menu.dashboard');
+});
+

@@ -44,7 +44,7 @@
               <div class="card card-plain">
                 <div class="card-header pb-0 text-start">
                   <h4 class="font-weight-bolder">Laman Registrasi</h4>
-                  <p class="mb-0">Masukkan Informasi Data User Anda</p>
+                  <p class="mb-0">Registrasi Anggota Baru</p>
                 </div>
                 <div class="card-body">
                   <form role="form">
