@@ -9,3 +9,11 @@ Route::get('/', function () {
 Route::get('/home', function () {
     return view('landing');
 });
+
+Route::get('/login', function () {
+    return view('dashboard_page.auth.login');
+});
+
+Route::get('/register', function () {
+    return view('dashboard_page.auth.register');
+});
