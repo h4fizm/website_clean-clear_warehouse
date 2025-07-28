@@ -26,20 +26,40 @@
       <li class="nav-item mt-3">
         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Transaksi</h6>
       </li>
+      {{-- Penyaluran/Penerimaan --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/penyaluran') ? 'active' : '' }}" href="{{ url('transaksi/penyaluran') }}">
+        <a class="nav-link {{ request()->is('transaksi/penyaluran') ? 'active' : '' }}" href="{{ url('/transaksi') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-exchange-alt text-primary text-sm opacity-10"></i>
           </div>
           <span class="nav-link-text ms-1">Penyaluran/Penerimaan</span>
         </a>
       </li>
+      {{-- Tambah Data Cabang --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('transaksi/stok-keseluruhan') }}">
+        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/cabang') }}">
+          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
+            <i class="fas fa-building text-primary text-sm opacity-10"></i>
+          </div>
+          <span class="nav-link-text ms-1">Tambah Data Cabang</span>
+        </a>
+      </li>
+      {{-- Tambah Data SPBE & BPT --}}
+      <li class="nav-item">
+        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/spbe-bpt') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-boxes text-primary text-sm opacity-10"></i>
           </div>
-          <span class="nav-link-text ms-1">Jumlah Stok Material</span>
+          <span class="nav-link-text ms-1">Tambah Data SPBE & BPT</span>
+        </a>
+      </li>
+      {{-- Tambah Material --}}
+      <li class="nav-item">
+        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/material') }}">
+          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
+            <i class="fas fa-cube text-primary text-sm opacity-10"></i>
+          </div>
+          <span class="nav-link-text ms-1">Tambah Data Material</span>
         </a>
       </li>
       <li class="nav-item">
@@ -50,25 +70,28 @@
           <span class="nav-link-text ms-1">Recycle Material</span>
         </a>
       </li>
+     
+
+      <!-- Section: Analisis -->
+      <li class="nav-item mt-3">
+        <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Laporan</h6>
+      </li>
+      {{-- Laporan Grafik --}}
+      <li class="nav-item">
+        <a class="nav-link {{ request()->is('analisis/grafik') ? 'active' : '' }}" href="{{ url('analisis/grafik') }}">
+          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
+            <i class="fas fa-chart-line text-primary text-sm opacity-10"></i>
+          </div>
+          <span class="nav-link-text ms-1">Laporan Grafik</span>
+        </a>
+      </li>
+      {{-- Aktivitas Harian --}}
       <li class="nav-item">
         <a class="nav-link {{ request()->is('transaksi/aktivitas') ? 'active' : '' }}" href="{{ url('transaksi/aktivitas') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-calendar-check text-primary text-sm opacity-10"></i>
           </div>
           <span class="nav-link-text ms-1">Aktivitas Harian</span>
-        </a>
-      </li>
-
-      <!-- Section: Analisis -->
-      <li class="nav-item mt-3">
-        <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Analisis</h6>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link {{ request()->is('analisis/grafik') ? 'active' : '' }}" href="{{ url('analisis/grafik') }}">
-          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="fas fa-chart-line text-primary text-sm opacity-10"></i>
-          </div>
-          <span class="nav-link-text ms-1">Grafik Penyaluran</span>
         </a>
       </li>
 

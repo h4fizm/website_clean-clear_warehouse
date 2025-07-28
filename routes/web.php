@@ -22,7 +22,17 @@ Route::get('/dashboard', function () {
     return view('dashboard_page.menu.dashboard');
 });
 
-Route::get('/spbe-bpt', function () {
-    return view('dashboard_page.menu.list_spbe-bpt');
+Route::get('/transaksi', function () {
+    return view('dashboard_page.menu.');
 });
+Route::get('/cabang', function () {
+    return view('dashboard_page.menu.data_cabang');
+});
+Route::get('/spbe-bpt', function () {
+    return view('dashboard_page.menu.data_spbe-bpt');
+});
+Route::get('/material', function () {
+    return view('dashboard_page.menu.data_material');
+});
+
 

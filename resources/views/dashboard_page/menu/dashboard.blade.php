@@ -111,7 +111,7 @@
                 </div>
 
                 {{-- Custom Pagination --}}
-                <div class="mt-2 d-flex justify-content-end">
+                <div class="mt-2 d-flex justify-content-center">
                     <nav>
                         <ul id="custom-pagination" class="pagination pagination-sm mb-0"></ul>
                     </nav>
