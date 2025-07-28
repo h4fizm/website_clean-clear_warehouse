@@ -1,5 +1,5 @@
 @extends('dashboard_page.main')
-
+@section('title', 'Data Cabang - Nama Cabang')
 @section('content')
 <div class="row">
     <div class="col-12">

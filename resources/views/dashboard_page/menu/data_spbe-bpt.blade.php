@@ -1,11 +1,11 @@
 @extends('dashboard_page.main')
-
+@section('title', 'Data SPBE & BPT - Nama Cabang')
 @section('content')
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
-                <h6>Tabel Data SPBE & BPT</h6>
+                <h6>Tabel Data SPBE & BPT - Nama Cabang</h6>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center"> {{-- Added align-items-center here --}}
                     {{-- Dropdown Filter Cabang --}}
                     <div class="dropdown">
@@ -56,7 +56,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE / BPT</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang & Kode</th> {{-- Moved this column --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total Stok</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -142,17 +142,17 @@
     }
 
     const dataDummy = [
-        { nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: generateRandomCode(5) },
-        { nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: generateRandomCode(5) },
-        { nama: 'SPBE Bekasi', stok: 150, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: generateRandomCode(5) },
-        { nama: 'SPBE Bandung', stok: 135, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: generateRandomCode(5) },
-        { nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: generateRandomCode(5) },
-        { nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: generateRandomCode(5) },
-        { nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: generateRandomCode(5) },
-        { nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: generateRandomCode(5) }
+        { id: 1, nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: generateRandomCode(5) },
+        { id: 2, nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: generateRandomCode(5) },
+        { id: 3, nama: 'SPBE Bekasi', stok: 150, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: generateRandomCode(5) }, // Manager kosong
+        { id: 4, nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: generateRandomCode(5) },
+        { id: 5, nama: 'SPBE Bandung', stok: 135, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: generateRandomCode(5) }, // Manager kosong
+        { id: 6, nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: generateRandomCode(5) },
+        { id: 7, nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: generateRandomCode(5) },
+        { id: 8, nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: generateRandomCode(5) }, // Manager kosong
+        { id: 9, nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: generateRandomCode(5) },
+        { id: 10, nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: generateRandomCode(5) },
+        { id: 11, nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: generateRandomCode(5) }
     ];
 
     let selectedCabang = null;
@@ -192,6 +192,11 @@
                     `<span class="badge bg-gradient-primary rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-warehouse text-white" style="font-size: 0.75rem;"></i></span>` :
                     `<span class="badge bg-gradient-info rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-building text-white" style="font-size: 0.75rem;"></i></span>`; // Using building icon for BPT for differentiation
 
+                // Construct the URL for the material page
+                // We'll pass the 'id' and 'nama' as query parameters for now.
+                // In a real application, you might use a route parameter like /material/{id}
+                const materialUrl = `/material?id=${item.id}&nama=${encodeURIComponent(item.nama)}`;
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="text-center">
@@ -211,8 +216,8 @@
                                 <p class="text-xs text-secondary mb-0">Kode cabang : ${item.kode}</p>
                             </div>
                         </td>
-                        <td>
-                            <p class="text-xs text-secondary mb-0">${item.stok} pcs</p>
+                        <td class="text-center">
+                            <a href="${materialUrl}" class="text-center text-xs text-secondary font-weight-bold mb-0 text-decoration-underline" style="cursor: pointer;">${item.stok} pcs</a>
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-gradient-info text-white text-xs" style="cursor:pointer;">Edit</span>
@@ -352,6 +357,7 @@
 
         if (nama && jenis && cabang) { // Validasi: nama, jenis, dan cabang wajib
             const newData = {
+                id: dataDummy.length + 1, // Simple ID generation for dummy data
                 nama: nama,
                 stok: Math.floor(Math.random() * 200) + 50, // Dummy stok
                 jenis: jenis,

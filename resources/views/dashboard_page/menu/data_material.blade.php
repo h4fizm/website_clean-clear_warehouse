@@ -1,11 +1,11 @@
 @extends('dashboard_page.main')
-
+@section('title', 'Data Material - Nama SPBE/BPT')
 @section('content')
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
-                <h6>Tabel Data Material</h6>
+                <h6>Tabel Data Material - Nama SPBE/BPT</h6>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center">
                     {{-- Search --}}
                     <input type="text" id="search-input-material" class="form-control form-control-sm" placeholder="Cari Nama atau Kode Material..." style="width: 250px; height: 55px;">
@@ -27,6 +27,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Produk</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Produk</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -71,6 +72,10 @@
                         <label for="kodeMaterialAuto" class="form-label">Kode Material</label>
                         <input type="text" class="form-control" id="kodeMaterialAuto" readonly> {{-- Auto-generated and read-only --}}
                     </div>
+                    <div class="mb-3">
+                        <label for="totalStokMaterial" class="form-label">Total Stok</label> {{-- Form input baru --}}
+                        <input type="number" class="form-control" id="totalStokMaterial" min="0" value="0" required>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -97,16 +102,16 @@
 
     // Dummy data for Material table
     const dataMaterialDummy = [
-        { id: 1, nama: 'Material A', kode: 'M1001' },
-        { id: 2, nama: 'Material B', kode: 'M1002' },
-        { id: 3, nama: 'Material C', kode: 'M1003' },
-        { id: 4, nama: 'Material D', kode: 'M1004' },
-        { id: 5, nama: 'Material E', kode: 'M1005' },
-        { id: 6, nama: 'Material F', kode: 'M1006' },
-        { id: 7, nama: 'Material G', kode: 'M1007' },
-        { id: 8, nama: 'Material H', kode: 'M1008' },
-        { id: 9, nama: 'Material I', kode: 'M1009' },
-        { id: 10, nama: 'Material J', kode: 'M1010' },
+        { id: 1, nama: 'Material A', kode: 'M1001', stok: 150 },
+        { id: 2, nama: 'Material B', kode: 'M1002', stok: 200 },
+        { id: 3, nama: 'Material C', kode: 'M1003', stok: 75 },
+        { id: 4, nama: 'Material D', kode: 'M1004', stok: 300 },
+        { id: 5, nama: 'Material E', kode: 'M1005', stok: 120 },
+        { id: 6, nama: 'Material F', kode: 'M1006', stok: 90 },
+        { id: 7, nama: 'Material G', kode: 'M1007', stok: 50 },
+        { id: 8, nama: 'Material H', kode: 'M1008', stok: 250 },
+        { id: 9, nama: 'Material I', kode: 'M1009', stok: 180 },
+        { id: 10, nama: 'Material J', kode: 'M1010', stok: 100 },
     ];
 
     let searchMaterialQuery = '';
@@ -155,6 +160,9 @@
                         </td>
                         <td>
                             <p class="text-xs text-secondary mb-0">${item.kode}</p>
+                        </td>
+                        <td class="text-center">
+                            <span class="text-xs font-weight-bold">${item.stok} pcs</span>
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-gradient-info text-white text-xs" style="cursor:pointer;">Edit</span>
@@ -260,6 +268,7 @@
     // Populate Kode Material automatically when modal is shown
     document.getElementById('addMaterialModal').addEventListener('show.bs.modal', function () {
         document.getElementById('kodeMaterialAuto').value = 'MAT-' + generateRandomCode(4); // Example: MAT-1234
+        document.getElementById('totalStokMaterial').value = '0'; // Reset total stok to 0
     });
 
     // Handle form submission for adding new Material data
@@ -268,12 +277,14 @@
 
         const nama = document.getElementById('namaMaterial').value;
         const kode = document.getElementById('kodeMaterialAuto').value;
+        const stok = parseInt(document.getElementById('totalStokMaterial').value); // Ambil nilai stok dan konversi ke integer
 
-        if (nama && kode) {
+        if (nama && kode && !isNaN(stok)) { // Pastikan stok juga valid
             const newData = {
                 id: dataMaterialDummy.length + 1, // Simple ID generation for dummy data
                 nama: nama,
-                kode: kode
+                kode: kode,
+                stok: stok // Tambahkan stok ke data baru
             };
             dataMaterialDummy.push(newData); // Add new data to our dummy array
 
@@ -286,7 +297,7 @@
             renderMaterialTable();
             alert('Data Material berhasil ditambahkan!');
         } else {
-            alert('Harap lengkapi Nama Material.');
+            alert('Harap lengkapi Nama Material, Kode Material, dan Total Stok dengan benar.');
         }
     });
 

@@ -23,7 +23,7 @@ Route::get('/dashboard', function () {
 });
 
 Route::get('/transaksi', function () {
-    return view('dashboard_page.menu.');
+    return view('dashboard_page.menu.data_transaksi');
 });
 Route::get('/cabang', function () {
     return view('dashboard_page.menu.data_cabang');

@@ -1,8 +1,8 @@
 @extends('dashboard_page.main')
-
+@section('title', 'Laman Dashboard Utama')
 @section('content')
 
-{{-- Welcome Section (Desain Lebih Keren dengan Gradien Biru Tua & Kalimat Baru) --}}
+{{-- Welcome Section  --}}
 <div class="col-12 mb-6">
     <div class="card p-3" style="
         background: linear-gradient(to right, #0F2027 0%, #203A43 50%, #2C5364 100%); /* Gradien Biru Tua */
@@ -16,8 +16,8 @@
             <div class="mb-3 mb-md-0">
                 <h4 class="mb-1 text-white fw-bold">Selamat Datang, <strong style="color: #FFD700;">Nama User</strong>!</h4>
                 {{-- Kalimat p diubah sesuai permintaan --}}
-                <p class="mb-2 opacity-8">Informasi Data Stok Material dan Transaksi cabang Anda.</p>
-                <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.8em;">Nama Role</span>
+                <p class="mb-2 opacity-8">Informasi Data Stok Material dan Transaksi pada Cabang - Nama Cabang.</p>
+                <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
             </div>
             
             <div class="text-center position-relative me-md-4">
@@ -147,8 +147,6 @@
         </div>
     </div>
 </div>
-
-@endsection
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -371,3 +369,5 @@
     });
 </script>
 @endpush
+@endsection
+
