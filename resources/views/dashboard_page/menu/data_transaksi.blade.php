@@ -273,7 +273,7 @@
                         <td>
                             <div class="d-flex px-2 py-1 align-items-center">
                                 <div class="d-flex flex-column justify-content-center">
-                                    <a href="{{ url('/spbe-bpt') }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
+                                    <a href="{{ url('/cabang/spbe-bpt1') }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
                                         ${item.nama}
                                     </a>
                                 </div>
@@ -364,7 +364,7 @@
                         <td>
                             <div class="d-flex px-2 py-1 align-items-center">
                                 <div class="d-flex flex-column justify-content-center">
-                                    <a href="{{ url('/spbe-bpt') }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
+                                    <a href="{{ url('/cabang/spbe-bpt2') }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
                                         ${item.nama}
                                     </a>
                                 </div>
