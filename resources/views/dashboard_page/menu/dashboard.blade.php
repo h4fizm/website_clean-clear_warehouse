@@ -2,7 +2,7 @@
 @section('title', 'Laman Dashboard Utama')
 @section('content')
 
-{{-- Welcome Section  --}}
+{{-- Welcome Section --}}
 <div class="col-12 mb-6">
     <div class="card p-3" style="
         background: linear-gradient(to right, #0F2027 0%, #203A43 50%, #2C5364 100%); /* Gradien Biru Tua */
@@ -15,19 +15,15 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
                 <h4 class="mb-1 text-white fw-bold">Selamat Datang, <strong style="color: #FFD700;">Nama User</strong>!</h4>
-                {{-- Kalimat p diubah sesuai permintaan --}}
                 <p class="mb-2 opacity-8">Informasi Data Stok Material dan Transaksi pada Cabang - Nama Cabang.</p>
                 <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
             </div>
             
             <div class="text-center position-relative me-md-4">
-                {{-- Icon yang lebih menonjol dan relevan --}}
                 <i class="fas fa-hand-sparkles text-white opacity-8" style="font-size: 4em;"></i> 
-                {{-- Tambahkan ikon kecil tambahan atau efek visual --}}
                 <i class="fas fa-warehouse text-white opacity-5 position-absolute" style="font-size: 2em; top: 10px; right: 0;"></i>
             </div>
         </div>
-        {{-- Optional: Overlay background pattern --}}
         <div style="
             position: absolute;
             top: 0;
@@ -48,8 +44,8 @@
         $cards = [
             ['title' => 'Total User', 'value' => '1,234', 'icon' => 'ni-single-02', 'bg' => 'primary'],
             ['title' => 'Total Cabang', 'value' => '24', 'icon' => 'ni-building', 'bg' => 'info'],
-            ['title' => 'Total Transaksi Bulan Ini', 'value' => '12,567', 'icon' => 'ni-send', 'bg' => 'success'],
-            ['title' => 'Total Recycle Bulan Ini', 'value' => '189', 'icon' => 'fas fa-sync-alt', 'bg' => 'danger'],
+            ['title' => 'Transaksi Bulan Ini', 'value' => '12,567', 'icon' => 'ni-send', 'bg' => 'success'],
+            ['title' => 'UPP Material Bulan ini', 'value' => '189', 'icon' => 'fas fa-sync-alt', 'bg' => 'danger'],
         ];
     @endphp
     @foreach ($cards as $card)
@@ -84,7 +80,7 @@
         <div class="card" style="height: 420px;">
             <div class="card-header pb-0 p-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Daftar Cabang</h6>
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Data Material - Nama Cabang</h6>
                     <div class="input-group input-group-sm" style="width: 200px;">
                         <input type="text" id="search-input-cabang" class="form-control" placeholder="Search..." aria-label="Search">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -96,12 +92,10 @@
                     <table class="table align-items-center mb-0" id="table-cabang-custom">
                         <thead>
                             <tr>
-                                {{-- Kolom No. terpisah --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width: 40px;">No.</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Nama Cabang</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center ps-2">Total User</th>
-                                {{-- KOLOM BARU: Aksi --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Nama Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center ps-2">Kode Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Fisik</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -131,7 +125,6 @@
                     <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 13px;">
                         Pilih Cabang
                     </button>
-                    {{-- ambil 5 data saja --}}
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li><a class="dropdown-item" href="#" data-value="Cabang 1">Cabang 1</a></li>
                         <li><a class="dropdown-item" href="#" data-value="Cabang 2">Cabang 2</a></li>
@@ -155,60 +148,87 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        // --- Data Dummy untuk Tabel Cabang ---
-        const allCabangData = [
-            @for ($i = 1; $i <= 30; $i++)
-                { id: {{ $i }}, nama: 'Cabang {{ $i }}', total_user: {{ rand(50, 500) }} },
-            @endfor
+        // Function to generate a random code with a fixed number of digits
+        function generateRandomMaterialCode(length) {
+            let result = '';
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            const charactersLength = characters.length;
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            return result;
+        }
+
+        // --- Data Dummy untuk Tabel Material ---
+        const allMaterialData = [
+            { id: 1, nama_material: 'Material A (Bahan Baku)', kode_material: generateRandomMaterialCode(5), stok_fisik: 1500 },
+            { id: 2, nama_material: 'Material B (Produk Jadi)', kode_material: generateRandomMaterialCode(5), stok_fisik: 800 },
+            { id: 3, nama_material: 'Material C (Spare Part)', kode_material: generateRandomMaterialCode(5), stok_fisik: 250 },
+            { id: 4, nama_material: 'Material D (Packaging)', kode_material: generateRandomMaterialCode(5), stok_fisik: 3000 },
+            { id: 5, nama_material: 'Material E (Kimia Industri)', kode_material: generateRandomMaterialCode(5), stok_fisik: 120 },
+            { id: 6, nama_material: 'Material F (Elektronik)', kode_material: generateRandomMaterialCode(5), stok_fisik: 75 },
+            { id: 7, nama_material: 'Material G (Peralatan)', kode_material: generateRandomMaterialCode(5), stok_fisik: 30 },
+            { id: 8, nama_material: 'Material H (Kertas Roll Besar)', kode_material: generateRandomMaterialCode(5), stok_fisik: 450 },
+            { id: 9, nama_material: 'Material I (Pelumas)', kode_material: generateRandomMaterialCode(5), stok_fisik: 180 },
+            { id: 10, nama_material: 'Material J (Seal Karet)', kode_material: generateRandomMaterialCode(5), stok_fisik: 900 },
+            { id: 11, nama_material: 'Material K (Pipa PVC)', kode_material: generateRandomMaterialCode(5), stok_fisik: 600 },
+            { id: 12, nama_material: 'Material L (Kabel Listrik)', kode_material: generateRandomMaterialCode(5), stok_fisik: 2200 },
+            { id: 13, nama_material: 'Material M (Cat Industri)', kode_material: generateRandomMaterialCode(5), stok_fisik: 90 },
+            { id: 14, nama_material: 'Material N (Baut & Mur)', kode_material: generateRandomMaterialCode(5), stok_fisik: 5000 },
+            { id: 15, nama_material: 'Material O (Alat Ukur)', kode_material: generateRandomMaterialCode(5), stok_fisik: 15 },
+            { id: 16, nama_material: 'Material P (Sensor)', kode_material: generateRandomMaterialCode(5), stok_fisik: 40 },
+            { id: 17, nama_material: 'Material Q (Filter Udara)', kode_material: generateRandomMaterialCode(5), stok_fisik: 100 },
+            { id: 18, nama_material: 'Material R (Resistor)', kode_material: generateRandomMaterialCode(5), stok_fisik: 300 },
+            { id: 19, nama_material: 'Material S (Transistor)', kode_material: generateRandomMaterialCode(5), stok_fisik: 200 },
+            { id: 20, nama_material: 'Material T (Relay)', kode_material: generateRandomMaterialCode(5), stok_fisik: 60 },
+            { id: 21, nama_material: 'Material U (Konektor)', kode_material: generateRandomMaterialCode(5), stok_fisik: 700 },
+            { id: 22, nama_material: 'Material V (Pelat Logam)', kode_material: generateRandomMaterialCode(5), stok_fisik: 1000 },
+            { id: 23, nama_material: 'Material W (Gasket)', kode_material: generateRandomMaterialCode(5), stok_fisik: 400 },
+            { id: 24, nama_material: 'Material X (Klem Pipa)', kode_material: generateRandomMaterialCode(5), stok_fisik: 1200 },
+            { id: 25, nama_material: 'Material Y (Pompa Kecil)', kode_material: generateRandomMaterialCode(5), stok_fisik: 25 }
         ];
 
-        // --- Custom Pagination & Search untuk Tabel Cabang ---
+        // --- Custom Pagination & Search untuk Tabel Material ---
         const itemsPerPage = 5; // Jumlah baris per halaman
-        const tableBody = document.querySelector('#table-cabang-custom tbody');
+        const tableBody = document.querySelector('#table-cabang-custom tbody'); // This ID is still 'table-cabang-custom'
         const paginationContainer = document.getElementById('custom-pagination');
-        let currentFilteredData = []; // Data yang difilter saat ini
-        let currentPage = 0; // Halaman aktif
+        let currentFilteredData = [];
+        let currentPage = 0;
 
         function renderTable(data, page) {
-            tableBody.innerHTML = ''; // Kosongkan tabel
+            tableBody.innerHTML = '';
             const start = page * itemsPerPage;
             const end = start + itemsPerPage;
             const paginatedItems = data.slice(start, end);
 
             if (paginatedItems.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Tidak ada data cabang ditemukan.</td></tr>'; // colspan 4 karena sekarang ada 4 kolom
+                // Adjusted colspan to 4 for the new table structure
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Tidak ada data material ditemukan.</td></tr>';
             } else {
-                paginatedItems.forEach((cabang, index) => {
-                    const rowIndex = start + index + 1; // Nomor urut baris
+                paginatedItems.forEach((material, index) => {
+                    const rowIndex = start + index + 1;
                     const row = `
                         <tr>
-                            {{-- Kolom No. --}}
                             <td class="text-center">
                                 <p class="text-xs font-weight-bold mb-0">${rowIndex}</p>
                             </td>
-                            {{-- Kolom Nama Cabang dengan Icon --}}
                             <td class="w-30">
                                 <div class="d-flex px-2 py-1 align-items-center">
-                                    {{-- Icon Kotak Rounded --}}
                                     <div class="icon icon-shape icon-sm me-3 bg-gradient-secondary shadow-secondary text-center rounded">
-                                        <i class="fas fa-warehouse text-white opacity-10"></i>
+                                        <i class="fas fa-box text-white opacity-10"></i> {{-- Changed icon to fa-box for material --}}
                                     </div>
                                     <div class="ms-1">
-                                        <h6 class="text-sm mb-0">${cabang.nama}</h6>
+                                        <h6 class="text-sm mb-0">${material.nama_material}</h6>
                                     </div>
                                 </div>
                             </td>
-                            {{-- Kolom Total User --}}
                             <td>
                                 <div class="text-center">
-                                    <h6 class="text-sm mb-0">${cabang.total_user.toLocaleString('id-ID')}</h6>
+                                    <h6 class="text-sm mb-0">${material.kode_material}</h6>
                                 </div>
                             </td>
-                            {{-- KOLOM BARU: Aksi dengan Badge Buttons --}}
                             <td class="text-center">
-                               <a href="{{ url('/spbe-bpt') }}" class="badge badge-sm bg-gradient-info me-1" style="cursor:pointer;">
-                                    Daftar SPBE & BPT
-                                </a>
+                                <h6 class="text-sm mb-0">${material.stok_fisik.toLocaleString('id-ID')} pcs</h6>
                             </td>
                         </tr>
                     `;
@@ -221,7 +241,6 @@
         function updatePaginationButtons(activePage, totalPages) {
             paginationContainer.innerHTML = '';
 
-            // Tombol "First Page" (<<)
             const firstPageButton = document.createElement('li');
             firstPageButton.classList.add('page-item');
             if (activePage === 0 || totalPages === 0) firstPageButton.classList.add('disabled');
@@ -234,7 +253,6 @@
             }
             paginationContainer.appendChild(firstPageButton);
 
-            // Tombol angka halaman (maksimal 5 terlihat)
             const maxVisible = 5;
             let startPage = Math.max(0, activePage - Math.floor(maxVisible / 2));
             let endPage = Math.min(totalPages, startPage + maxVisible);
@@ -256,7 +274,6 @@
                 paginationContainer.appendChild(pageItem);
             }
 
-            // Tombol "Last Page" (>>)
             const lastPageButton = document.createElement('li');
             lastPageButton.classList.add('page-item');
             if (activePage === totalPages - 1 || totalPages === 0) lastPageButton.classList.add('disabled');
@@ -273,27 +290,34 @@
         // Event listener untuk input search
         document.getElementById('search-input-cabang').addEventListener('keyup', function () {
             const searchTerm = this.value.toLowerCase();
-            currentFilteredData = allCabangData.filter(cabang =>
-                cabang.nama.toLowerCase().includes(searchTerm)
+            currentFilteredData = allMaterialData.filter(material => // Changed from allCabangData to allMaterialData
+                material.nama_material.toLowerCase().includes(searchTerm) ||
+                material.kode_material.toLowerCase().includes(searchTerm) // Added search by kode_material
             );
-            currentPage = 0; // Reset ke halaman pertama setelah pencarian
+            currentPage = 0;
             renderTable(currentFilteredData, currentPage);
         });
 
         // Inisialisasi awal tabel dan paginasi
-        currentFilteredData = allCabangData;
+        currentFilteredData = allMaterialData; // Changed from allCabangData to allMaterialData
         renderTable(currentFilteredData, currentPage);
 
 
         // --- Inisialisasi Chart.js untuk Grafik Transaksi ---
         const ctxGrafik = document.getElementById('grafik-transaksi').getContext('2d');
 
-        // Data dummy untuk 7 hari terakhir dari tanggal saat ini (28 Juli 2025)
+        // Data dummy untuk 7 hari terakhir dari tanggal saat ini (menggunakan objek Date aktual)
         const labelsGrafik = [];
         const dataPointsGrafik = [];
-        const today = new Date('2025-07-28T00:00:00'); // Tetapkan tanggal "hari ini" ke 28 Juli 2025
+        // Use the actual current date for dynamic date generation
+        const todayActual = new Date(); 
+        // For consistent dummy data in the context of this request, 
+        // I will keep the fixed date `2025-07-28` for dummy generation, 
+        // but note that `new Date()` would be more appropriate for a live system.
+        const dummyFixedToday = new Date('2025-07-28T00:00:00'); 
+        
         for (let i = 6; i >= 0; i--) {
-            const date = new Date(today);
+            const date = new Date(dummyFixedToday);
             date.setDate(date.getDate() - i);
             const day = date.toLocaleString('id-ID', { weekday: 'short' });
             const formattedDate = date.toLocaleString('id-ID', { day: '2-digit', month: 'short' }).replace('.', '');
@@ -370,4 +394,3 @@
 </script>
 @endpush
 @endsection
-

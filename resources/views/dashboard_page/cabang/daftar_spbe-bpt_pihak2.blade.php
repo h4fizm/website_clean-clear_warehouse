@@ -4,54 +4,53 @@
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
-          <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap"> {{-- Changed align-items-start to align-items-center --}}
-    <div class="d-flex flex-column"> {{-- This div ensures headings stack vertically --}}
-        <h3>Tabel Data SPBE & BPT - Nama Material</h3>
-        <h6>Daftar Nama SPBE & BPT yang ingin dilakukan transaksi</h6>
-    </div>
-    <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto"> {{-- ms-auto pushes this block to the right --}}
-        {{-- Dropdown Filter Cabang --}}
-        <div class="dropdown">
-            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="dropdownCabang" data-bs-toggle="dropdown" aria-expanded="false" style="height: 38px;">
-                Semua Cabang
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownCabang">
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="">Semua Cabang</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 1">Cabang 1</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 2">Cabang 2</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 3">Cabang 3</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 4">Cabang 4</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 5">Cabang 5</a></li>
-            </ul>
-        </div>
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
+                <div class="d-flex flex-column">
+                    <h3>Tabel Data SPBE & BPT - Nama Material</h3>
+                    <h6>Daftar Nama SPBE & BPT yang ingin dilakukan transaksi</h6>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto">
+                    {{-- Dropdown Filter Cabang --}}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="dropdownCabang" data-bs-toggle="dropdown" aria-expanded="false" style="height: 38px;">
+                            Semua Cabang
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownCabang">
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="">Semua Cabang</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 1">Cabang 1</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 2">Cabang 2</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 3">Cabang 3</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 4">Cabang 4</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="cabang" data-value="Cabang 5">Cabang 5</a></li>
+                        </ul>
+                    </div>
 
-        {{-- Dropdown Filter Jenis --}}
-        <div class="dropdown">
-            <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" id="dropdownJenis" data-bs-toggle="dropdown" aria-expanded="false" style="height: 38px;">
-                Semua Jenis
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownJenis">
-                <li><a class="dropdown-item" href="#" data-filter="jenis" data-value=" ">Semua Jenis</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" data-filter="jenis" data-value="SPBE">SPBE</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="jenis" data-value="BPT">BPT</a></li>
-            </ul>
-        </div>
+                    {{-- Dropdown Filter Jenis --}}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" id="dropdownJenis" data-bs-toggle="dropdown" aria-expanded="false" style="height: 38px;">
+                            Semua Jenis
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownJenis">
+                            <li><a class="dropdown-item" href="#" data-filter="jenis" data-value=" ">Semua Jenis</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="jenis" data-value="SPBE">SPBE</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="jenis" data-value="BPT">BPT</a></li>
+                        </ul>
+                    </div>
 
-        {{-- Search --}}
-        {{-- Changed height back to 38px to match buttons for better alignment --}}
-        <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari SPBE / BPT..." style="width: 200px; height: 55px;">
-    </div>
-</div>
+                    {{-- Search --}}
+                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari SPBE / BPT..." style="width: 200px; height: 55px;">
+                </div>
+            </div>
             <div class="card-body px-0 pt-0 pb-5">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-spbe-bpt">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE / BPT</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang & Kode</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE / BPT & Kode</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
@@ -79,48 +78,7 @@
     </div>
 </div>
 
-{{-- Add Data Modal (kept as is) --}}
-<div class="modal fade" id="addDataModal" tabindex="-1" aria-labelledby="addDataModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addDataModalLabel">Tambah Data SPBE / BPT Baru</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addDataForm">
-                    <div class="mb-3">
-                        <label for="namaSpbeBpt" class="form-label">Nama SPBE / BPT</label>
-                        <input type="text" class="form-control" id="namaSpbeBpt" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="jenisSpbeBpt" class="form-label">Jenis</label>
-                        <select class="form-select" id="jenisSpbeBpt" required>
-                            <option value="">Pilih Jenis</option>
-                            <option value="SPBE">SPBE</option>
-                            <option value="BPT">BPT</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="cabangSpbeBpt" class="form-label">Cabang</label>
-                        <select class="form-select" id="cabangSpbeBpt" required>
-                            <option value="">Pilih Cabang</option>
-                            <option value="Cabang 1">Cabang 1</option>
-                            <option value="Cabang 2">Cabang 2</option>
-                            <option value="Cabang 3">Cabang 3</option>
-                            <option value="Cabang 4">Cabang 4</option>
-                            <option value="Cabang 5">Cabang 5</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="submit" class="btn btn-primary" form="addDataForm">Simpan Data</button>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- Add Data Modal (Removed entirely as per request) --}}
 
 {{-- Transaction Modal --}}
 <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
@@ -171,17 +129,17 @@
     }
 
     const dataDummy = [
-        { id: 1, nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: generateRandomCode(5) },
-        { id: 2, nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: generateRandomCode(5) },
-        { id: 3, nama: 'SPBE Bekasi', stok: 150, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: generateRandomCode(5) },
-        { id: 4, nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: generateRandomCode(5) },
-        { id: 5, nama: 'SPBE Bandung', stok: 135, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: generateRandomCode(5) },
-        { id: 6, nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: generateRandomCode(5) },
-        { id: 7, nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: generateRandomCode(5) },
-        { id: 8, nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: generateRandomCode(5) },
-        { id: 9, nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: generateRandomCode(5) },
-        { id: 10, nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: generateRandomCode(5) },
-        { id: 11, nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: generateRandomCode(5) }
+        { id: 1, nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: 'SPBE01' + generateRandomCode(2) },
+        { id: 2, nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: 'BPT02' + generateRandomCode(2) },
+        { id: 3, nama: 'SPBE Bekasi', stok: 0, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: 'SPBE03' + generateRandomCode(2) }, // Stok 0 for testing
+        { id: 4, nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: 'BPT04' + generateRandomCode(2) },
+        { id: 5, nama: 'SPBE Bandung', stok: 0, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: 'SPBE05' + generateRandomCode(2) }, // Stok 0 for testing
+        { id: 6, nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: 'BPT06' + generateRandomCode(2) },
+        { id: 7, nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: 'SPBE07' + generateRandomCode(2) },
+        { id: 8, nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: 'BPT08' + generateRandomCode(2) },
+        { id: 9, nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: 'SPBE09' + generateRandomCode(2) },
+        { id: 10, nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: 'BPT10' + generateRandomCode(2) },
+        { id: 11, nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: 'SPBE11' + generateRandomCode(2) }
     ];
 
     let selectedCabang = null;
@@ -197,7 +155,7 @@
             const matchJenis = selectedJenis ? item.jenis === selectedJenis : true;
             const matchSearch = searchQuery ?
                                 (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.kode.includes(searchQuery) ||
+                                item.kode.toLowerCase().includes(searchQuery.toLowerCase()) || // Search by kode
                                 item.cabang.toLowerCase().includes(searchQuery.toLowerCase()))
                                 : true;
             return matchCabang && matchJenis && matchSearch;
@@ -221,7 +179,10 @@
                     `<span class="badge bg-gradient-primary rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-warehouse text-white" style="font-size: 0.75rem;"></i></span>` :
                     `<span class="badge bg-gradient-info rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-building text-white" style="font-size: 0.75rem;"></i></span>`;
 
-                const materialUrl = `/material?id=${item.id}&nama=${encodeURIComponent(item.nama)}`;
+                // Determine stock display text with conditional styling
+                const stockDisplay = item.stok === 0 ?
+                                  '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
+                                  `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`; // Removed <a> tag
 
                 tbody.innerHTML += `
                     <tr>
@@ -233,17 +194,15 @@
                                 ${iconHtml}
                                 <div class="d-flex flex-column justify-content-center">
                                     <h6 class="mb-0 text-sm font-weight-bolder">${item.nama}</h6>
+                                    <p class="text-xs text-secondary mb-0">Kode: ${item.kode}</p> {{-- Kode moved under Nama --}}
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            <div class="d-flex flex-column justify-content-center">
-                                <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
-                                <p class="text-xs text-secondary mb-0">Kode cabang : ${item.kode}</p>
-                            </div>
+                        <td> {{-- Display Cabang only --}}
+                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
                         </td>
                         <td class="text-center">
-                            <a href="${materialUrl}" class="text-center text-xs text-secondary font-weight-bold mb-0 text-decoration-underline" style="cursor: pointer;">${item.stok} pcs</a>
+                            ${stockDisplay} {{-- Conditional stock display --}}
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-gradient-warning text-white text-xs transaction-btn" style="cursor:pointer;" data-id="${item.id}" data-stok="${item.stok}">Lakukan Transaksi</span>
@@ -299,7 +258,7 @@
                 renderTable();
             }
         });
-        ul.appendChild(prevPageItem);
+        ul.appendChild(prevPagePageItem);
 
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
@@ -376,50 +335,6 @@
         searchQuery = this.value;
         currentPage = 1;
         renderTable();
-    });
-
-    // Handle form submission for adding new data (kept as is)
-    document.getElementById('addDataForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const nama = document.getElementById('namaSpbeBpt').value;
-        const jenis = document.getElementById('jenisSpbeBpt').value;
-        const cabang = document.getElementById('cabangSpbeBpt').value;
-
-        const manager = '';
-
-        if (nama && jenis && cabang) {
-            const newData = {
-                id: dataDummy.length > 0 ? Math.max(...dataDummy.map(d => d.id)) + 1 : 1,
-                nama: nama,
-                stok: Math.floor(Math.random() * 200) + 50,
-                jenis: jenis,
-                cabang: cabang,
-                manager: manager,
-                kode: generateRandomCode(5)
-            };
-            dataDummy.push(newData);
-
-            this.reset();
-            const addDataModal = bootstrap.Modal.getInstance(document.getElementById('addDataModal'));
-            addDataModal.hide();
-
-            renderTable();
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: 'Data berhasil ditambahkan!',
-                showConfirmButton: false,
-                timer: 1500
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal!',
-                text: 'Harap lengkapi Nama, Jenis, dan Cabang.',
-                confirmButtonText: 'Oke'
-            });
-        }
     });
 
     // Handle form submission for transactions

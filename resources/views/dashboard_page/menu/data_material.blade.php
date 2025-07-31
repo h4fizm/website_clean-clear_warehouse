@@ -5,7 +5,7 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
-                <h6>Tabel Data Material - Nama SPBE/BPT</h6>
+                <h5>Tabel Data Material - Nama SPBE/BPT</h5>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center">
                     {{-- Search --}}
                     <input type="text" id="search-input-material" class="form-control form-control-sm" placeholder="Cari Nama atau Kode Material..." style="width: 250px; height: 55px;">

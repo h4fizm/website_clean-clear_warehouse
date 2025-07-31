@@ -5,7 +5,7 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
-                <h6>Tabel Data SPBE & BPT - Nama Cabang</h6>
+                <h5>Tabel Data SPBE & BPT - Nama Cabang</h5>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center"> {{-- Added align-items-center here --}}
                     {{-- Dropdown Filter Cabang --}}
                     <div class="dropdown">
@@ -54,8 +54,8 @@
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE / BPT</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang & Kode</th> {{-- Moved this column --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE / BPT</th> {{-- Now includes code --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
@@ -116,6 +116,10 @@
                             <option value="Cabang 5">Cabang 5</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="kodeSpbeBpt" class="form-label">Kode SPBE / BPT</label>
+                        <input type="text" class="form-control" id="kodeSpbeBpt" required placeholder="Contoh: SPBE001 / BPT001">
+                    </div>
                     {{-- Manager field removed from here --}}
                 </form>
             </div>
@@ -142,17 +146,17 @@
     }
 
     const dataDummy = [
-        { id: 1, nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: generateRandomCode(5) },
-        { id: 2, nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: generateRandomCode(5) },
-        { id: 3, nama: 'SPBE Bekasi', stok: 150, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { id: 4, nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: generateRandomCode(5) },
-        { id: 5, nama: 'SPBE Bandung', stok: 135, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { id: 6, nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: generateRandomCode(5) },
-        { id: 7, nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: generateRandomCode(5) },
-        { id: 8, nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: generateRandomCode(5) }, // Manager kosong
-        { id: 9, nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: generateRandomCode(5) },
-        { id: 10, nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: generateRandomCode(5) },
-        { id: 11, nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: generateRandomCode(5) }
+        { id: 1, nama: 'SPBE Cakung', stok: 120, jenis: 'SPBE', cabang: 'Cabang 1', manager: 'Budi Santoso', kode: 'SPBE01' + generateRandomCode(2) },
+        { id: 2, nama: 'BPT Jakarta Timur', stok: 90, jenis: 'BPT', cabang: 'Cabang 1', manager: 'Siti Aminah', kode: 'BPT02' + generateRandomCode(2) },
+        { id: 3, nama: 'SPBE Bekasi', stok: 0, jenis: 'SPBE', cabang: 'Cabang 2', manager: '', kode: 'SPBE03' + generateRandomCode(2) }, // Stok 0 for testing
+        { id: 4, nama: 'BPT Depok', stok: 110, jenis: 'BPT', cabang: 'Cabang 2', manager: 'Dewi Lestari', kode: 'BPT04' + generateRandomCode(2) },
+        { id: 5, nama: 'SPBE Bandung', stok: 0, jenis: 'SPBE', cabang: 'Cabang 3', manager: '', kode: 'SPBE05' + generateRandomCode(2) }, // Stok 0 for testing
+        { id: 6, nama: 'BPT Bandung', stok: 95, jenis: 'BPT', cabang: 'Cabang 3', manager: 'Rina Wijaya', kode: 'BPT06' + generateRandomCode(2) },
+        { id: 7, nama: 'SPBE Surabaya', stok: 170, jenis: 'SPBE', cabang: 'Cabang 4', manager: 'Hadi Prasetyo', kode: 'SPBE07' + generateRandomCode(2) },
+        { id: 8, nama: 'BPT Surabaya', stok: 140, jenis: 'BPT', cabang: 'Cabang 4', manager: '', kode: 'BPT08' + generateRandomCode(2) },
+        { id: 9, nama: 'SPBE Malang', stok: 160, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Eko Nurcahyo', kode: 'SPBE09' + generateRandomCode(2) },
+        { id: 10, nama: 'BPT Malang', stok: 130, jenis: 'BPT', cabang: 'Cabang 5', manager: 'Linda Kusumawati', kode: 'BPT10' + generateRandomCode(2) },
+        { id: 11, nama: 'SPBE Bonus', stok: 200, jenis: 'SPBE', cabang: 'Cabang 5', manager: 'Fajar Indah', kode: 'SPBE11' + generateRandomCode(2) }
     ];
 
     let selectedCabang = null;
@@ -168,7 +172,7 @@
             const matchJenis = selectedJenis ? item.jenis === selectedJenis : true;
             const matchSearch = searchQuery ?
                                 (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.kode.includes(searchQuery) ||
+                                item.kode.toLowerCase().includes(searchQuery.toLowerCase()) || // Search by kode
                                 item.cabang.toLowerCase().includes(searchQuery.toLowerCase()))
                                 : true;
             return matchCabang && matchJenis && matchSearch;
@@ -190,12 +194,14 @@
             paginated.forEach((item, index) => {
                 const iconHtml = item.jenis === 'SPBE' ?
                     `<span class="badge bg-gradient-primary rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-warehouse text-white" style="font-size: 0.75rem;"></i></span>` :
-                    `<span class="badge bg-gradient-info rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-building text-white" style="font-size: 0.75rem;"></i></span>`; // Using building icon for BPT for differentiation
+                    `<span class="badge bg-gradient-info rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-building text-white" style="font-size: 0.75rem;"></i></span>`;
 
-                // Construct the URL for the material page
-                // We'll pass the 'id' and 'nama' as query parameters for now.
-                // In a real application, you might use a route parameter like /material/{id}
                 const materialUrl = `/material?id=${item.id}&nama=${encodeURIComponent(item.nama)}`;
+                
+                // Determine stock display text
+                const stockText = item.stok === 0 ? 
+                                  '<span class="text-danger font-weight-bold">Stok material kosong</span>' : 
+                                  `${item.stok} pcs`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -207,17 +213,15 @@
                                 ${iconHtml}
                                 <div class="d-flex flex-column justify-content-center">
                                     <h6 class="mb-0 text-sm font-weight-bolder">${item.nama}</h6>
+                                    <p class="text-xs text-secondary mb-0">Kode: ${item.kode}</p> {{-- Kode moved under Nama --}}
                                 </div>
                             </div>
                         </td>
-                        <td> {{-- New cell for Cabang & Kode --}}
-                            <div class="d-flex flex-column justify-content-center">
-                                <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
-                                <p class="text-xs text-secondary mb-0">Kode cabang : ${item.kode}</p>
-                            </div>
+                        <td> {{-- Display Cabang only --}}
+                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
                         </td>
                         <td class="text-center">
-                            <a href="${materialUrl}" class="text-center text-xs text-secondary font-weight-bold mb-0 text-decoration-underline" style="cursor: pointer;">${item.stok} pcs</a>
+                            <a href="${materialUrl}" class="text-center text-xs text-secondary font-weight-bold mb-0 text-decoration-underline" style="cursor: pointer;">${stockText}</a> {{-- Conditional stock text --}}
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-gradient-info text-white text-xs" style="cursor:pointer;">Edit</span>
@@ -350,20 +354,21 @@
 
         const nama = document.getElementById('namaSpbeBpt').value;
         const jenis = document.getElementById('jenisSpbeBpt').value;
-        const cabang = document.getElementById('cabangSpbeBpt').value; // Cabang tetap wajib
+        const cabang = document.getElementById('cabangSpbeBpt').value;
+        const kode = document.getElementById('kodeSpbeBpt').value; // Get the new kode input
 
-        // Manager tidak diambil dari form, selalu kosongkan atau atur default
-        const manager = ''; // Manager akan selalu kosong saat ditambah dari modal ini
+        // Manager not taken from form, always empty or set default
+        const manager = ''; // Manager will always be empty when added from this modal
 
-        if (nama && jenis && cabang) { // Validasi: nama, jenis, dan cabang wajib
+        if (nama && jenis && cabang && kode) { // Validation: nama, jenis, cabang, AND kode are required
             const newData = {
-                id: dataDummy.length + 1, // Simple ID generation for dummy data
+                id: dataDummy.length > 0 ? Math.max(...dataDummy.map(d => d.id)) + 1 : 1, // Ensure unique ID
                 nama: nama,
                 stok: Math.floor(Math.random() * 200) + 50, // Dummy stok
                 jenis: jenis,
                 cabang: cabang,
-                manager: manager, // Manager akan kosong
-                kode: generateRandomCode(5) // Generate new random code
+                manager: manager, // Manager will be empty
+                kode: kode // Use the manually entered kode
             };
             dataDummy.push(newData); // Add new data to our dummy array
 
@@ -376,7 +381,7 @@
             renderTable();
             alert('Data berhasil ditambahkan!');
         } else {
-            alert('Harap lengkapi Nama, Jenis, dan Cabang.'); // Mengubah pesan alert
+            alert('Harap lengkapi Nama, Jenis, Cabang, dan Kode SPBE/BPT.'); // Updated alert message
         }
     });
 

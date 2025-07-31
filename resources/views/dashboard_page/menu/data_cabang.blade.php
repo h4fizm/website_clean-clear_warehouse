@@ -5,10 +5,10 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
-                <h6>Tabel Data Cabang</h6>
+                <h3>Tabel Data Cabang</h3>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center">
                     {{-- Search --}}
-                    <input type="text" id="search-input-cabang" class="form-control form-control-sm" placeholder="Cari Cabang atau Kode..." style="width: 250px; height: 55px;">
+                    <input type="text" id="search-input-cabang" class="form-control form-control-sm" placeholder="Cari Cabang..." style="width: 250px; height: 55px;"> {{-- Adjusted placeholder --}}
 
                     {{-- Add Cabang Button --}}
                     <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
@@ -26,9 +26,9 @@
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Cabang</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Cabang</th>
+                                {{-- <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Cabang</th> --}} {{-- Removed Kode Cabang --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Total Stok</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Manager</th> {{-- Manager is back for branch table --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Manager</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -69,11 +69,7 @@
                         <label for="namaCabang" class="form-label">Nama Cabang</label>
                         <input type="text" class="form-control" id="namaCabang" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="kodeCabangAuto" class="form-label">Kode Cabang</label>
-                        <input type="text" class="form-control" id="kodeCabangAuto" readonly> {{-- Auto-generated and read-only --}}
-                    </div>
-                    {{-- Jenis, Manager, Stok tidak ada di modal ini --}}
+                    {{-- Removed Kode Cabang input field from here --}}
                 </form>
             </div>
             <div class="modal-footer">
@@ -87,7 +83,8 @@
 {{-- Script for Cabang Page --}}
 @push('scripts')
 <script>
-    // Function to generate a random code with a fixed number of digits
+    // generateRandomCode is no longer strictly needed for branch codes, 
+    // but keeping it for potential future use or other dummy data generation.
     function generateRandomCode(length) {
         let result = '';
         const characters = '0123456789';
@@ -98,19 +95,38 @@
         return result;
     }
 
-    // Dummy data for Cabang table
-    // Each cabang has its own manager (could be empty) and total stok (sum of SPBE/BPT under it, or just dummy)
+    // Dummy data for Cabang table - 'kode' property removed
     const dataCabangDummy = [
-        { id: 1, nama: 'Cabang 1', kode: 'C0001', stok: 700, manager: 'Manager A' },
-        { id: 2, nama: 'Cabang 2', kode: 'C0002', stok: 550, manager: 'Manager B' },
-        { id: 3, nama: 'Cabang 3', kode: 'C0003', stok: 820, manager: '' }, // Manager kosong
-        { id: 4, nama: 'Cabang 4', kode: 'C0004', stok: 610, manager: 'Manager C' },
-        { id: 5, nama: 'Cabang 5', kode: 'C0005', stok: 930, manager: '' }, // Manager kosong
-        { id: 6, nama: 'Cabang 6', kode: 'C0006', stok: 400, manager: 'Manager D' },
-        { id: 7, nama: 'Cabang 7', kode: 'C0007', stok: 750, manager: '' }, // Manager kosong
-        { id: 8, nama: 'Cabang 8', kode: 'C0008', stok: 680, manager: 'Manager E' },
-        { id: 9, nama: 'Cabang 9', kode: 'C0009', stok: 500, manager: 'Manager F' },
-        { id: 10, nama: 'Cabang 10', kode: 'C0010', stok: 990, manager: '' }, // Manager kosong
+        { id: 1, nama: 'Cabang 1', stok: 700, manager: 'Manager A' },
+        { id: 2, nama: 'Cabang 2', stok: 550, manager: 'Manager B' },
+        { id: 3, nama: 'Cabang 3', stok: 820, manager: '' },
+        { id: 4, nama: 'Cabang 4', stok: 610, manager: 'Manager C' },
+        { id: 5, nama: 'Cabang 5', stok: 930, manager: '' },
+        { id: 6, nama: 'Cabang 6', stok: 400, manager: 'Manager D' },
+        { id: 7, nama: 'Cabang 7', stok: 750, manager: '' },
+        { id: 8, nama: 'Cabang 8', stok: 680, manager: 'Manager E' },
+        { id: 9, nama: 'Cabang 9', stok: 500, manager: 'Manager F' },
+        { id: 10, nama: 'Cabang 10', stok: 990, manager: '' },
+        { id: 11, nama: 'Cabang 11', stok: 650, manager: 'Manager G' },
+        { id: 12, nama: 'Cabang 12', stok: 720, manager: 'Manager H' },
+        { id: 13, nama: 'Cabang 13', stok: 480, manager: '' },
+        { id: 14, nama: 'Cabang 14', stok: 880, manager: 'Manager I' },
+        { id: 15, nama: 'Cabang 15', stok: 590, manager: '' },
+        { id: 16, nama: 'Cabang 16', stok: 710, manager: 'Manager J' },
+        { id: 17, nama: 'Cabang 17', stok: 630, manager: '' },
+        { id: 18, nama: 'Cabang 18', stok: 910, manager: 'Manager K' },
+        { id: 19, nama: 'Cabang 19', stok: 530, manager: 'Manager L' },
+        { id: 20, nama: 'Cabang 20', stok: 840, manager: '' },
+        { id: 21, nama: 'Cabang 21', stok: 770, manager: 'Manager M' },
+        { id: 22, nama: 'Cabang 22', stok: 600, manager: 'Manager N' },
+        { id: 23, nama: 'Cabang 23', stok: 950, manager: '' },
+        { id: 24, nama: 'Cabang 24', stok: 510, manager: 'Manager O' },
+        { id: 25, nama: 'Cabang 25', stok: 800, manager: '' },
+        { id: 26, nama: 'Cabang 26', stok: 730, manager: 'Manager P' },
+        { id: 27, nama: 'Cabang 27', stok: 660, manager: '' },
+        { id: 28, nama: 'Cabang 28', stok: 980, manager: 'Manager Q' },
+        { id: 29, nama: 'Cabang 29', stok: 570, manager: 'Manager R' },
+        { id: 30, nama: 'Cabang 30', stok: 890, manager: '' },
     ];
 
     let searchCabangQuery = '';
@@ -121,8 +137,7 @@
     function filterCabangData() {
         return dataCabangDummy.filter(item => {
             const matchSearch = searchCabangQuery ?
-                                (item.nama.toLowerCase().includes(searchCabangQuery.toLowerCase()) ||
-                                item.kode.toLowerCase().includes(searchCabangQuery.toLowerCase()))
+                                item.nama.toLowerCase().includes(searchCabangQuery.toLowerCase())
                                 : true;
             return matchSearch;
         });
@@ -138,10 +153,11 @@
         tbody.innerHTML = '';
         if (paginated.length === 0) {
             noData.style.display = 'block';
+            // Updated colspan to 5 for the new column structure
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Data Kosong</td></tr>'; 
         } else {
             noData.style.display = 'none';
             paginated.forEach((item, index) => {
-                // Icon for branch - using fa-building as a generic branch/company icon
                 const iconHtml = `<span class="badge bg-gradient-success rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-city text-white" style="font-size: 0.75rem;"></i></span>`;
 
                 tbody.innerHTML += `
@@ -157,9 +173,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            <p class="text-xs text-secondary mb-0">${item.kode}</p>
-                        </td>
+                        {{-- Removed Kode Cabang column --}}
                         <td>
                             <p class="text-xs text-secondary mb-0">${item.stok} pcs</p>
                         </td>
@@ -267,23 +281,23 @@
         renderCabangTable();
     });
 
-    // Populate Kode Cabang automatically when modal is shown
-    document.getElementById('addCabangModal').addEventListener('show.bs.modal', function () {
-        document.getElementById('kodeCabangAuto').value = 'C' + generateRandomCode(4); // Example: C1234
-    });
+    // Removed the event listener for populating Kode Cabang as it's no longer used.
+    // document.getElementById('addCabangModal').addEventListener('show.bs.modal', function () {
+    //     document.getElementById('kodeCabangAuto').value = 'C' + generateRandomCode(4); 
+    // });
 
     // Handle form submission for adding new Cabang data
     document.getElementById('addCabangForm').addEventListener('submit', function(e) {
         e.preventDefault(); // Prevent default form submission
 
         const nama = document.getElementById('namaCabang').value;
-        const kode = document.getElementById('kodeCabangAuto').value;
+        // Removed 'kode' constant as it's no longer sourced from the form
 
-        if (nama && kode) {
+        if (nama) { // Validation updated to only check for 'nama'
             const newData = {
                 id: dataCabangDummy.length + 1, // Simple ID generation for dummy data
                 nama: nama,
-                kode: kode,
+                // Removed 'kode: kode,' from newData object
                 stok: Math.floor(Math.random() * 1000) + 100, // Dummy stok for branch
                 manager: '' // Manager is empty by default when adding new branch
             };
@@ -296,9 +310,9 @@
 
             // Re-render table to show new data
             renderCabangTable();
-            alert('Data Cabang berhasil ditambahkan!');
+            alert('Data Cabang berhasil ditambahkan!'); // Alert message adjusted
         } else {
-            alert('Harap lengkapi Nama Cabang.');
+            alert('Harap lengkapi Nama Cabang.'); // Alert message adjusted
         }
     });
 
