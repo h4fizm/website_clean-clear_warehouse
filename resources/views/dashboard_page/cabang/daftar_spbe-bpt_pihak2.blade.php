@@ -40,7 +40,7 @@
                     </div>
 
                     {{-- Search --}}
-                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari SPBE / BPT..." style="width: 200px; height: 55px;">
+                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari SPBE / BPT..." style="width: 200px; height: 38px;">
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
@@ -77,8 +77,6 @@
         </div>
     </div>
 </div>
-
-{{-- Add Data Modal (Removed entirely as per request) --}}
 
 {{-- Transaction Modal --}}
 <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
@@ -182,7 +180,7 @@
                 // Determine stock display text with conditional styling
                 const stockDisplay = item.stok === 0 ?
                                   '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
-                                  `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`; // Removed <a> tag
+                                  `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -236,7 +234,8 @@
 
         const firstPageItem = document.createElement('li');
         firstPageItem.classList.add('page-item');
-        if (currentPage === 1) firstPageItem.classList.add('disabled');
+        // Condition for disabling '<<' button
+        if (currentPage === 1 || totalPages === 0) firstPageItem.classList.add('disabled'); // Added totalPages check
         firstPageItem.innerHTML = `<a class="page-link" href="#" aria-label="First">«</a>`;
         firstPageItem.addEventListener('click', function(e) {
             e.preventDefault();
@@ -249,7 +248,8 @@
 
         const prevPageItem = document.createElement('li');
         prevPageItem.classList.add('page-item');
-        if (currentPage === 1) prevPageItem.classList.add('disabled');
+        // Condition for disabling '<' button
+        if (currentPage === 1 || totalPages === 0) prevPageItem.classList.add('disabled'); // Added totalPages check
         prevPageItem.innerHTML = `<a class="page-link" href="#"><</a>`;
         prevPageItem.addEventListener('click', function(e) {
             e.preventDefault();
@@ -258,14 +258,22 @@
                 renderTable();
             }
         });
-        ul.appendChild(prevPagePageItem);
+        ul.appendChild(prevPageItem); // Corrected typo here, was prevPagePageItem
 
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-        if (endPage - startPage + 1 < maxPagesToShow) {
+        // Adjust startPage if endPage is too low (to maintain maxPagesToShow if possible)
+        if (endPage - startPage + 1 < maxPagesToShow && totalPages >= maxPagesToShow) { // Added totalPages check
             startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
+        
+        // Ensure that if totalPages is less than maxPagesToShow, the loop runs correctly
+        if (totalPages < maxPagesToShow) {
+            startPage = 1;
+            endPage = totalPages;
+        }
+
 
         for (let i = startPage; i <= endPage; i++) {
             const li = document.createElement('li');
@@ -282,7 +290,8 @@
 
         const nextPageItem = document.createElement('li');
         nextPageItem.classList.add('page-item');
-        if (currentPage === totalPages) nextPageItem.classList.add('disabled');
+        // Condition for disabling '>' button
+        if (currentPage === totalPages || totalPages === 0) nextPageItem.classList.add('disabled'); // Added totalPages check
         nextPageItem.innerHTML = `<a class="page-link" href="#">></a>`;
         nextPageItem.addEventListener('click', function(e) {
             e.preventDefault();
@@ -295,7 +304,8 @@
 
         const lastPageItem = document.createElement('li');
         lastPageItem.classList.add('page-item');
-        if (currentPage === totalPages) lastPageItem.classList.add('disabled');
+        // Condition for disabling '>>' button
+        if (currentPage === totalPages || totalPages === 0) lastPageItem.classList.add('disabled'); // Added totalPages check
         lastPageItem.innerHTML = `<a class="page-link" href="#" aria-label="Last">»</a>`;
         lastPageItem.addEventListener('click', function(e) {
             e.preventDefault();

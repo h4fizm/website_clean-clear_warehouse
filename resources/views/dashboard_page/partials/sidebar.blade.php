@@ -9,12 +9,12 @@
   <hr class="horizontal dark mt-0">
   <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main" style="max-height: none !important; height: auto !important; overflow: hidden !important;">
     <ul class="navbar-nav">
-      <!-- Dashboard Menu Item -->
       <li class="nav-item mt-3">
         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Dashboard</h6>
       </li>
       <li class="nav-item">
-        <a class="nav-link active" href="{{ url('dashboard') }}">
+        {{-- Corrected Dashboard active state --}}
+        <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" href="{{ url('dashboard') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-tachometer-alt text-primary text-sm opacity-10"></i>
           </div>
@@ -22,13 +22,12 @@
         </a>
       </li>
 
-      <!-- Section: Transaksi -->
       <li class="nav-item mt-3">
         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Transaksi</h6>
       </li>
       {{-- Data Transaksi --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/penyaluran') ? 'active' : '' }}" href="{{ url('/transaksi') }}">
+        <a class="nav-link {{ request()->is('transaksi') ? 'active' : '' }}" href="{{ url('/transaksi') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-exchange-alt text-primary text-sm opacity-10"></i>
           </div>
@@ -37,7 +36,7 @@
       </li>
       {{-- Tambah Data Cabang --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/cabang') }}">
+        <a class="nav-link {{ request()->is('cabang') ? 'active' : '' }}" href="{{ url('/cabang') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-building text-primary text-sm opacity-10"></i>
           </div>
@@ -46,7 +45,7 @@
       </li>
       {{-- Tambah Data SPBE & BPT --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/spbe-bpt') }}">
+        <a class="nav-link {{ request()->is('spbe-bpt') ? 'active' : '' }}" href="{{ url('/spbe-bpt') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-boxes text-primary text-sm opacity-10"></i>
           </div>
@@ -55,7 +54,8 @@
       </li>
       {{-- Tambah Material --}}
       <li class="nav-item">
-        <a class="nav-link {{ request()->is('transaksi/stok-keseluruhan') ? 'active' : '' }}" href="{{ url('/material') }}">
+        {{-- Fixed leading slash for URL matching. request()->is() expects path without leading slash --}}
+        <a class="nav-link {{ request()->is('material') ? 'active' : '' }}" href="{{ url('/material') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-cube text-primary text-sm opacity-10"></i>
           </div>
@@ -63,16 +63,16 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-danger {{ request()->is('transaksi/recycle') ? 'active' : '' }}" href="{{ url('transaksi/recycle') }}">
+        {{-- Fixed leading slash for URL matching --}}
+        <a class="nav-link text-danger {{ request()->is('upp-material') ? 'active' : '' }}" href="{{ url('/upp-material') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
             <i class="fas fa-sync-alt text-danger text-sm opacity-10"></i>
           </div>
           <span class="nav-link-text ms-1">UPP Material</span>
         </a>
       </li>
-     
+      
 
-      <!-- Section: Analisis -->
       <li class="nav-item mt-3">
         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Laporan</h6>
       </li>
@@ -95,7 +95,6 @@
         </a>
       </li>
 
-      <!-- Section: Pengguna -->
       <li class="nav-item mt-3">
         <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Menu Pengguna</h6>
       </li>

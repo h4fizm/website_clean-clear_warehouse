@@ -24,7 +24,6 @@ Route::get('/register', function () {
 Route::get('/dashboard', function () {
     return view('dashboard_page.menu.dashboard');
 });
-
 Route::get('/transaksi', function () {
     return view('dashboard_page.menu.data_transaksi');
 });
@@ -37,6 +36,9 @@ Route::get('/spbe-bpt', function () {
 Route::get('/material', function () {
     return view('dashboard_page.menu.data_material');
 });
+Route::get('/upp-material', function () {
+    return view('dashboard_page.menu.data_upp-material');
+});
 
 // transaksi
 Route::get('/cabang/spbe-bpt1', function () {
@@ -46,3 +48,7 @@ Route::get('/cabang/spbe-bpt2', function () {
     return view('dashboard_page.cabang.daftar_spbe-bpt_pihak2');
 });
 
+// form keterangan pemusnahan upp material
+Route::get('/keterangan-pemusnahan', function () {
+    return view('dashboard_page.upp_material.keterangan_pemusnahan');
+});
