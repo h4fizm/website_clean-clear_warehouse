@@ -3,25 +3,25 @@
 @section('content')
 
 {{-- Welcome Section --}}
-<div class="col-12 mb-6">
+<div class="col-12 mb-3">
     <div class="card p-3" style="
-        background: linear-gradient(to right, #0F2027 0%, #203A43 50%, #2C5364 100%); /* Gradien Biru Tua */
-        color: white; /* Text color for contrast */
-        border-radius: 1rem; /* Slightly more rounded corners */
+        background-color: white; /* Putih Polos */
+        color: #344767; /* Warna teks gelap agar kontras dengan latar putih */
+        border-radius: 1rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Soft shadow */
-        overflow: hidden; /* To contain pseudo-elements if added */
+        overflow: hidden;
         position: relative;
     ">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
-                <h4 class="mb-1 text-white fw-bold">Selamat Datang, <strong style="color: #FFD700;">Nama User</strong>!</h4>
-                <p class="mb-2 opacity-8">Informasi Data Stok Material dan Transaksi pada Cabang - Nama Cabang.</p>
-                <span class="badge bg-white text-primary text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
+                {{-- Changed text to be descriptive of the page --}}
+                <h4 class="mb-1 fw-bold">Selamat Datang, Nama User</h4>
+                <p class="mb-2 opacity-8">Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.</p>
+                <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
             </div>
-            
+
             <div class="text-center position-relative me-md-4">
-                <i class="fas fa-hand-sparkles text-white opacity-8" style="font-size: 4em;"></i> 
-                <i class="fas fa-warehouse text-white opacity-5 position-absolute" style="font-size: 2em; top: 10px; right: 0;"></i>
+                <img src="{{ asset('dashboard_template/assets/img/icon.png') }}" alt="Branch Icon" style="height: 60px; width: auto; opacity: 0.9;">
             </div>
         </div>
         <div style="
@@ -30,7 +30,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+            background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
             background-size: 60px 60px;
             opacity: 0.2;
             pointer-events: none;

@@ -2,7 +2,7 @@
 @section('title', 'Laman Transaksi')
 @section('content')
 
-{{-- Welcome Section: Pihak Pertama (Cabang Anda) --}}
+{{-- Welcome Section --}}
 <div class="col-12 mb-3">
     <div class="card p-3" style="
         background-color: white; /* Putih Polos */
