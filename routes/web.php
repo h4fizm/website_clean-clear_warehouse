@@ -27,12 +27,6 @@ Route::get('/dashboard', function () {
 Route::get('/transaksi', function () {
     return view('dashboard_page.menu.data_transaksi');
 });
-Route::get('/cabang', function () {
-    return view('dashboard_page.menu.data_cabang');
-});
-Route::get('/spbe-bpt', function () {
-    return view('dashboard_page.menu.data_spbe-bpt');
-});
 Route::get('/material', function () {
     return view('dashboard_page.menu.data_material');
 });
@@ -43,13 +37,11 @@ Route::get('/laporan-grafik', function () {
     return view('dashboard_page.menu.data_laporan_grafik');
 });
 
-// transaksi
-Route::get('/cabang/spbe-bpt1', function () {
-    return view('dashboard_page.cabang.daftar_spbe-bpt_pihak1');
+// daftar spbe-bpt
+Route::get('/spbe-bpt', function () {
+    return view('dashboard_page.sales_area.daftar_spbe-bpt');
 });
-Route::get('/cabang/spbe-bpt2', function () {
-    return view('dashboard_page.cabang.daftar_spbe-bpt_pihak2');
-});
+
 
 // form keterangan pemusnahan upp material
 Route::get('/keterangan-pemusnahan', function () {

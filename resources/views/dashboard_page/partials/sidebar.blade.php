@@ -34,24 +34,6 @@
           <span class="nav-link-text ms-1">Data Transaksi</span>
         </a>
       </li>
-      {{-- Tambah Data Cabang --}}
-      <li class="nav-item">
-        <a class="nav-link {{ request()->is('cabang') ? 'active' : '' }}" href="{{ url('/cabang') }}">
-          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="fas fa-building text-primary text-sm opacity-10"></i>
-          </div>
-          <span class="nav-link-text ms-1">Tambah Data Cabang</span>
-        </a>
-      </li>
-      {{-- Tambah Data SPBE & BPT --}}
-      <li class="nav-item">
-        <a class="nav-link {{ request()->is('spbe-bpt') ? 'active' : '' }}" href="{{ url('/spbe-bpt') }}">
-          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="fas fa-boxes text-primary text-sm opacity-10"></i>
-          </div>
-          <span class="nav-link-text ms-1">Tambah Data SPBE & BPT</span>
-        </a>
-      </li>
       {{-- Tambah Material --}}
       <li class="nav-item">
         {{-- Fixed leading slash for URL matching. request()->is() expects path without leading slash --}}
