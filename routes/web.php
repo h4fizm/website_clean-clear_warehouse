@@ -39,6 +39,9 @@ Route::get('/material', function () {
 Route::get('/upp-material', function () {
     return view('dashboard_page.menu.data_upp-material');
 });
+Route::get('/laporan-grafik', function () {
+    return view('dashboard_page.menu.data_laporan_grafik');
+});
 
 // transaksi
 Route::get('/cabang/spbe-bpt1', function () {

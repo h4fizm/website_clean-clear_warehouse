@@ -83,7 +83,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="transactionModalLabel">Lakukan Transaksi Stok</h5>
+                <h5 class="modal-title" id="transactionModalLabel">Lakukan Penyaluran Stok</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -91,22 +91,14 @@
                     <input type="hidden" id="transactionId">
                     <input type="hidden" id="currentStok">
                     <div class="mb-3">
-                        <label for="transactionType" class="form-label">Jenis Transaksi</label>
-                        <select class="form-select" id="transactionType" required>
-                            <option value="">Pilih Jenis Transaksi</option>
-                            <option value="Penyaluran">Penyaluran</option>
-                            <option value="Penerimaan">Penerimaan</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="transactionQuantity" class="form-label">Jumlah Stok</label>
+                        <label for="transactionQuantity" class="form-label">Jumlah Stok yang Akan Disalurkan ke SPBE/BPT Tujuan</label>
                         <input type="number" class="form-control" id="transactionQuantity" required min="1">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="submit" class="btn btn-warning" form="transactionForm">Proses Transaksi</button>
+                <button type="submit" class="btn btn-warning" form="transactionForm">Proses Penyaluran</button>
             </div>
         </div>
     </div>
@@ -179,8 +171,8 @@
 
                 // Determine stock display text with conditional styling
                 const stockDisplay = item.stok === 0 ?
-                                  '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
-                                  `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
+                                    '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
+                                    `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -217,7 +209,6 @@
                     document.getElementById('transactionId').value = id;
                     document.getElementById('currentStok').value = stok;
                     document.getElementById('transactionQuantity').value = ''; // Clear previous quantity
-                    document.getElementById('transactionType').value = ''; // Clear previous selection
                     const transactionModal = new bootstrap.Modal(document.getElementById('transactionModal'));
                     transactionModal.show();
                 });
@@ -352,7 +343,6 @@
         e.preventDefault();
 
         const idToTransact = parseInt(document.getElementById('transactionId').value);
-        const transactionType = document.getElementById('transactionType').value;
         const transactionQuantity = parseInt(document.getElementById('transactionQuantity').value);
         let currentStok = parseInt(document.getElementById('currentStok').value);
 
@@ -369,43 +359,25 @@
         const itemIndex = dataDummy.findIndex(item => item.id === idToTransact);
 
         if (itemIndex !== -1) {
-            if (transactionType === 'Penyaluran') {
-                if (currentStok < transactionQuantity) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Stok Tidak Cukup!',
-                        text: `Stok saat ini hanya ${currentStok} pcs. Tidak bisa menyalurkan ${transactionQuantity} pcs.`,
-                        confirmButtonText: 'Oke'
-                    });
-                    return;
-                }
-                dataDummy[itemIndex].stok -= transactionQuantity;
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: `Stok berhasil disalurkan sebanyak ${transactionQuantity} pcs.`,
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-            } else if (transactionType === 'Penerimaan') {
-                dataDummy[itemIndex].stok += transactionQuantity;
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: `Stok berhasil diterima sebanyak ${transactionQuantity} pcs.`,
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-            } else {
+            // Only handle "Penyaluran" (distribution)
+            if (currentStok < transactionQuantity) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Pilih Jenis Transaksi!',
-                    text: 'Harap pilih jenis transaksi (Penyaluran atau Penerimaan).',
+                    title: 'Stok Tidak Cukup!',
+                    text: `Stok saat ini hanya ${currentStok} pcs. Tidak bisa menyalurkan ${transactionQuantity} pcs.`,
                     confirmButtonText: 'Oke'
                 });
                 return;
             }
-
+            dataDummy[itemIndex].stok -= transactionQuantity;
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: `Stok berhasil disalurkan sebanyak ${transactionQuantity} pcs.`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        
             const transactionModal = bootstrap.Modal.getInstance(document.getElementById('transactionModal'));
             transactionModal.hide();
             renderTable(); // Re-render table to reflect updated stock
