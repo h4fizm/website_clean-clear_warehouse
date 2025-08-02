@@ -57,12 +57,17 @@
                 <div class="row align-items-center">
                     {{-- Branch Selection Buttons (Left Side) --}}
                     <div class="col-12 col-md-auto mb-2 mb-md-0">
-                        <div class="btn-group" role="group" aria-label="Branch selection">
-                            <button type="button" class="btn btn-outline-primary" data-branch="P.Layang">P.Layang</button>
-                            <button type="button" class="btn btn-outline-primary" data-branch="Sales Area Jambi">SA Jambi</button>
-                            <button type="button" class="btn btn-outline-primary" data-branch="SA Bengkulu">SA Bengkulu</button>
-                            <button type="button" class="btn btn-outline-primary" data-branch="SA Lampung">SA Lampung</button>
-                            <button type="button" class="btn btn-outline-primary" data-branch="SA Sumsel">SA Sumsel</button>
+                        {{-- Small text indicating the button group --}}
+                        <p class="text-sm text-secondary mb-1">
+                            *Pilih salah satu tombol di bawah ini untuk melihat data material berdasarkan lokasi cabang : *
+                        </p>
+                        <div class="btn-group d-flex flex-wrap" role="group" aria-label="Branch selection">
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="P.Layang">P.Layang</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="Sales Area Jambi">SA Jambi</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Bengkulu">SA Bengkulu</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Lampung">SA Lampung</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Sumsel">SA Sumsel</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Palembang">SA Palembang</button> {{-- Added new branch --}}
                         </div>
                     </div>
 
@@ -81,13 +86,6 @@
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
-                {{-- No longer needed here as it's moved to card-header --}}
-                {{-- <div class="d-flex justify-content-end mb-3 pe-3">
-                    <button type="button" class="btn btn-success d-flex align-items-center justify-content-center" style="height: 45px;">
-                        <i class="fas fa-file-excel me-2"></i> Export Excel
-                    </button>
-                </div> --}}
-
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-material-1">
                         <thead>

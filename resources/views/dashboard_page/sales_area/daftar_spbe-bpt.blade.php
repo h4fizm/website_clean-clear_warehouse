@@ -74,18 +74,19 @@
                     <div class="mb-3">
                         <label for="updateSalesArea" class="form-label">Region/Sales Area</label>
                         <select class="form-select" id="updateSalesArea" required>
+                            {{-- Updated to match the button group list --}}
                             <option value="P.Layang">P.Layang</option>
                             <option value="Sales Area Jambi">Sales Area Jambi</option>
                             <option value="SA Bengkulu">SA Bengkulu</option>
                             <option value="SA Lampung">SA Lampung</option>
                             <option value="SA Sumsel">SA Sumsel</option>
+                            <option value="SA Palembang">SA Palembang</option> {{-- Added new branch --}}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="updateKabupaten" class="form-label">Nama Kabupaten</label>
                         <input type="text" class="form-control" id="updateKabupaten" required>
                     </div>
-                    {{-- Removed Total Stok field from modal HTML --}}
                 </form>
             </div>
             <div class="modal-footer">
@@ -116,31 +117,35 @@
     const rawDataDummy = [
         { id: 1, nama: 'SPBE Jakarta Barat', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Budi Santoso', kode_plant: 'SPBE01' + generateRandomCode(2), kabupaten: 'Jakarta Barat' },
         { id: 2, nama: 'BPT Jakarta Utara', jenis: 'BPT', cabang: 'P.Layang', manager: 'Siti Aminah', kode_plant: 'BPT02' + generateRandomCode(2), kabupaten: 'Jakarta Utara' },
-        { id: 3, nama: 'SPBE Jakarta Selatan', jenis: 'SPBE', cabang: 'P.Layang', manager: '', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Jakarta Selatan' },
-        { id: 4, nama: 'BPT Jakarta Pusat', jenis: 'BPT', cabang: 'P.Layang', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Jakarta Pusat' },
-        { id: 5, nama: 'SPBE Jakarta Timur', jenis: 'SPBE', cabang: 'P.Layang', manager: '', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Jakarta Timur' },
-        { id: 6, nama: 'BPT Tangerang', jenis: 'BPT', cabang: 'P.Layang', manager: 'Rina Wijaya', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Kab. Tangerang' },
-        { id: 7, nama: 'SPBE Bekasi', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Hadi Prasetyo', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Kota Bekasi' },
-        { id: 8, nama: 'BPT Depok', jenis: 'BPT', cabang: 'P.Layang', manager: '', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Kota Depok' },
-        { id: 9, nama: 'SPBE Bogor', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Eko Nurcahyo', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kab. Bogor' },
-        { id: 10, nama: 'BPT Cirebon', jenis: 'BPT', cabang: 'P.Layang', manager: 'Linda Kusumawati', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Kota Cirebon' },
-        { id: 11, nama: 'SPBE Karawang', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Fajar Indah', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kab. Karawang' },
-        { id: 12, nama: 'BPT Sukabumi', jenis: 'BPT', cabang: 'P.Layang', manager: 'Andi Jaya', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kab. Sukabumi' },
-        { id: 13, nama: 'SPBE Purwakarta', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Candra Dewi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Kab. Purwakarta' },
-        { id: 14, nama: 'BPT Subang', jenis: 'BPT', cabang: 'P.Layang', manager: 'Dina Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kab. Subang' },
-        { id: 15, nama: 'SPBE Majalengka', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Eka Putra', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Kab. Majalengka' },
-        { id: 16, nama: 'BPT Sumedang', jenis: 'BPT', cabang: 'P.Layang', manager: 'Fita Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Kab. Sumedang' },
-        { id: 17, nama: 'SPBE Garut', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Gilang Ramadhan', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Kab. Garut' },
-        { id: 18, nama: 'BPT Tasikmalaya', jenis: 'BPT', cabang: 'P.Layang', manager: 'Hani Fauziah', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Kota Tasikmalaya' },
-        { id: 19, nama: 'SPBE Indramayu', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Imran Syah', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Kab. Indramayu' },
-        { id: 20, nama: 'BPT Kuningan', jenis: 'BPT', cabang: 'P.Layang', manager: 'Juwita Nur', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Kab. Kuningan' }
+        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: '', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi' },
+        { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'Sales Area Jambi', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi' },
+        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', manager: '', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan' },
+        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Rina Wijaya', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara' },
+        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Hadi Prasetyo', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur' },
+        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', manager: '', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat' },
+        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', manager: 'Eko Nurcahyo', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang' },
+        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Linda Kusumawati', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir' },
+        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Fajar Indah', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat' },
+        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', manager: 'Andi Jaya', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur' },
+        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Candra Dewi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru' },
+        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Dina Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang' },
+        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Eka Putra', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung' },
+        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Fita Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih' },
+        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Gilang Ramadhan', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh' },
+        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hani Fauziah', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan' },
+        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Imran Syah', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro' },
+        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Juwita Nur', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau' },
+        { id: 21, nama: 'SPBE Palembang Utara', jenis: 'SPBE', cabang: 'SA Palembang', manager: 'Zainal Arifin', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Palembang' },
+        { id: 22, nama: 'BPT Banyuasin', jenis: 'BPT', cabang: 'SA Palembang', manager: 'Nurul Hidayah', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Banyuasin' }
     ];
 
-    // Get current Sales Area from URL (assuming it's passed as a query parameter, e.g., ?sales_area=P.Layang)
+    // Get current Sales Area from URL or set initial default to 'Sales Area Jambi'
     const urlParams = new URLSearchParams(window.location.search);
-    const initialSalesArea = urlParams.get('sales_area') || 'P.Layang'; // Default to P.Layang if not specified
+    const initialSalesArea = urlParams.get('sales_area') || 'Sales Area Jambi';
 
-    // Filter dataDummy based on initial Sales Area.
+    // Filter rawDataDummy based on initial Sales Area.
+    // NOTE: Data for 'P.Layang' will *only* be shown if 'P.Layang' is explicitly selected
+    // or set as the initialSalesArea via URL. Otherwise, it's filtered out.
     const dataDummy = rawDataDummy.filter(item => item.cabang === initialSalesArea);
 
 
@@ -220,7 +225,6 @@
                                 data-kodeplant="${item.kode_plant}"
                                 data-salesarea="${item.cabang}"
                                 data-kabupaten="${item.kabupaten}"
-                                {{-- Removed data-stok as it's no longer editable via this modal --}}
                             >Edit</span>
                             <span class="badge bg-gradient-danger text-white text-xs ms-1 delete-btn" style="cursor:pointer;" data-id="${item.id}">Hapus</span>
                         </td>
@@ -236,15 +240,12 @@
                     const kodePlant = this.getAttribute('data-kodeplant');
                     const salesArea = this.getAttribute('data-salesarea');
                     const kabupaten = this.getAttribute('data-kabupaten');
-                    // const stok = parseInt(this.getAttribute('data-stok')); // No longer needed here
-
 
                     document.getElementById('updateId').value = id;
                     document.getElementById('updateNama').value = nama;
                     document.getElementById('updateKodePlant').value = kodePlant;
                     document.getElementById('updateSalesArea').value = salesArea;
                     document.getElementById('updateKabupaten').value = kabupaten;
-                    // document.getElementById('updateStok').value = stok; // No longer needed for setting modal value
 
                     const updateModal = new bootstrap.Modal(document.getElementById('updateDataModal'));
                     updateModal.show();
@@ -265,9 +266,18 @@
                         cancelButtonText: 'Batal'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            const index = dataDummy.findIndex(item => item.id === id);
+                            // Find the index in the original rawDataDummy
+                            const index = rawDataDummy.findIndex(item => item.id === id);
                             if (index !== -1) {
-                                dataDummy.splice(index, 1);
+                                rawDataDummy.splice(index, 1); // Remove from raw data
+                                // Re-filter and re-render the table
+                                // Re-initialize dataDummy to reflect changes in rawDataDummy for the currentSalesArea
+                                const updatedDataDummyForCurrentArea = rawDataDummy.filter(item => item.cabang === currentSalesArea);
+                                // Assign this new filtered array to dataDummy
+                                dataDummy.length = 0; // Clear the existing dataDummy
+                                dataDummy.push(...updatedDataDummyForCurrentArea); // Add new filtered items
+                                
+                                updatePageTitleAndSalesAreaDisplay(); // Ensure display is correct
                                 renderTable();
                                 Swal.fire(
                                     'Dihapus!',
@@ -384,16 +394,14 @@
             const updatedKodePlant = document.getElementById('updateKodePlant').value;
             const updatedSalesArea = document.getElementById('updateSalesArea').value;
             const updatedKabupaten = document.getElementById('updateKabupaten').value;
-            // const updatedStok = parseInt(document.getElementById('updateStok').value); // No longer reading from modal
 
-
-            const itemIndex = dataDummy.findIndex(item => item.id === id);
+            // Find the item in the original rawDataDummy to update it
+            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
-                dataDummy[itemIndex].nama = updatedNama;
-                dataDummy[itemIndex].kode_plant = updatedKodePlant;
-                dataDummy[itemIndex].cabang = updatedSalesArea; // Update 'cabang' as it represents Sales Area
-                dataDummy[itemIndex].kabupaten = updatedKabupaten;
-                // dataDummy[itemIndex].stok = updatedStok; // No longer updating stok from modal
+                rawDataDummy[itemIndex].nama = updatedNama;
+                rawDataDummy[itemIndex].kode_plant = updatedKodePlant;
+                rawDataDummy[itemIndex].cabang = updatedSalesArea; // Update 'cabang' as it represents Sales Area
+                rawDataDummy[itemIndex].kabupaten = updatedKabupaten;
 
                 Swal.fire(
                     'Berhasil!',
@@ -401,7 +409,14 @@
                     'success'
                 );
                 bootstrap.Modal.getInstance(document.getElementById('updateDataModal')).hide();
-                renderTable(); // Re-render the table to reflect changes
+                
+                // Re-filter dataDummy to reflect changes in rawDataDummy for the currentSalesArea
+                const updatedDataDummyForCurrentArea = rawDataDummy.filter(item => item.cabang === currentSalesArea);
+                dataDummy.length = 0; // Clear the existing dataDummy
+                dataDummy.push(...updatedDataDummyForCurrentArea); // Add new filtered items
+
+                updatePageTitleAndSalesAreaDisplay();
+                renderTable();
             } else {
                 Swal.fire(
                     'Gagal!',
