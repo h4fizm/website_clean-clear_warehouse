@@ -2,6 +2,12 @@
 @section('title', 'Laman Transaksi')
 @section('content')
 
+{{-- Define initialSalesArea using PHP to make it accessible to Blade and JavaScript --}}
+<?php
+    // Get the 'sales_area' query parameter from the URL, default to 'P.Layang' if not set
+    $initialSalesArea = request()->query('sales_area', 'P.Layang');
+?>
+
 {{-- Welcome Section --}}
 <div class="col-12 mb-3">
     <div class="card p-3" style="
@@ -14,7 +20,6 @@
     ">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
-                {{-- Changed text to be descriptive of the page --}}
                 <h4 class="mb-1 fw-bold">Ringkasan Data Transaksi Material</h4>
                 <p class="mb-2 opacity-8">Lihat dan kelola data stok material serta riwayat transaksi untuk cabang : <strong class="text-primary"><span id="dynamic-branch-name">Cabang Anda</span></strong>.</p>
             </div>
@@ -44,10 +49,10 @@
            <div class="card-header pb-0">
                 {{-- Row for Table Title and Export Button --}}
                 <div class="row mb-3 align-items-center">
-                    <div class="col-12 col-md-auto me-auto mb-2 mb-md-0"> {{-- Title on left, takes auto width, pushes others to right --}}
+                    <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
                         <h4 class="mb-0" id="table-branch-name">Tabel Stok Material Cabang Anda - Nama Cabang</h4>
                     </div>
-                    <div class="col-12 col-md-auto"> {{-- Export button on right, takes auto width --}}
+                    <div class="col-12 col-md-auto">
                         <button type="button" class="btn btn-success d-flex align-items-center justify-content-center w-100 w-md-auto" style="height: 45px;">
                             <i class="fas fa-file-excel me-2"></i> Export Excel
                         </button>
@@ -57,7 +62,6 @@
                 <div class="row align-items-center">
                     {{-- Branch Selection Buttons (Left Side) --}}
                     <div class="col-12 col-md-auto mb-2 mb-md-0">
-                        {{-- Small text indicating the button group --}}
                         <p class="text-sm text-secondary mb-1">
                             *Pilih salah satu tombol di bawah ini untuk melihat data material berdasarkan lokasi cabang : *
                         </p>
@@ -67,7 +71,7 @@
                             <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Bengkulu">SA Bengkulu</button>
                             <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Lampung">SA Lampung</button>
                             <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Sumsel">SA Sumsel</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Palembang">SA Palembang</button> {{-- Added new branch --}}
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-branch="SA Babel">SA Babel</button>
                         </div>
                     </div>
 
@@ -93,11 +97,11 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Material</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th> {{-- New Column --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penyaluran</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th> {{-- Changed Text --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,7 +129,14 @@
 
 @push('scripts')
 <script>
+    // Pass the PHP variable to JavaScript
+    let selectedBranch = "{{ $initialSalesArea }}"; // Now properly initialized from URL param or default
+
     const materialData1 = [
+        // NOTE: Your materialData1 currently does NOT have a 'cabang' property for filtering.
+        // If you want to filter this table by selectedBranch, each item needs a 'cabang' property.
+        // For now, the branch selection only updates the displayed branch name in the header,
+        // and routes to the correct SPBE/BPT list page for that selected branch.
         { nama: 'Gas LPG 3 kg', kode: 'LPG3-001', stok_awal: 250, penerimaan: 1000, penyaluran: 800, stok: 200, tanggal: '2025-07-28' },
         { nama: 'Gas LPG 12 kg', kode: 'LPG12-001', stok_awal: 180, penerimaan: 500, penyaluran: 350, stok: 150, tanggal: '2025-07-27' },
         { nama: 'Tabung 3 kg', kode: 'TBG3-001', stok_awal: 200, penerimaan: 400, penyaluran: 200, stok: 200, tanggal: '2025-07-26' },
@@ -137,7 +148,6 @@
         { nama: 'Tabung 5.5 kg', kode: 'TBG5.5-001', stok_awal: 60, penerimaan: 80, penyaluran: 30, stok: 50, tanggal: '2025-07-20' },
         { nama: 'Manometer', kode: 'MAN-001', stok_awal: 45, penerimaan: 50, penyaluran: 10, stok: 40, tanggal: '2025-07-19' },
         { nama: 'Flow Meter', kode: 'FLM-002', stok_awal: 25, penerimaan: 30, penyaluran: 10, stok: 20, tanggal: '2025-07-18' },
-        // Added more dummy data for better pagination demo
         { nama: 'Konektor Gas', kode: 'KNG-001', stok_awal: 150, penerimaan: 200, penyaluran: 120, stok: 80, tanggal: '2025-07-17' },
         { nama: 'Tabung Bright Gas 5.5kg', kode: 'TBG5.5-BG', stok_awal: 70, penerimaan: 100, penyaluran: 60, stok: 40, tanggal: '2025-07-16' },
         { nama: 'Gas Elpiji 12kg Bright', kode: 'LPG12-BG', stok_awal: 300, penerimaan: 400, penyaluran: 250, stok: 150, tanggal: '2025-07-15' },
@@ -146,10 +156,9 @@
     ];
 
     const perPage = 10;
-
     let currentPage1 = 1;
     let searchQuery1 = '';
-    let selectedBranch = 'P.Layang'; // Default selected branch
+    // selectedBranch is already initialized above from PHP
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -199,6 +208,19 @@
         } else {
             noData.style.display = 'none';
             dataPage.forEach((item, index) => {
+                // Determine the base URL based on selectedBranch
+                let baseUrl;
+                if (selectedBranch === 'P.Layang') {
+                    baseUrl = '{{ url('/pusat') }}'; // New URL for P.Layang
+                } else {
+                    baseUrl = '{{ url('/spbe-bpt') }}'; // Existing URL for other SAs
+                }
+
+                // Construct the detail URL including the sales_area parameter
+                const detailUrl = `${baseUrl}?sales_area=${encodeURIComponent(selectedBranch)}&id=${item.kode}&nama_material=${encodeURIComponent(item.nama)}`;
+                // Note: I used item.kode as a placeholder for id, adjust if your data structure has an actual unique ID for material items.
+                // Also added nama_material for clarity on the receiving page.
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="text-center">
@@ -207,7 +229,7 @@
                         <td>
                             <div class="d-flex px-2 py-1 align-items-center">
                                 <div class="d-flex flex-column justify-content-center">
-                                    <a href="{{ url('/spbe-bpt') }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
+                                    <a href="${detailUrl}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
                                         ${item.nama}
                                     </a>
                                 </div>
@@ -285,16 +307,19 @@
                 selectedBranch = this.dataset.branch;
                 updateBranchNames(selectedBranch);
                 renderBranchButtons(); // Update active button style
-                // If materialData1 needs to be filtered by selectedBranch, re-render the table
-                // currentPage1 = 1; // Reset to first page
-                // renderTable1();
+
+                // If materialData1 needs to be filtered by selectedBranch,
+                // you would add filtering logic here or modify materialData1 structure.
+                // For now, it just re-renders with the same data but updated branch name.
+                currentPage1 = 1; // Reset to first page
+                renderTable1(); // Re-render table to apply the new URL logic
             });
         });
 
         // Initial render for table 1 and set default branch name and active button
-        updateBranchNames(selectedBranch); // Set initial branch name to P.Layang
-        renderBranchButtons(); // Set P.Layang button as active
-        renderTable1();
+        updateBranchNames(selectedBranch); // Set initial branch name using the variable from PHP
+        renderBranchButtons(); // Set active button based on initial selectedBranch
+        renderTable1(); // Initial render to populate table and apply URL logic
     });
 </script>
 @endpush

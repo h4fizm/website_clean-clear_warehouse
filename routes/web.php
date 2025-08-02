@@ -37,6 +37,10 @@ Route::get('/laporan-grafik', function () {
     return view('dashboard_page.menu.data_laporan_grafik');
 });
 
+// daftar p.layang pusat
+Route::get('/pusat', function () {
+    return view('dashboard_page.sales_area.daftar_pusat');
+});
 // daftar spbe-bpt
 Route::get('/spbe-bpt', function () {
     return view('dashboard_page.sales_area.daftar_spbe-bpt');

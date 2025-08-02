@@ -74,13 +74,11 @@
                     <div class="mb-3">
                         <label for="updateSalesArea" class="form-label">Region/Sales Area</label>
                         <select class="form-select" id="updateSalesArea" required>
-                            {{-- Updated to match the button group list --}}
-                            <option value="P.Layang">P.Layang</option>
-                            <option value="Sales Area Jambi">Sales Area Jambi</option>
+                            <option value="Sales Area Jambi">SA Jambi</option>
                             <option value="SA Bengkulu">SA Bengkulu</option>
                             <option value="SA Lampung">SA Lampung</option>
                             <option value="SA Sumsel">SA Sumsel</option>
-                            <option value="SA Palembang">SA Palembang</option> {{-- Added new branch --}}
+                            <option value="SA Babel">SA Babel</option> {{-- Changed from SA Palembang to SA Babel --}}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -135,8 +133,8 @@
         { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hani Fauziah', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan' },
         { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Imran Syah', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro' },
         { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Juwita Nur', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau' },
-        { id: 21, nama: 'SPBE Palembang Utara', jenis: 'SPBE', cabang: 'SA Palembang', manager: 'Zainal Arifin', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Palembang' },
-        { id: 22, nama: 'BPT Banyuasin', jenis: 'BPT', cabang: 'SA Palembang', manager: 'Nurul Hidayah', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Banyuasin' }
+        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', manager: 'Zainal Arifin', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang' }, {{-- Updated to Babel --}}
+        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', manager: 'Nurul Hidayah', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung' } {{-- Updated to Babel --}}
     ];
 
     // Get current Sales Area from URL or set initial default to 'Sales Area Jambi'
@@ -144,8 +142,6 @@
     const initialSalesArea = urlParams.get('sales_area') || 'Sales Area Jambi';
 
     // Filter rawDataDummy based on initial Sales Area.
-    // NOTE: Data for 'P.Layang' will *only* be shown if 'P.Layang' is explicitly selected
-    // or set as the initialSalesArea via URL. Otherwise, it's filtered out.
     const dataDummy = rawDataDummy.filter(item => item.cabang === initialSalesArea);
 
 
@@ -271,9 +267,7 @@
                             if (index !== -1) {
                                 rawDataDummy.splice(index, 1); // Remove from raw data
                                 // Re-filter and re-render the table
-                                // Re-initialize dataDummy to reflect changes in rawDataDummy for the currentSalesArea
                                 const updatedDataDummyForCurrentArea = rawDataDummy.filter(item => item.cabang === currentSalesArea);
-                                // Assign this new filtered array to dataDummy
                                 dataDummy.length = 0; // Clear the existing dataDummy
                                 dataDummy.push(...updatedDataDummyForCurrentArea); // Add new filtered items
                                 
