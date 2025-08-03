@@ -15,7 +15,7 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
                 {{-- Changed text to be descriptive of the page --}}
-                <h4 class="mb-1 fw-bold">Selamat Datang, Nama User</h4>
+                <h4 class="mb-1 fw-bold">Selamat Datang, Nama User TESSS</h4>
                 <p class="mb-2 opacity-8">Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.</p>
                 <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
             </div>
