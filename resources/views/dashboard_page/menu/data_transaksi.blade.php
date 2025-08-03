@@ -80,12 +80,12 @@
                         {{-- Date Range Picker --}}
                         <div class="d-flex align-items-center gap-1">
                             <label for="start-date-material-1" class="text-xs mb-0 me-1">Dari</label>
-                            <input type="date" id="start-date-material-1" class="form-control form-control-sm" style="height: 60px; width: 140px; min-width: 120px;">
+                            <input type="date" id="start-date-material-1" class="form-control form-control-sm" style="height: 45px; width: 140px; min-width: 120px;">
                             <label for="end-date-material-1" class="text-xs mb-0 ms-2 me-1">Sampai</label>
-                            <input type="date" id="end-date-material-1" class="form-control form-control-sm" style="height: 60px; width: 140px; min-width: 120px;">
+                            <input type="date" id="end-date-material-1" class="form-control form-control-sm" style="height: 45px; width: 140px; min-width: 120px;">
                         </div>
                         {{-- Input Search --}}
-                        <input type="text" id="search-input-material-1" class="form-control form-control-sm" placeholder="Cari Nama atau Kode Material..." style="width: 200px; min-width: 150px; height: 60px;">
+                        <input type="text" id="search-input-material-1" class="form-control form-control-sm" placeholder="Cari Nama atau Kode Material..." style="width: 200px; min-width: 150px; height: 45px;">
                     </div>
                 </div>
             </div>

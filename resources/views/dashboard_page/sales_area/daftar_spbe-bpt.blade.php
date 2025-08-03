@@ -67,6 +67,14 @@
                         <label for="updateNama" class="form-label">Nama SPBE / BPT</label>
                         <input type="text" class="form-control" id="updateNama" required>
                     </div>
+                    {{-- Tambahkan dropdown untuk Jenis SPBE/BPT --}}
+                    <div class="mb-3">
+                        <label for="updateJenis" class="form-label">Jenis</label>
+                        <select class="form-select" id="updateJenis" required>
+                            <option value="SPBE">SPBE</option>
+                            <option value="BPT">BPT</option>
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label for="updateKodePlant" class="form-label">Kode Plant</label>
                         <input type="text" class="form-control" id="updateKodePlant" required>
@@ -78,7 +86,7 @@
                             <option value="SA Bengkulu">SA Bengkulu</option>
                             <option value="SA Lampung">SA Lampung</option>
                             <option value="SA Sumsel">SA Sumsel</option>
-                            <option value="SA Babel">SA Babel</option> {{-- Changed from SA Palembang to SA Babel --}}
+                            <option value="SA Babel">SA Babel</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -95,6 +103,96 @@
     </div>
 </div>
 
+{{-- Stok & Transaksi Modal (Desain Portrait dengan Alignment Rapi) --}}
+<div class="modal fade" id="stockTransactionModal" tabindex="-1" aria-labelledby="stockTransactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-center">
+                <h5 class="modal-title w-100" id="stockTransactionModalLabel">Detail Stok & Transaksi untuk <span id="modal-spbe-bpt-name" class="fw-bold text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Bagian Informasi SPBE/BPT --}}
+                <h6 class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 mb-3">INFORMASI SPBE/BPT</h6>
+                <input type="hidden" id="transactionSpbeId">
+                
+                {{-- Setiap baris informasi menggunakan flexbox untuk alignment yang tepat --}}
+                <div class="d-flex mb-1 align-items-baseline">
+                    <div class="flex-shrink-0" style="width: 140px;"> {{-- Lebar tetap untuk label --}}
+                        <strong class="text-secondary">Nama SPBE / BPT</strong>
+                    </div>
+                    <strong class="text-secondary me-2 flex-shrink-0">:</strong> {{-- Titik dua sebagai elemen terpisah dengan margin kanan --}}
+                    <div class="flex-grow-1"> {{-- Konten mengambil sisa ruang dan wrap --}}
+                        <span class="text-dark" id="modal-spbe-bpt-detail-name-body"></span>
+                    </div>
+                </div>
+                
+                <div class="d-flex mb-1 align-items-baseline">
+                    <div class="flex-shrink-0" style="width: 140px;">
+                        <strong class="text-secondary">Kode Plant</strong>
+                    </div>
+                    <strong class="text-secondary me-2 flex-shrink-0">:</strong>
+                    <div class="flex-grow-1">
+                        <span class="text-dark" id="modal-kode-plant"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-1 align-items-baseline">
+                    <div class="flex-shrink-0" style="width: 140px;">
+                        <strong class="text-secondary">Region/SA</strong>
+                    </div>
+                    <strong class="text-secondary me-2 flex-shrink-0">:</strong>
+                    <div class="flex-grow-1">
+                        <span class="text-dark" id="modal-sales-area"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-3 align-items-baseline">
+                    <div class="flex-shrink-0" style="width: 140px;">
+                        <strong class="text-secondary">Kabupaten</strong>
+                    </div>
+                    <strong class="text-secondary me-2 flex-shrink-0">:</strong>
+                    <div class="flex-grow-1">
+                        <span class="text-dark" id="modal-kabupaten"></span>
+                    </div>
+                </div>
+
+                <hr class="my-3"> {{-- Garis pemisah --}}
+
+                {{-- Bagian Stok dan Form Transaksi --}}
+                <div class="d-flex mb-3 align-items-baseline">
+                    <div class="flex-shrink-0" style="width: 140px;">
+                        <strong class="text-secondary">Stok Saat Ini</strong>
+                    </div>
+                    <strong class="text-secondary me-2 flex-shrink-0">:</strong>
+                    <div class="flex-grow-1">
+                        <span class="fs-5 text-success" id="modal-current-stock-display"></span>
+                    </div>
+                </div>
+
+                <form id="stockTransactionForm">
+                    <div class="mb-3">
+                        <label for="transactionType" class="form-label">Jenis Transaksi</label>
+                        <select class="form-select" id="transactionType" required>
+                            <option value="">Pilih Jenis Transaksi</option>
+                            <option value="Pengiriman">Pengiriman (Tambah Stok)</option>
+                            <option value="Pengambilan">Pengambilan (Kurangi Stok)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="stockAmount" class="form-label">Jumlah Stok yang Digunakan</label>
+                        <input type="number" class="form-control" id="stockAmount" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-primary" form="stockTransactionForm">Proses Transaksi</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Script Dummy Filter + Pagination --}}
 @push('scripts')
@@ -111,30 +209,35 @@
         return result;
     }
 
+    // Function to generate a random stock amount between 1000 and 10000
+    function generateRandomStock() {
+        return Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
+    }
+
     // Dummy data reflecting the Sales Area names
     const rawDataDummy = [
-        { id: 1, nama: 'SPBE Jakarta Barat', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Budi Santoso', kode_plant: 'SPBE01' + generateRandomCode(2), kabupaten: 'Jakarta Barat' },
-        { id: 2, nama: 'BPT Jakarta Utara', jenis: 'BPT', cabang: 'P.Layang', manager: 'Siti Aminah', kode_plant: 'BPT02' + generateRandomCode(2), kabupaten: 'Jakarta Utara' },
-        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: '', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi' },
-        { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'Sales Area Jambi', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi' },
-        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', manager: '', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan' },
-        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Rina Wijaya', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara' },
-        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Hadi Prasetyo', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur' },
-        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', manager: '', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat' },
-        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', manager: 'Eko Nurcahyo', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang' },
-        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Linda Kusumawati', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir' },
-        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Fajar Indah', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat' },
-        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', manager: 'Andi Jaya', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur' },
-        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Candra Dewi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru' },
-        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Dina Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang' },
-        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Eka Putra', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung' },
-        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Fita Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih' },
-        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Gilang Ramadhan', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh' },
-        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hani Fauziah', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan' },
-        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Imran Syah', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro' },
-        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Juwita Nur', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau' },
-        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', manager: 'Zainal Arifin', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang' }, {{-- Updated to Babel --}}
-        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', manager: 'Nurul Hidayah', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung' } {{-- Updated to Babel --}}
+        { id: 1, nama: 'SPBE Jakarta Barat', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Budi Santoso', kode_plant: 'SPBE01' + generateRandomCode(2), kabupaten: 'Jakarta Barat', stock: generateRandomStock() },
+        { id: 2, nama: 'BPT Jakarta Utara', jenis: 'BPT', cabang: 'P.Layang', manager: 'Siti Aminah', kode_plant: 'BPT02' + generateRandomCode(2), kabupaten: 'Jakarta Utara', stock: generateRandomStock() },
+        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: '', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi', stock: generateRandomStock() },
+        { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'Sales Area Jambi', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi', stock: generateRandomStock() },
+        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', manager: '', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Rina Wijaya', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara', stock: generateRandomStock() },
+        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Hadi Prasetyo', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur', stock: generateRandomStock() },
+        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', manager: '', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat', stock: generateRandomStock() },
+        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', manager: 'Eko Nurcahyo', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang', stock: generateRandomStock() },
+        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Linda Kusumawati', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir', stock: generateRandomStock() },
+        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Fajar Indah', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat', stock: generateRandomStock() },
+        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', manager: 'Andi Jaya', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur', stock: generateRandomStock() },
+        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Candra Dewi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru', stock: generateRandomStock() },
+        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Dina Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang', stock: generateRandomStock() },
+        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Eka Putra', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung', stock: generateRandomStock() },
+        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Fita Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih', stock: generateRandomStock() },
+        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'Sales Area Jambi', manager: 'Gilang Ramadhan', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh', stock: generateRandomStock() },
+        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hani Fauziah', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Imran Syah', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro', stock: generateRandomStock() },
+        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Juwita Nur', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau', stock: generateRandomStock() },
+        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', manager: 'Zainal Arifin', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang', stock: generateRandomStock() },
+        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', manager: 'Nurul Hidayah', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung', stock: generateRandomStock() }
     ];
 
     // Get current Sales Area from URL or set initial default to 'Sales Area Jambi'
@@ -142,8 +245,8 @@
     const initialSalesArea = urlParams.get('sales_area') || 'Sales Area Jambi';
 
     // Filter rawDataDummy based on initial Sales Area.
+    // dataDummy ini yang akan digunakan untuk tampilan tabel di halaman ini
     const dataDummy = rawDataDummy.filter(item => item.cabang === initialSalesArea);
-
 
     let currentSalesArea = initialSalesArea; // The sales area this page is currently displaying
     let searchQuery = '';
@@ -152,7 +255,7 @@
     const maxPagesToShow = 5;
 
     function filterData() {
-        return dataDummy.filter(item => {
+        return dataDummy.filter(item => { // Filter berdasarkan dataDummy yang sudah difilter Sales Area
             const matchSearch = searchQuery ?
                                 (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 item.kode_plant.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -188,7 +291,16 @@
                     `<span class="badge bg-gradient-primary rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-warehouse text-white" style="font-size: 0.75rem;"></i></span>` :
                     `<span class="badge bg-gradient-info rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-building text-white" style="font-size: 0.75rem;"></i></span>`;
 
-                const detailUrl = `/spbe-bpt/detail?id=${item.id}&nama=${encodeURIComponent(item.nama)}&jenis=${encodeURIComponent(item.jenis)}`;
+                // Modified to open the new stockTransactionModal
+                const nameLinkHtml = `<a href="#" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary view-stock-btn" style="cursor: pointer;"
+                                            data-id="${item.id}"
+                                            data-nama="${item.nama}"
+                                            data-kodeplant="${item.kode_plant}"
+                                            data-salesarea="${item.cabang}"
+                                            data-kabupaten="${item.kabupaten}"
+                                            data-stock="${item.stock}"> {{-- Pastikan data-stock ada --}}
+                                            ${item.nama}
+                                        </a>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -199,9 +311,7 @@
                             <div class="d-flex px-2 py-1 align-items-center">
                                 ${iconHtml}
                                 <div class="d-flex flex-column justify-content-center">
-                                    <a href="${detailUrl}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
-                                        ${item.nama}
-                                    </a>
+                                    ${nameLinkHtml}
                                 </div>
                             </div>
                         </td>
@@ -218,6 +328,7 @@
                             <span class="badge bg-gradient-info text-white text-xs edit-btn" style="cursor:pointer;"
                                 data-id="${item.id}"
                                 data-nama="${item.nama}"
+                                data-jenis="${item.jenis}" {{-- Tambahkan data-jenis --}}
                                 data-kodeplant="${item.kode_plant}"
                                 data-salesarea="${item.cabang}"
                                 data-kabupaten="${item.kabupaten}"
@@ -233,12 +344,14 @@
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
                     const nama = this.getAttribute('data-nama');
+                    const jenis = this.getAttribute('data-jenis'); // Ambil jenis
                     const kodePlant = this.getAttribute('data-kodeplant');
                     const salesArea = this.getAttribute('data-salesarea');
                     const kabupaten = this.getAttribute('data-kabupaten');
 
                     document.getElementById('updateId').value = id;
                     document.getElementById('updateNama').value = nama;
+                    document.getElementById('updateJenis').value = jenis; // Set nilai dropdown jenis
                     document.getElementById('updateKodePlant').value = kodePlant;
                     document.getElementById('updateSalesArea').value = salesArea;
                     document.getElementById('updateKabupaten').value = kabupaten;
@@ -247,6 +360,34 @@
                     updateModal.show();
                 });
             });
+
+            // Listener for the new stock transaction modal
+            document.querySelectorAll('.view-stock-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default link behavior
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const nama = this.getAttribute('data-nama');
+                    const kodePlant = this.getAttribute('data-kodeplant');
+                    const salesArea = this.getAttribute('data-salesarea');
+                    const kabupaten = this.getAttribute('data-kabupaten');
+                    const stock = parseInt(this.getAttribute('data-stock')); // Get stock
+
+                    // Populate the stock transaction modal with new IDs
+                    document.getElementById('transactionSpbeId').value = id;
+                    document.getElementById('modal-spbe-bpt-name').textContent = nama; // Judul modal
+                    document.getElementById('modal-spbe-bpt-detail-name-body').textContent = nama; // Di dalam detail informasi
+                    document.getElementById('modal-kode-plant').textContent = kodePlant;
+                    document.getElementById('modal-sales-area').textContent = salesArea;
+                    document.getElementById('modal-kabupaten').textContent = kabupaten;
+                    document.getElementById('modal-current-stock-display').textContent = `${stock} unit`; // Pastikan menampilkan 'unit'
+                    document.getElementById('stockAmount').value = ''; // Clear previous input
+                    document.getElementById('transactionType').value = ''; // Clear previous selection
+
+                    const stockModal = new bootstrap.Modal(document.getElementById('stockTransactionModal'));
+                    stockModal.show();
+                });
+            });
+
 
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -385,6 +526,7 @@
             e.preventDefault();
             const id = parseInt(document.getElementById('updateId').value);
             const updatedNama = document.getElementById('updateNama').value;
+            const updatedJenis = document.getElementById('updateJenis').value; // Ambil nilai jenis
             const updatedKodePlant = document.getElementById('updateKodePlant').value;
             const updatedSalesArea = document.getElementById('updateSalesArea').value;
             const updatedKabupaten = document.getElementById('updateKabupaten').value;
@@ -393,6 +535,7 @@
             const itemIndex = rawDataDummy.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
                 rawDataDummy[itemIndex].nama = updatedNama;
+                rawDataDummy[itemIndex].jenis = updatedJenis; // Perbarui jenis
                 rawDataDummy[itemIndex].kode_plant = updatedKodePlant;
                 rawDataDummy[itemIndex].cabang = updatedSalesArea; // Update 'cabang' as it represents Sales Area
                 rawDataDummy[itemIndex].kabupaten = updatedKabupaten;
@@ -417,6 +560,57 @@
                     'Data tidak ditemukan.',
                     'error'
                 );
+            }
+        });
+
+        // Handle form submission for stock transaction modal
+        document.getElementById('stockTransactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('transactionSpbeId').value);
+            const transactionType = document.getElementById('transactionType').value;
+            const stockAmount = parseInt(document.getElementById('stockAmount').value);
+
+            if (!transactionType || isNaN(stockAmount) || stockAmount <= 0) {
+                Swal.fire('Error!', 'Mohon lengkapi semua field dengan benar.', 'error');
+                return;
+            }
+
+            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
+            if (itemIndex !== -1) {
+                let currentStock = rawDataDummy[itemIndex].stock;
+                let newStock = currentStock;
+                let successMessage = '';
+                let errorMessage = '';
+
+                if (transactionType === 'Pengiriman') {
+                    newStock = currentStock + stockAmount;
+                    successMessage = `Stok berhasil dikirim. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                } else if (transactionType === 'Pengambilan') {
+                    if (currentStock >= stockAmount) {
+                        newStock = currentStock - stockAmount;
+                        successMessage = `Stok berhasil diambil. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                    } else {
+                        errorMessage = `Stok tidak mencukupi untuk pengambilan ${stockAmount} unit. Stok saat ini hanya ${currentStock} unit.`;
+                    }
+                }
+
+                if (errorMessage) {
+                    Swal.fire('Gagal!', errorMessage, 'error');
+                } else {
+                    rawDataDummy[itemIndex].stock = newStock;
+                    Swal.fire('Berhasil!', successMessage, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('stockTransactionModal')).hide();
+                    
+                    // Re-filter dataDummy to reflect changes in rawDataDummy for the currentSalesArea
+                    const updatedDataDummyForCurrentArea = rawDataDummy.filter(item => item.cabang === currentSalesArea);
+                    dataDummy.length = 0; // Clear the existing dataDummy
+                    dataDummy.push(...updatedDataDummyForCurrentArea); // Add new filtered items
+                    
+                    updatePageTitleAndSalesAreaDisplay();
+                    renderTable(); // Re-render table to update stock display if needed (though not directly displayed in this table)
+                }
+            } else {
+                Swal.fire('Gagal!', 'Data SPBE/BPT tidak ditemukan.', 'error');
             }
         });
 
