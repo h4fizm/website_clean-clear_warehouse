@@ -1,6 +1,9 @@
 @extends('dashboard_page.main')
 
-@section('title', 'Data SPBE & BPT - P.Layang Pusat')
+{{-- Dynamically set the title based on the sales_area query parameter --}}
+@section('title')
+    Data SPBE & BPT - {{ request()->query('sales_area', 'Semua Region') }}
+@endsection
 
 @section('content')
 <div class="row">
@@ -8,19 +11,19 @@
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-start flex-wrap spbe-header">
                 <div class="d-flex flex-column spbe-title-section">
-                    <h3>Daftar Nama SPBE & BPT - P.Layang (Pusat)</h3>
-                    <h6 class="text-secondary opacity-8 spbe-subtitle">Menampilkan daftar SPBE/BPT dari Setiap Region/SA, **kecuali** P.Layang itu sendiri.</h6>
+                    {{-- Display the selected region name dynamically --}}
+                    <h3>Daftar Nama SPBE & BPT - <span id="current-region-display">Sesuai Region yang Dipilih</span></h3>
+                    <h6 class="text-secondary opacity-8 spbe-subtitle">Menampilkan daftar SPBE/BPT yang menyediakan material(nama material tulis disini) - Nama Region yang dipilih.</h6>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto spbe-search-section">
                     <input type="text" id="search-input" class="form-control form-control-sm search-input-spbe" placeholder="Cari Nama SPBE / BPT, Kode Plant, Kabupaten">
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
-                <div class="table-responsive p-0"> {{-- Removed .table-responsive-custom and no custom overflow here --}}
+                <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-spbe-bpt">
                         <thead>
                             <tr>
-                                {{-- Widths are as per desktop, let Bootstrap's table-responsive handle overflow --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width: 5%;">No</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width: 28%;">Nama SPBE / BPT</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width: 17%;">Kode Plant</th>
@@ -51,6 +54,7 @@
     </div>
 </div>
 
+{{-- Modals (Tidak Diubah) --}}
 {{-- Update Data Modal --}}
 <div class="modal fade" id="updateDataModal" tabindex="-1" aria-labelledby="updateDataModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -208,48 +212,73 @@
         return Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
     }
 
-    const rawDataDummy = [
+    // THIS IS THE MASTER DATA FOR ALL SPBE/BPT.
+    // It should be the same across all related pages to ensure data consistency.
+    const allSpbeBptData = [
         { id: 1, nama: 'SPBE Jakarta Barat', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Budi Santoso', kode_plant: 'SPBE01' + generateRandomCode(2), kabupaten: 'Jakarta Barat', stock: generateRandomStock() },
         { id: 2, nama: 'BPT Jakarta Utara', jenis: 'BPT', cabang: 'P.Layang', manager: 'Siti Aminah', kode_plant: 'BPT02' + generateRandomCode(2), kabupaten: 'Jakarta Utara', stock: generateRandomStock() },
-        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'SA Jambi', manager: '', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi', stock: generateRandomStock() },
+        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', manager: 'Andi Jaya', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat', stock: generateRandomStock() },
+        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', manager: 'Rina Dewi', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur', stock: generateRandomStock() },
+
+        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Ahmad Faisal', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi', stock: generateRandomStock() },
         { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'SA Jambi', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi', stock: generateRandomStock() },
-        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
-        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara', stock: generateRandomStock() },
-        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur', stock: generateRandomStock() },
-        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat', stock: generateRandomStock() },
-        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang', stock: generateRandomStock() },
-        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir', stock: generateRandomStock() },
-        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat', stock: generateRandomStock() },
-        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur', stock: generateRandomStock() },
-        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'SA Jambi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru', stock: generateRandomStock() },
-        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang', stock: generateRandomStock() },
-        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung', stock: generateRandomStock() },
-        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih', stock: generateRandomStock() },
-        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'SA Jambi', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh', stock: generateRandomStock() },
-        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
-        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro', stock: generateRandomStock() },
-        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau', stock: generateRandomStock() },
-        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang', stock: generateRandomStock() },
-        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung', stock: generateRandomStock() }
+        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Citra Kirana', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru', stock: generateRandomStock() },
+        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Eko Sulistyo', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh', stock: generateRandomStock() },
+
+        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', manager: 'Bayu Prakoso', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Fitriani', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara', stock: generateRandomStock() },
+        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Gita Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang', stock: generateRandomStock() },
+        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hadi Wijaya', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+
+        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Cahya Gumilang', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur', stock: generateRandomStock() },
+        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', manager: 'Dian Puspita', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat', stock: generateRandomStock() },
+        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Indra Lesmana', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung', stock: generateRandomStock() },
+        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Joko Susilo', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro', stock: generateRandomStock() },
+
+        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', manager: 'Eka Putra', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang', stock: generateRandomStock() },
+        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Fajar Kurniawan', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir', stock: generateRandomStock() },
+        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Kartika Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih', stock: generateRandomStock() },
+        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Lukman Hakim', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau', stock: generateRandomStock() },
+
+        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', manager: 'Mira Puspita', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang', stock: generateRandomStock() },
+        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', manager: 'Nia Ramadhani', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung', stock: generateRandomStock() }
     ];
 
-    // Filter data to exclude 'P.Layang' for this specific page
-    const dataDisplay = rawDataDummy.filter(item => item.cabang !== 'P.Layang');
+    // Get selected Sales Area from URL query parameter for THIS page
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSalesArea = urlParams.get('sales_area') || 'Semua Region'; // Default to 'Semua Region' if not specified
+
+    // Initial data set for this page, filtered by currentSalesArea.
+    // IMPORTANT: This page (spbe-bpt.blade.php) should NOT show P.Layang data.
+    // So, we filter out P.Layang data first, then filter by currentSalesArea if it's not 'Semua Region'.
+    let dataForThisPage = allSpbeBptData.filter(item => 
+        item.cabang !== 'P.Layang' && // Exclude P.Layang data always from this page
+        (currentSalesArea === 'Semua Region' || item.cabang === currentSalesArea) // Filter by SA from URL
+    );
 
     let searchQuery = '';
     let currentPage = 1;
     const itemsPerPage = 10;
     const maxPagesToShow = 5;
 
-    // Filters data based on search query
+    // Function to update the displayed region name in the header
+    function updateCurrentRegionDisplay(regionName) {
+        document.getElementById('current-region-display').textContent = regionName;
+    }
+
+    // Filters data based on the current Sales Area and search query
     function filterData() {
-        return dataDisplay.filter(item => 
-            (searchQuery ? (
+        let filtered = dataForThisPage; // Start with data already filtered by initial URL param
+
+        // Apply search query
+        if (searchQuery) {
+            filtered = filtered.filter(item =>
                 item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.kode_plant.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.kabupaten.toLowerCase().includes(searchQuery.toLowerCase())
-            ) : true)
-        );
+            );
+        }
+        return filtered;
     }
 
     // Renders table rows based on filtered and paginated data
@@ -266,19 +295,22 @@
         } else {
             noData.style.display = 'none';
             paginated.forEach((item, index) => {
+                // Modified iconHtml to use d-flex and align-items-center for proper vertical centering
                 const iconHtml = item.jenis === 'SPBE' ?
-                    `<span class="badge bg-gradient-primary rounded-circle me-2 icon-sm"><i class="fas fa-warehouse text-white"></i></span>` :
-                    `<span class="badge bg-gradient-info rounded-circle me-2 icon-sm"><i class="fas fa-building text-white"></i></span>`;
+                    `<span class="badge bg-gradient-primary rounded-circle me-2 icon-sm d-flex align-items-center justify-content-center"><i class="fas fa-warehouse text-white"></i></span>` :
+                    `<span class="badge bg-gradient-info rounded-circle me-2 icon-sm d-flex align-items-center justify-content-center"><i class="fas fa-building text-white"></i></span>`;
 
+                // Links within this page will just open modals for detailed view
                 const nameLinkHtml = `<a href="#" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary view-stock-btn" style="cursor: pointer;"
-                                            data-id="${item.id}"
-                                            data-nama="${item.nama}"
-                                            data-kodeplant="${item.kode_plant}"
-                                            data-salesarea="${item.cabang}"
-                                            data-kabupaten="${item.kabupaten}"
-                                            data-stock="${item.stock}">
-                                            ${item.nama}
-                                        </a>`;
+                                        data-id="${item.id}"
+                                        data-nama="${item.nama}"
+                                        data-jenis="${item.jenis}"
+                                        data-kodeplant="${item.kode_plant}"
+                                        data-salesarea="${item.cabang}"
+                                        data-kabupaten="${item.kabupaten}"
+                                        data-stock="${item.stock}">
+                                        ${item.nama}
+                                    </a>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -317,10 +349,11 @@
                 `;
             });
 
+            // Add event listeners for edit and delete buttons
             document.querySelectorAll('.edit-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
-                    const itemData = rawDataDummy.find(item => item.id === id);
+                    const itemData = allSpbeBptData.find(item => item.id === id); // Use allSpbeBptData to find all data
                     if (itemData) {
                         document.getElementById('updateId').value = itemData.id;
                         document.getElementById('updateNama').value = itemData.nama;
@@ -335,11 +368,12 @@
                 });
             });
 
+            // Add event listeners for view stock buttons
             document.querySelectorAll('.view-stock-btn').forEach(button => {
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const id = parseInt(this.getAttribute('data-id'));
-                    const itemData = rawDataDummy.find(item => item.id === id);
+                    const itemData = allSpbeBptData.find(item => item.id === id); // Use allSpbeBptData to find all data
                     if (itemData) {
                         document.getElementById('transactionSpbeId').value = itemData.id;
                         document.getElementById('modal-spbe-bpt-name').textContent = itemData.nama;
@@ -357,6 +391,7 @@
                 });
             });
 
+            // Add event listeners for delete buttons
             document.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -371,9 +406,14 @@
                         cancelButtonText: 'Batal'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            const index = rawDataDummy.findIndex(item => item.id === id);
+                            const index = allSpbeBptData.findIndex(item => item.id === id); // Use allSpbeBptData to find all data
                             if (index !== -1) {
-                                rawDataDummy.splice(index, 1);
+                                allSpbeBptData.splice(index, 1);
+                                // After deleting, re-filter the dataForThisPage and re-render
+                                dataForThisPage = allSpbeBptData.filter(item => 
+                                    item.cabang !== 'P.Layang' && 
+                                    (currentSalesArea === 'Semua Region' || item.cabang === currentSalesArea)
+                                );
                                 renderTable();
                                 Swal.fire('Dihapus!', 'Data telah berhasil dihapus.', 'success');
                             }
@@ -385,7 +425,7 @@
         renderPagination(data.length);
     }
 
-    // Renders pagination buttons
+    // Renders pagination buttons (Tidak Diubah)
     function renderPagination(totalItems) {
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         const ul = document.getElementById('pagination-spbe-bpt');
@@ -426,6 +466,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Update current region display on page load
+        updateCurrentRegionDisplay(currentSalesArea);
+
         document.getElementById('search-input').addEventListener('input', function () {
             searchQuery = this.value;
             currentPage = 1;
@@ -441,17 +484,22 @@
             const updatedSalesArea = document.getElementById('updateSalesArea').value;
             const updatedKabupaten = document.getElementById('updateKabupaten').value;
 
-            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
+            const itemIndex = allSpbeBptData.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
-                rawDataDummy[itemIndex].nama = updatedNama;
-                rawDataDummy[itemIndex].jenis = updatedJenis;
-                rawDataDummy[itemIndex].kode_plant = updatedKodePlant;
-                rawDataDummy[itemIndex].cabang = updatedSalesArea;
-                rawDataDummy[itemIndex].kabupaten = updatedKabupaten;
+                allSpbeBptData[itemIndex].nama = updatedNama;
+                allSpbeBptData[itemIndex].jenis = updatedJenis;
+                allSpbeBptData[itemIndex].kode_plant = updatedKodePlant;
+                allSpbeBptData[itemIndex].cabang = updatedSalesArea;
+                allSpbeBptData[itemIndex].kabupaten = updatedKabupaten;
 
                 Swal.fire('Berhasil!', 'Data telah berhasil diperbarui.', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('updateDataModal')).hide();
-                renderTable();
+                // After updating, re-filter the dataForThisPage and re-render
+                dataForThisPage = allSpbeBptData.filter(item => 
+                    item.cabang !== 'P.Layang' && 
+                    (currentSalesArea === 'Semua Region' || item.cabang === currentSalesArea)
+                );
+                renderTable(); // Re-render table after update
             } else {
                 Swal.fire('Gagal!', 'Data tidak ditemukan.', 'error');
             }
@@ -468,20 +516,20 @@
                 return;
             }
 
-            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
+            const itemIndex = allSpbeBptData.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
-                let currentStock = rawDataDummy[itemIndex].stock;
+                let currentStock = allSpbeBptData[itemIndex].stock;
                 let newStock = currentStock;
                 let successMessage = '';
                 let errorMessage = '';
 
                 if (transactionType === 'Pengiriman') {
                     newStock = currentStock + stockAmount;
-                    successMessage = `Stok berhasil dikirim. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                    successMessage = `Stok berhasil dikirim. Stok ${allSpbeBptData[itemIndex].nama} sekarang ${newStock} unit.`;
                 } else if (transactionType === 'Pengambilan') {
                     if (currentStock >= stockAmount) {
                         newStock = currentStock - stockAmount;
-                        successMessage = `Stok berhasil diambil. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                        successMessage = `Stok berhasil diambil. Stok ${allSpbeBptData[itemIndex].nama} sekarang ${newStock} unit.`;
                     } else {
                         errorMessage = `Stok tidak mencukupi untuk pengambilan ${stockAmount} unit. Stok saat ini hanya ${currentStock} unit.`;
                     }
@@ -490,21 +538,28 @@
                 if (errorMessage) {
                     Swal.fire('Gagal!', errorMessage, 'error');
                 } else {
-                    rawDataDummy[itemIndex].stock = newStock;
+                    allSpbeBptData[itemIndex].stock = newStock;
                     Swal.fire('Berhasil!', successMessage, 'success');
                     bootstrap.Modal.getInstance(document.getElementById('stockTransactionModal')).hide();
-                    renderTable();
+                    // After transaction, re-filter the dataForThisPage and re-render
+                    dataForThisPage = allSpbeBptData.filter(item => 
+                        item.cabang !== 'P.Layang' && 
+                        (currentSalesArea === 'Semua Region' || item.cabang === currentSalesArea)
+                    );
+                    renderTable(); // Re-render table after transaction
                 }
             } else {
                 Swal.fire('Gagal!', 'Data SPBE/BPT tidak ditemukan.', 'error');
             }
         });
 
-        renderTable();
+        renderTable(); // Initial render of the table for this page
     });
 </script>
 @endpush
 
+{{-- CSS untuk halaman SPBE/BPT (Disesuaikan untuk searchbar mobile) --}}
+@push('styles')
 <style>
     /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
     @media (max-width: 767.98px) {
@@ -531,44 +586,53 @@
         }
 
         .spbe-search-section {
-            width: 100%; /* Take full width */
-            margin-top: 0 !important; /* Remove desktop margin-top */
-            margin-left: 0 !important; /* Remove desktop margin-left */
+            width: 100px; /* Take full width for the search section wrapper */
+            /* Remove margins that might push it inward */
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            /* Add some side padding to keep content off edges */
+            padding-left: 1rem;
+            padding-right: 1rem;
+            box-sizing: border-box; /* Include padding in width calculation */
+            
             justify-content: center !important; /* Center search input */
+            margin-top: 0 !important; /* Remove desktop margin-top */
             margin-bottom: 0.75rem; /* Added margin below search input to separate from table */
         }
 
         .search-input-spbe {
-            width: 100% !important; /* Full width for search input */
+            width: 100% !important; /* Make the input itself take full width of its container */
             height: 38px !important; /* Smaller height */
             min-width: unset !important; /* Remove min-width */
             padding: 0.5rem 0.75rem; /* Adjust padding */
             font-size: 0.85rem; /* Smaller font size */
         }
 
-        /* Table adjustments - RETURNED TO ORIGINAL BEHAVIOR (let Bootstrap's table-responsive handle it) */
-        /* Removed all custom widths, white-space, overflow, text-overflow for table cells */
+        .input-group.search-input-group { /* Target the input-group wrapper if present */
+            width: 100% !important; /* Ensure the whole input group takes full width */
+        }
+
+        /* Table adjustments */
         #table-spbe-bpt thead th,
         #table-spbe-bpt tbody td {
             font-size: 0.75rem !important; /* Keep text slightly smaller for readability in compressed view */
             padding: 0.5rem 0.5rem !important; /* Keep padding consistent */
-            /* Removed white-space, overflow, text-overflow to allow default Bootstrap responsive behavior */
         }
 
-        /* Ensure all columns are displayed (overriding previous `display: none;` rules) */
+        /* Hide/Show columns for mobile responsiveness */
         .table-col-no,
         .table-col-nama,
-        .table-col-kode,
-        .table-col-region,
         .table-col-kab,
         .table-col-aksi {
             display: table-cell !important;
-            /* Reset widths if they were set for specific mobile configurations */
-            width: auto !important; /* Allow browser to determine width within table-responsive */
-            text-align: inherit; /* Inherit alignment from parent or default */
+            width: auto !important;
+            text-align: inherit;
+        }
+        .table-col-kode,
+        .table-col-region {
+            display: none !important; /* Hide these columns on mobile */
         }
 
-        /* Specific icon sizing */
         .icon-sm {
             width: 20px !important;
             height: 20px !important;
@@ -586,7 +650,7 @@
             white-space: nowrap;
         }
 
-        /* Modal adjustments */
+        /* Modal adjustments for update and stock transaction modals */
         .modal-dialog {
             margin: 0.5rem !important;
         }
@@ -606,7 +670,7 @@
             padding: 0.4rem 0.8rem !important;
         }
 
-        /* Modal info row alignment */
+        /* Alignments within modals for info rows */
         .info-row {
             flex-direction: column;
             align-items: flex-start !important;
@@ -638,5 +702,20 @@
             padding: 0.5rem 0.75rem !important;
         }
     }
+
+    /* Desktop styles (min-width 768px) */
+    @media (min-width: 768px) {
+        /* Ensure all columns are displayed on desktop */
+        .table-col-no,
+        .table-col-nama,
+        .table-col-kode,
+        .table-col-region,
+        .table-col-kab,
+        .table-col-aksi {
+            display: table-cell !important;
+            width: auto !important; /* Reset width to auto for desktop table layout */
+        }
+    }
 </style>
+@endpush
 @endsection

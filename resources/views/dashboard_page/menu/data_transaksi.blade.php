@@ -7,28 +7,25 @@
     $initialSalesArea = request()->query('sales_area', 'P.Layang');
 ?>
 
-{{-- Welcome Section --}}
+{{-- Welcome Section (Tidak Diubah) --}}
 <div class="col-12 mb-3">
-    <div class="card p-3 welcome-card">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div class="mb-3 mb-md-0 w-100">
-                <h4 class="mb-1 fw-bold text-start text-md-start" id="summary-title">
-                    Ringkasan Data Transaksi Material
-                </h4>
-                <p class="mb-2 opacity-8 text-start text-md-start" id="summary-text">
-                    Lihat dan kelola data stok material serta riwayat transaksi untuk cabang :
-                    <strong class="text-primary"><span id="dynamic-branch-name">Cabang Anda</span></strong>.
-                </p>
-            </div>
-
-            {{-- Logo only visible on desktop --}}
-            <div class="d-none d-md-block text-end me-md-4">
+    <div class="card p-4 position-relative welcome-card">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
+            <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
                      alt="Branch Icon"
                      class="welcome-card-icon">
             </div>
+            <div class="w-100 order-md-1 text-center text-md-start">
+                <h4 class="mb-1 fw-bold" id="summary-title">
+                    Ringkasan Data Transaksi Material
+                </h4>
+                <p class="mb-2 opacity-8" id="summary-text">
+                    Lihat dan kelola data stok material serta riwayat transaksi untuk cabang :
+                    <strong class="text-primary"><span id="dynamic-branch-name">Cabang Anda</span></strong>.
+                </p>
+            </div>
         </div>
-
         <div class="welcome-card-background"></div>
     </div>
 </div>
@@ -51,7 +48,7 @@
                 </div>
                 {{-- Filters --}}
                 <div class="row mt-3">
-                    {{-- Row 1: Branch Selection Buttons (Left Side on Desktop) and Date Range Picker (Right Side on Desktop) --}}
+                    {{-- Row 1: Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) and Date Range Picker (Right Side on Desktop) --}}
                     <div class="col-12 d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center desktop-filter-row-top">
                         {{-- Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) --}}
                         <div class="col-12 col-md-auto mb-2 mb-md-0 d-flex flex-column order-1 order-md-1">
@@ -60,7 +57,7 @@
                             </p>
                             <div class="btn-group d-flex flex-wrap branch-buttons" role="group" aria-label="Branch selection">
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="P.Layang">P.Layang</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="Sales Area Jambi">SA Jambi</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Jambi">SA Jambi</button>
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Bengkulu">SA Bengkulu</button>
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Lampung">SA Lampung</button>
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Sumsel">SA Sumsel</button>
@@ -128,6 +125,9 @@
 <script>
     let selectedBranch = "{{ $initialSalesArea }}";
 
+    // Dummy data for materials (This data is displayed on the "Laman Transaksi" table)
+    // It does NOT need a 'cabang' property if the table itself isn't filtered by branch.
+    // The 'selectedBranch' here only dictates where the link points to.
     const materialData1 = [
         { nama: 'Gas LPG 3kg', kode: 'LPG3-001', stok_awal: 250, penerimaan: 1000, penyaluran: 800, stok: 200, tanggal: '2025-07-28' },
         { nama: 'Gas LPG 12kg', kode: 'LPG12-001', stok_awal: 180, penerimaan: 500, penyaluran: 350, stok: 150, tanggal: '2025-07-27' },
@@ -177,9 +177,9 @@
         });
     }
 
-    // Filter material data based on search query
+    // Filter material data based on search query (materialData1 is NOT filtered by branch here)
     function filterData1() {
-        let filteredData = materialData1;
+        let filteredData = materialData1; // Always use the full materialData1
         if (searchQuery1) {
             filteredData = filteredData.filter(item =>
                 item.nama.toLowerCase().includes(searchQuery1.toLowerCase()) ||
@@ -203,7 +203,13 @@
         } else {
             noData.style.display = 'none';
             dataPage.forEach((item, index) => {
-                let baseUrl = (selectedBranch === 'P.Layang') ? '{{ url('/pusat') }}' : '{{ url('/spbe-bpt') }}';
+                let baseUrl;
+                // LOGIC PERBAIKAN ROUTING DI SINI
+                if (selectedBranch === 'P.Layang') {
+                    baseUrl = '{{ url('/pusat') }}';
+                } else {
+                    baseUrl = '{{ url('/spbe-bpt') }}';
+                }
                 const detailUrl = `${baseUrl}?sales_area=${encodeURIComponent(selectedBranch)}&id=${item.kode}&nama_material=${encodeURIComponent(item.nama)}`;
 
                 tbody.innerHTML += `
@@ -247,7 +253,7 @@
         renderPagination1(filtered.length);
     }
 
-    // Render pagination buttons
+    // Render pagination buttons (Tidak Diubah)
     function renderPagination1(totalItems) {
         const pagination = document.getElementById('pagination-material-1');
         const totalPages = Math.ceil(totalItems / perPage);
@@ -294,7 +300,7 @@
                 updateBranchNames(selectedBranch);
                 renderBranchButtons();
                 currentPage1 = 1;
-                renderTable1();
+                renderTable1(); // Re-render table to update links based on new selectedBranch
             });
         });
 
@@ -306,6 +312,7 @@
 </script>
 @endpush
 
+{{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
 <style>
     /* General styles for welcome card */
     .welcome-card {
@@ -315,6 +322,7 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         overflow: hidden;
         position: relative;
+        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
     }
 
     .welcome-card-icon {
@@ -445,19 +453,37 @@
 
     /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
     @media (max-width: 767.98px) {
-
         /* --- Welcome Section Title Adjustment for Mobile --- */
-        #summary-title {
-            text-align: center !important;
-            font-size: 1.25rem !important;
-            /* Slightly smaller for mobile */
+        .welcome-card {
+            padding: 1rem !important; /* Reduce padding for mobile */
         }
 
-        #summary-text {
-            text-align: center !important;
-            font-size: 0.8rem !important;
-            /* Slightly smaller for mobile */
+        .welcome-card .card-body {
+            flex-direction: column; /* Stack items vertically */
+            align-items: center; /* Center items horizontally */
         }
+
+        .welcome-card .card-body > div {
+            width: 100%; /* Take full width */
+            text-align: center; /* Center text within these divs */
+        }
+
+        .welcome-card-icon {
+            margin-bottom: 0.5rem; /* Space below icon on mobile */
+            margin-top: 0.5rem; /* Space above icon on mobile */
+        }
+
+        #summary-title, #summary-text {
+            text-align: center !important;
+        }
+        #summary-title {
+            font-size: 1.25rem !important;
+        }
+        #summary-text {
+            font-size: 0.8rem !important;
+        }
+        /* End Welcome Section */
+
 
         /* --- Table Branch Name Title Adjustment for Mobile --- */
         #table-branch-name {

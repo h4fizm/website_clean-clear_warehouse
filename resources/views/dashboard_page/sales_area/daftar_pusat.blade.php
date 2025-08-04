@@ -1,6 +1,6 @@
 @extends('dashboard_page.main')
 
-@section('title', 'Data SPBE & BPT - P.Layang Pusat')
+@section('title', 'Data SPBE & BPT - Pusat (Seluruh Region)') {{-- Updated title for clarity --}}
 
 @section('content')
 <div class="row">
@@ -8,8 +8,8 @@
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-start flex-wrap spbe-header">
                 <div class="d-flex flex-column spbe-title-section">
-                    <h3>Daftar Nama SPBE & BPT - P.Layang (Pusat)</h3>
-                    <h6 class="text-secondary opacity-8 spbe-subtitle">Menampilkan daftar SPBE/BPT dari Setiap Region/SA, **kecuali** P.Layang itu sendiri.</h6>
+                    <h3>Daftar Nama SPBE & BPT - Pusat (Seluruh Region)</h3> {{-- Updated H3 title --}}
+                    <h6 class="text-secondary opacity-8 spbe-subtitle">Menampilkan daftar seluruh SPBE/BPT dari semua Region/SA.</h6> {{-- Updated subtitle --}}
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto spbe-search-section">
                     <input type="text" id="search-input" class="form-control form-control-sm search-input-spbe" placeholder="Cari Nama SPBE / BPT, Kode Plant, Kabupaten">
@@ -20,19 +20,19 @@
                     <table class="table align-items-center mb-0" id="table-spbe-bpt">
                         <thead>
                             <tr>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center table-col-no" style="width: 5%;">No</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 table-col-nama" style="width: 28%;">Nama SPBE / BPT</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 table-col-kode" style="width: 17%;">Kode Plant</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2 table-col-region" style="width: 18%;">Region/Sales Area</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center table-col-kab" style="width: 17%;">Nama Kabupaten</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center table-col-aksi" style="width: 15%;">Aksi</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width: 5%;">No</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width: 28%;">Nama SPBE / BPT</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width: 17%;">Kode Plant</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2" style="width: 18%;">Region/Sales Area</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width: 17%;">Nama Kabupaten</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center" style="width: 15%;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{-- Data will be rendered here by JavaScript --}}
                         </tbody>
                     </table>
-                    <div id="no-data" class="text-center text-muted py-4">
+                    <div id="no-data" class="text-center text-muted py-4" style="display: none;">
                         Data Kosong
                     </div>
                 </div>
@@ -50,7 +50,7 @@
     </div>
 </div>
 
-{{-- Update Data Modal --}}
+{{-- Modals (Tidak Diubah) --}}
 <div class="modal fade" id="updateDataModal" tabindex="-1" aria-labelledby="updateDataModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -194,7 +194,6 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Helper function to generate random codes
     function generateRandomCode(length) {
         let result = '';
         const characters = '0123456789';
@@ -204,56 +203,57 @@
         return result;
     }
 
-    // Helper function to generate random stock amounts
     function generateRandomStock() {
         return Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
     }
 
-    // Dummy data for all Sales Areas
-    const rawDataDummy = [
-        // P.Layang data (excluded from main table as per requirement)
-        { id: 1, nama: 'SPBE Jakarta Barat', jenis: 'SPBE', cabang: 'P.Layang', kode_plant: 'SPBE01' + generateRandomCode(2), kabupaten: 'Jakarta Barat', stock: generateRandomStock() },
-        { id: 2, nama: 'BPT Jakarta Utara', jenis: 'BPT', cabang: 'P.Layang', kode_plant: 'BPT02' + generateRandomCode(2), kabupaten: 'Jakarta Utara', stock: generateRandomStock() },
-        { id: 11, nama: 'SPBE Pangkalan Bun', jenis: 'SPBE', cabang: 'P.Layang', kode_plant: 'SPBE11' + generateRandomCode(2), kabupaten: 'Kotawaringin Barat', stock: generateRandomStock() },
-        { id: 12, nama: 'BPT Sampit', jenis: 'BPT', cabang: 'P.Layang', kode_plant: 'BPT12' + generateRandomCode(2), kabupaten: 'Kotawaringin Timur', stock: generateRandomStock() },
+    // THIS IS THE MASTER DATA FOR ALL SPBE/BPT.
+    const allSpbeBptData = [
+        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Ahmad Faisal', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi', stock: generateRandomStock() },
+        { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'SA Jambi', manager: 'Dewi Lestari', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi', stock: generateRandomStock() },
+        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Citra Kirana', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru', stock: generateRandomStock() },
+        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'SA Jambi', manager: 'Eko Sulistyo', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh', stock: generateRandomStock() },
 
-        // Data from other Sales Areas (displayed in table)
-        { id: 3, nama: 'SPBE Jambi Kota', jenis: 'SPBE', cabang: 'SA Jambi', kode_plant: 'SPBE03' + generateRandomCode(2), kabupaten: 'Kota Jambi', stock: generateRandomStock() },
-        { id: 4, nama: 'BPT Muaro Jambi', jenis: 'BPT', cabang: 'SA Jambi', kode_plant: 'BPT04' + generateRandomCode(2), kabupaten: 'Muaro Jambi', stock: generateRandomStock() },
-        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
-        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara', stock: generateRandomStock() },
-        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur', stock: generateRandomStock() },
-        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat', stock: generateRandomStock() },
-        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang', stock: generateRandomStock() },
-        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir', stock: generateRandomStock() },
-        { id: 13, nama: 'SPBE Pekanbaru', jenis: 'SPBE', cabang: 'SA Jambi', kode_plant: 'SPBE13' + generateRandomCode(2), kabupaten: 'Pekanbaru', stock: generateRandomStock() },
-        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang', stock: generateRandomStock() },
-        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung', stock: generateRandomStock() },
-        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih', stock: generateRandomStock() },
-        { id: 17, nama: 'SPBE Sungai Penuh', jenis: 'SPBE', cabang: 'SA Jambi', kode_plant: 'SPBE17' + generateRandomCode(2), kabupaten: 'Sungai Penuh', stock: generateRandomStock() },
-        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
-        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro', stock: generateRandomStock() },
-        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau', stock: generateRandomStock() },
-        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang', stock: generateRandomStock() },
-        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung', stock: generateRandomStock() }
+        { id: 5, nama: 'SPBE Bengkulu Selatan', jenis: 'SPBE', cabang: 'SA Bengkulu', manager: 'Bayu Prakoso', kode_plant: 'SPBE05' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+        { id: 6, nama: 'BPT Bengkulu Utara', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Fitriani', kode_plant: 'BPT06' + generateRandomCode(2), kabupaten: 'Bengkulu Utara', stock: generateRandomStock() },
+        { id: 14, nama: 'BPT Padang', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Gita Permata', kode_plant: 'BPT14' + generateRandomCode(2), kabupaten: 'Kota Padang', stock: generateRandomStock() },
+        { id: 18, nama: 'BPT Manna', jenis: 'BPT', cabang: 'SA Bengkulu', manager: 'Hadi Wijaya', kode_plant: 'BPT18' + generateRandomCode(2), kabupaten: 'Bengkulu Selatan', stock: generateRandomStock() },
+
+        { id: 7, nama: 'SPBE Lampung Timur', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Cahya Gumilang', kode_plant: 'SPBE07' + generateRandomCode(2), kabupaten: 'Lampung Timur', stock: generateRandomStock() },
+        { id: 8, nama: 'BPT Lampung Barat', jenis: 'BPT', cabang: 'SA Lampung', manager: 'Dian Puspita', kode_plant: 'BPT08' + generateRandomCode(2), kabupaten: 'Lampung Barat', stock: generateRandomStock() },
+        { id: 15, nama: 'SPBE Bandar Lampung', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Indra Lesmana', kode_plant: 'SPBE15' + generateRandomCode(2), kabupaten: 'Bandar Lampung', stock: generateRandomStock() },
+        { id: 19, nama: 'SPBE Metro', jenis: 'SPBE', cabang: 'SA Lampung', manager: 'Joko Susilo', kode_plant: 'SPBE19' + generateRandomCode(2), kabupaten: 'Metro', stock: generateRandomStock() },
+
+        { id: 9, nama: 'SPBE Palembang Kota', jenis: 'SPBE', cabang: 'SA Sumsel', manager: 'Eka Putra', kode_plant: 'SPBE09' + generateRandomCode(2), kabupaten: 'Kota Palembang', stock: generateRandomStock() },
+        { id: 10, nama: 'BPT Ogan Ilir', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Fajar Kurniawan', kode_plant: 'BPT10' + generateRandomCode(2), kabupaten: 'Ogan Ilir', stock: generateRandomStock() },
+        { id: 16, nama: 'BPT Prabumulih', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Kartika Sari', kode_plant: 'BPT16' + generateRandomCode(2), kabupaten: 'Prabumulih', stock: generateRandomStock() },
+        { id: 20, nama: 'BPT Lubuklinggau', jenis: 'BPT', cabang: 'SA Sumsel', manager: 'Lukman Hakim', kode_plant: 'BPT20' + generateRandomCode(2), kabupaten: 'Lubuklinggau', stock: generateRandomStock() },
+
+        { id: 21, nama: 'SPBE Pangkalpinang', jenis: 'SPBE', cabang: 'SA Babel', manager: 'Mira Puspita', kode_plant: 'SPBE21' + generateRandomCode(2), kabupaten: 'Pangkalpinang', stock: generateRandomStock() },
+        { id: 22, nama: 'BPT Belitung', jenis: 'BPT', cabang: 'SA Babel', manager: 'Nia Ramadhani', kode_plant: 'BPT22' + generateRandomCode(2), kabupaten: 'Belitung', stock: generateRandomStock() }
     ];
+
+    // Filter data specifically for this page (pusat.blade.php should show ALL data)
+    // As per latest understanding, this page acts as a central view for ALL regions.
+    const dataForThisPage = allSpbeBptData; // Now it includes all data from all regions.
 
     let searchQuery = '';
     let currentPage = 1;
     const itemsPerPage = 10;
     const maxPagesToShow = 5;
 
-    // Filters data excluding 'P.Layang' and applies search query
+    // Filters data based on search query for this page's specific data set
     function filterData() {
-        return rawDataDummy.filter(item => {
-            const notPLayang = item.cabang !== 'P.Layang';
-            const matchSearch = searchQuery ? 
-                (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        let filtered = dataForThisPage; // Start with ALL data from allSpbeBptData
+
+        if (searchQuery) {
+            filtered = filtered.filter(item =>
+                item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.kode_plant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.kabupaten.toLowerCase().includes(searchQuery.toLowerCase()))
-                : true;
-            return notPLayang && matchSearch;
-        });
+                item.kabupaten.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        return filtered;
     }
 
     // Renders table rows based on filtered and paginated data
@@ -270,19 +270,22 @@
         } else {
             noData.style.display = 'none';
             paginated.forEach((item, index) => {
+                // Modified iconHtml to use d-flex and align-items-center for proper vertical centering
                 const iconHtml = item.jenis === 'SPBE' ?
-                    `<span class="badge bg-gradient-primary rounded-circle me-2 icon-sm"><i class="fas fa-warehouse text-white"></i></span>` :
-                    `<span class="badge bg-gradient-info rounded-circle me-2 icon-sm"><i class="fas fa-building text-white"></i></span>`;
+                    `<span class="badge bg-gradient-primary rounded-circle me-2 icon-sm d-flex align-items-center justify-content-center"><i class="fas fa-warehouse text-white"></i></span>` :
+                    `<span class="badge bg-gradient-info rounded-circle me-2 icon-sm d-flex align-items-center justify-content-center"><i class="fas fa-building text-white"></i></span>`;
 
+                // Links within this page will just open modals for detailed view
                 const nameLinkHtml = `<a href="#" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary view-stock-btn" style="cursor: pointer;"
-                                            data-id="${item.id}"
-                                            data-nama="${item.nama}"
-                                            data-kodeplant="${item.kode_plant}"
-                                            data-salesarea="${item.cabang}"
-                                            data-kabupaten="${item.kabupaten}"
-                                            data-stock="${item.stock}">
-                                            ${item.nama}
-                                        </a>`;
+                                        data-id="${item.id}"
+                                        data-nama="${item.nama}"
+                                        data-jenis="${item.jenis}"
+                                        data-kodeplant="${item.kode_plant}"
+                                        data-salesarea="${item.cabang}"
+                                        data-kabupaten="${item.kabupaten}"
+                                        data-stock="${item.stock}">
+                                        ${item.nama}
+                                    </a>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -297,10 +300,10 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="table-col-kode">
+                        <td>
                             <p class="text-xs font-weight-bold mb-0">${item.kode_plant}</p>
                         </td>
-                        <td class="table-col-region">
+                        <td>
                             <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
                         </td>
                         <td class="text-center">
@@ -325,7 +328,7 @@
             document.querySelectorAll('.edit-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
-                    const itemData = rawDataDummy.find(item => item.id === id);
+                    const itemData = allSpbeBptData.find(item => item.id === id); // Use allSpbeBptData to find all data
                     if (itemData) {
                         document.getElementById('updateId').value = itemData.id;
                         document.getElementById('updateNama').value = itemData.nama;
@@ -345,7 +348,7 @@
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const id = parseInt(this.getAttribute('data-id'));
-                    const itemData = rawDataDummy.find(item => item.id === id);
+                    const itemData = allSpbeBptData.find(item => item.id === id); // Use allSpbeBptData to find all data
                     if (itemData) {
                         document.getElementById('transactionSpbeId').value = itemData.id;
                         document.getElementById('modal-spbe-bpt-name').textContent = itemData.nama;
@@ -378,9 +381,11 @@
                         cancelButtonText: 'Batal'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            const index = rawDataDummy.findIndex(item => item.id === id);
+                            const index = allSpbeBptData.findIndex(item => item.id === id); // Use allSpbeBptData to find all data
                             if (index !== -1) {
-                                rawDataDummy.splice(index, 1);
+                                allSpbeBptData.splice(index, 1);
+                                // After deleting, re-filter dataForThisPage and re-render
+                                dataForThisPage = allSpbeBptData; // Re-assign all data
                                 renderTable();
                                 Swal.fire('Dihapus!', 'Data telah berhasil dihapus.', 'success');
                             }
@@ -392,7 +397,7 @@
         renderPagination(data.length);
     }
 
-    // Renders pagination buttons
+    // Renders pagination buttons (Tidak Diubah)
     function renderPagination(totalItems) {
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         const ul = document.getElementById('pagination-spbe-bpt');
@@ -433,6 +438,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // No need to updateCurrentRegionDisplay for P.Layang as its title is static
+        // updateCurrentRegionDisplay(currentSalesArea); // Removed as per new understanding
+
         document.getElementById('search-input').addEventListener('input', function () {
             searchQuery = this.value;
             currentPage = 1;
@@ -448,17 +456,19 @@
             const updatedSalesArea = document.getElementById('updateSalesArea').value;
             const updatedKabupaten = document.getElementById('updateKabupaten').value;
 
-            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
+            const itemIndex = allSpbeBptData.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
-                rawDataDummy[itemIndex].nama = updatedNama;
-                rawDataDummy[itemIndex].jenis = updatedJenis;
-                rawDataDummy[itemIndex].kode_plant = updatedKodePlant;
-                rawDataDummy[itemIndex].cabang = updatedSalesArea;
-                rawDataDummy[itemIndex].kabupaten = updatedKabupaten;
+                allSpbeBptData[itemIndex].nama = updatedNama;
+                allSpbeBptData[itemIndex].jenis = updatedJenis;
+                allSpbeBptData[itemIndex].kode_plant = updatedKodePlant;
+                allSpbeBptData[itemIndex].cabang = updatedSalesArea;
+                allSpbeBptData[itemIndex].kabupaten = updatedKabupaten;
 
                 Swal.fire('Berhasil!', 'Data telah berhasil diperbarui.', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('updateDataModal')).hide();
-                renderTable();
+                // After updating, re-filter dataForThisPage and re-render
+                dataForThisPage = allSpbeBptData; // Re-assign all data
+                renderTable(); // Re-render table after update
             } else {
                 Swal.fire('Gagal!', 'Data tidak ditemukan.', 'error');
             }
@@ -475,20 +485,20 @@
                 return;
             }
 
-            const itemIndex = rawDataDummy.findIndex(item => item.id === id);
+            const itemIndex = allSpbeBptData.findIndex(item => item.id === id);
             if (itemIndex !== -1) {
-                let currentStock = rawDataDummy[itemIndex].stock;
+                let currentStock = allSpbeBptData[itemIndex].stock;
                 let newStock = currentStock;
                 let successMessage = '';
                 let errorMessage = '';
 
                 if (transactionType === 'Pengiriman') {
                     newStock = currentStock + stockAmount;
-                    successMessage = `Stok berhasil dikirim. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                    successMessage = `Stok berhasil dikirim. Stok ${allSpbeBptData[itemIndex].nama} sekarang ${newStock} unit.`;
                 } else if (transactionType === 'Pengambilan') {
                     if (currentStock >= stockAmount) {
                         newStock = currentStock - stockAmount;
-                        successMessage = `Stok berhasil diambil. Stok ${rawDataDummy[itemIndex].nama} sekarang ${newStock} unit.`;
+                        successMessage = `Stok berhasil diambil. Stok ${allSpbeBptData[itemIndex].nama} sekarang ${newStock} unit.`;
                     } else {
                         errorMessage = `Stok tidak mencukupi untuk pengambilan ${stockAmount} unit. Stok saat ini hanya ${currentStock} unit.`;
                     }
@@ -497,21 +507,25 @@
                 if (errorMessage) {
                     Swal.fire('Gagal!', errorMessage, 'error');
                 } else {
-                    rawDataDummy[itemIndex].stock = newStock;
+                    allSpbeBptData[itemIndex].stock = newStock;
                     Swal.fire('Berhasil!', successMessage, 'success');
                     bootstrap.Modal.getInstance(document.getElementById('stockTransactionModal')).hide();
-                    renderTable();
+                    // After transaction, re-filter dataForThisPage and re-render
+                    dataForThisPage = allSpbeBptData; // Re-assign all data
+                    renderTable(); // Re-render table after transaction
                 }
             } else {
                 Swal.fire('Gagal!', 'Data SPBE/BPT tidak ditemukan.', 'error');
             }
         });
 
-        renderTable();
+        renderTable(); // Initial render of the table for this page
     });
 </script>
 @endpush
 
+{{-- CSS untuk halaman SPBE/BPT --}}
+@push('styles')
 <style>
     /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
     @media (max-width: 767.98px) {
@@ -538,103 +552,119 @@
         }
 
         .spbe-search-section {
-            width: 100%; /* Take full width */
-            margin-top: 0 !important; /* Remove desktop margin-top */
-            margin-left: 0 !important; /* Remove desktop margin-left */
+            width: 100%; /* Take full width for the search section wrapper */
+            /* Remove margins that might push it inward */
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            /* Add some side padding to keep content off edges */
+            padding-left: 1rem;
+            padding-right: 1rem;
+            box-sizing: border-box; /* Include padding in width calculation */
+            
             justify-content: center !important; /* Center search input */
+            margin-top: 0 !important; /* Remove desktop margin-top */
+            margin-bottom: 0.75rem; /* Added margin below search input to separate from table */
         }
 
         .search-input-spbe {
-            width: 100% !important; /* Full width for search input */
+            width: 100% !important; /* Make the input itself take full width of its container */
             height: 38px !important; /* Smaller height */
             min-width: unset !important; /* Remove min-width */
             padding: 0.5rem 0.75rem; /* Adjust padding */
             font-size: 0.85rem; /* Smaller font size */
         }
 
+        .input-group.search-input-group { /* Target the input-group wrapper if present */
+            width: 100% !important; /* Ensure the whole input group takes full width */
+        }
+
         /* Table adjustments */
-        #table-spbe-bpt thead th {
-            font-size: 0.65rem !important; /* Smaller text for table headers */
-            padding: 0.5rem 0.5rem !important; /* Smaller padding */
-        }
-
+        #table-spbe-bpt thead th,
         #table-spbe-bpt tbody td {
-            font-size: 0.75rem !important; /* Smaller text for table body */
-            padding: 0.5rem 0.5rem !important; /* Smaller padding */
+            font-size: 0.75rem !important; /* Keep text slightly smaller for readability in compressed view */
+            padding: 0.5rem 0.5rem !important; /* Keep padding consistent */
         }
 
-        /* Hide less critical columns to optimize space on mobile */
-        .table-col-kode,
-        .table-col-region {
-            display: none;
-        }
-        /* Ensure the other columns are visible if hidden */
+        /* Hide/Show columns for mobile responsiveness */
         .table-col-no,
         .table-col-nama,
         .table-col-kab,
         .table-col-aksi {
-            display: table-cell;
+            display: table-cell !important;
+            width: auto !important;
+            text-align: inherit;
+        }
+        .table-col-kode,
+        .table-col-region {
+            display: none !important; /* Hide these columns on mobile */
         }
 
+        /* PERBAIKAN IKON DI TABEL: Pastikan ikon sejajar di tengah */
         .icon-sm {
-            width: 20px !important;
-            height: 20px !important;
-            font-size: 0.65rem !important;
+            width: 24px; /* Slightly larger for better tap target and visibility */
+            height: 24px;
+            font-size: 0.8rem; /* Adjusted font size for icon inside */
+            flex-shrink: 0;
+            display: flex; /* Make it a flex container */
+            align-items: center; /* Vertically center icon */
+            justify-content: center; /* Horizontally center icon */
         }
 
+        /* Action buttons sizing */
         .action-buttons .badge {
-            padding: 0.3rem 0.5rem; /* Smaller padding for action badges */
-            font-size: 0.7rem; /* Smaller font for action badges */
-            margin-left: 0.2rem !important; /* Adjust margin */
+            padding: 0.3rem 0.5rem;
+            font-size: 0.7rem;
+            margin-left: 0.2rem !important;
             margin-right: 0.2rem !important;
-            margin-bottom: 0.2rem; /* Add small vertical margin if they wrap */
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
         }
 
         /* Modal adjustments for update and stock transaction modals */
         .modal-dialog {
-            margin: 0.5rem !important; /* Adjust modal margin */
+            margin: 0.5rem !important;
         }
 
         .modal-header .modal-title {
-            font-size: 1rem !important; /* Smaller title in modal */
-            text-align: center !important; /* Center modal title */
-            width: 100%; /* Ensure title takes full width */
+            font-size: 1rem !important;
+            text-align: center !important;
+            width: 100%;
         }
 
         .modal-body {
-            padding: 1rem !important; /* Adjust modal body padding */
+            padding: 1rem !important;
         }
 
         .modal-footer .btn {
-            font-size: 0.8rem !important; /* Smaller buttons in modal footer */
-            padding: 0.4rem 0.8rem !important; /* Adjust button padding */
+            font-size: 0.8rem !important;
+            padding: 0.4rem 0.8rem !important;
         }
 
         /* Alignments within modals for info rows */
         .info-row {
-            flex-direction: column; /* Stack label, colon, and value vertically */
-            align-items: flex-start !important; /* Align stacked items to start */
-            margin-bottom: 0.5rem !important; /* Reduce space between info rows */
+            flex-direction: column;
+            align-items: flex-start !important;
+            margin-bottom: 0.5rem !important;
         }
 
         .info-label {
-            width: 100% !important; /* Label takes full width */
-            margin-bottom: 0.2rem; /* Small margin below label */
-            font-size: 0.85rem; /* Smaller font for info labels */
+            width: 100% !important;
+            margin-bottom: 0.2rem;
+            font-size: 0.85rem;
         }
 
         .info-colon {
-            display: none !important; /* Hide colon when stacked vertically */
+            display: none !important;
         }
 
         .info-value {
-            width: 100%; /* Value takes full width */
-            text-align: left !important; /* Align value text to left */
-            margin-left: 0 !important; /* Remove any left margin */
-            font-size: 0.9rem; /* Smaller font for info values */
+            width: 100%;
+            text-align: left !important;
+            margin-left: 0 !important;
+            font-size: 0.9rem;
         }
         
-        /* Ensure all form controls inside modals are small */
+        /* Modal form controls sizing */
         .modal-body .form-control,
         .modal-body .form-select {
             height: 38px !important;
@@ -642,5 +672,30 @@
             padding: 0.5rem 0.75rem !important;
         }
     }
+
+    /* Desktop styles (min-width 768px) */
+    @media (min-width: 768px) {
+        /* Ensure all columns are displayed on desktop */
+        .table-col-no,
+        .table-col-nama,
+        .table-col-kode,
+        .table-col-region,
+        .table-col-kab,
+        .table-col-aksi {
+            display: table-cell !important;
+            width: auto !important; /* Reset width to auto for desktop table layout */
+        }
+
+        /* PERBAIKAN IKON DI TABEL: Pastikan ikon sejajar di tengah */
+        .icon-sm {
+            width: 28px; /* Default desktop size */
+            height: 28px;
+            font-size: 0.9rem;
+            display: flex; /* Make it a flex container */
+            align-items: center; /* Vertically center icon */
+            justify-content: center; /* Horizontally center icon */
+        }
+    }
 </style>
+@endpush
 @endsection
