@@ -7,10 +7,10 @@
                 </div>
             </div>
             <div class="col-lg-6 text-end">
-                <!-- Logo kanan bawah, sejajar dengan teks -->
+                <!-- Logo hanya tampil di desktop -->
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
                      alt="Footer Logo"
-                     class="img-fluid"
+                     class="img-fluid d-none d-lg-inline"
                      style="width: 200px; height: auto; opacity: 0.9;">
             </div>
         </div>

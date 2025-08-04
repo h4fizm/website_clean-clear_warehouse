@@ -4,26 +4,33 @@
 
 {{-- Welcome Section --}}
 <div class="col-12 mb-3">
-    <div class="card p-3" style="
-        background-color: white; /* Putih Polos */
-        color: #344767; /* Warna teks gelap agar kontras dengan latar putih */
+    <div class="card p-3 position-relative" style="
+        background-color: white;
+        color: #344767;
         border-radius: 1rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Soft shadow */
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         overflow: hidden;
-        position: relative;
     ">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div class="mb-3 mb-md-0">
-                {{-- Changed text to be descriptive of the page --}}
-                <h4 class="mb-1 fw-bold">Selamat Datang, Nama User</h4>
-                <p class="mb-2 opacity-8">Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.</p>
-                <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm" style="font-size: 0.8em;">Nama Role</span>
+            <div class="mb-3 mb-md-0 w-100">
+                <h4 class="mb-1 fw-bold text-start text-md-start" id="welcome-title">
+                    Selamat Datang, Nama User
+                </h4>
+                <p class="mb-2 opacity-8 text-start text-md-start" id="welcome-text">
+                    Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.
+                </p>
+                <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm"
+                      style="font-size: 0.8rem;">Nama Role</span>
             </div>
 
-            <div class="text-center position-relative me-md-4">
-                <img src="{{ asset('dashboard_template/assets/img/icon.png') }}" alt="Branch Icon" style="height: 60px; width: auto; opacity: 0.9;">
+            {{-- Logo hanya tampil di desktop --}}
+            <div class="d-none d-md-block text-end me-md-4">
+                <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
+                     alt="Branch Icon"
+                     style="height: 60px; width: auto; opacity: 0.9;">
             </div>
         </div>
+
         <div style="
             position: absolute;
             top: 0;
@@ -37,6 +44,7 @@
         "></div>
     </div>
 </div>
+
 
 {{-- Statistik Cards --}}
 <div class="row">
