@@ -27,8 +27,11 @@ Route::get('/dashboard', function () {
 Route::get('/transaksi', function () {
     return view('dashboard_page.menu.data_transaksi');
 });
-Route::get('/material', function () {
-    return view('dashboard_page.menu.data_material');
+Route::get('/tambah-spbe/bpt', function () {
+    return view('dashboard_page.menu.tambah_spbe-bpt');
+});
+Route::get('/tambah-material', function () {
+    return view('dashboard_page.menu.tambah_material');
 });
 Route::get('/upp-material', function () {
     return view('dashboard_page.menu.data_upp-material');
@@ -37,13 +40,9 @@ Route::get('/laporan-grafik', function () {
     return view('dashboard_page.menu.data_laporan_grafik');
 });
 
-// daftar p.layang pusat
-Route::get('/pusat', function () {
-    return view('dashboard_page.sales_area.daftar_pusat');
-});
-// daftar spbe-bpt
-Route::get('/spbe-bpt', function () {
-    return view('dashboard_page.sales_area.daftar_spbe-bpt');
+// daftar data material tiap spbe-bpt yang dipilih
+Route::get('/material', function () {
+    return view('dashboard_page.spbe-bpt_material.data_material');
 });
 
 

@@ -34,12 +34,23 @@
           <span class="nav-link-text ms-1">Data Transaksi</span>
         </a>
       </li>
+      {{-- Tambah SPBE-BPT --}}
+      <li class="nav-item">
+        {{-- The request()->is() method checks if the current URL matches the given pattern.
+            We should use the specific path for each nav link to correctly apply the active class. --}}
+        <a class="nav-link {{ request()->is('tambah-spbe/bpt') ? 'active' : '' }}" href="{{ url('/tambah-spbe/bpt') }}">
+          <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
+            <i class="fas fa-industry text-primary text-sm opacity-10"></i>
+          </div>
+          <span class="nav-link-text ms-1">Tambah SPBE/BPT</span>
+        </a>
+      </li>
       {{-- Tambah Material --}}
       <li class="nav-item">
-        {{-- Fixed leading slash for URL matching. request()->is() expects path without leading slash --}}
-        <a class="nav-link {{ request()->is('material') ? 'active' : '' }}" href="{{ url('/material') }}">
+        {{-- Correctly apply the active class for the 'tambah-material' path. --}}
+        <a class="nav-link {{ request()->is('tambah-material') ? 'active' : '' }}" href="{{ url('/tambah-material') }}">
           <div class="icon icon-shape icon-sm text-center me-2 d-flex align-items-center justify-content-center">
-            <i class="fas fa-cube text-primary text-sm opacity-10"></i>
+            <i class="fas fa-box text-primary text-sm opacity-10"></i>
           </div>
           <span class="nav-link-text ms-1">Tambah Data Material</span>
         </a>
