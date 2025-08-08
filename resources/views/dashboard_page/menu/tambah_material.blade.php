@@ -7,6 +7,7 @@
         <div class="card shadow mb-4">
             <div class="card-header pb-0 p-3">
                 <h3 class="mb-0">Form Tambah Data Material</h3>
+                <p class="text-muted mb-0"><small>Menambah data material ke P.Layang Pusat</small></p>
             </div>
             <div class="card-body p-3">
                 <form id="addMaterialForm" class="row g-3">
@@ -17,17 +18,6 @@
                     <div class="col-12">
                         <label for="kodeMaterial" class="form-label">Kode Material</label>
                         <input type="text" class="form-control" id="kodeMaterial" required>
-                    </div>
-                    <div class="col-12">
-                        <label for="spbeBptMaterial" class="form-label">Nama SPBE/BPT</label>
-                        <select class="form-select" id="spbeBptMaterial" required>
-                            <option value="">Pilih SPBE/BPT</option>
-                            <option value="SPBE Sukamaju">SPBE Sukamaju</option>
-                            <option value="BPT Sejahtera">BPT Sejahtera</option>
-                            <option value="SPBE Mandiri">SPBE Mandiri</option>
-                            <option value="BPT Jaya Abadi">BPT Jaya Abadi</option>
-                            <option value="SPBE Maju Bersama">SPBE Maju Bersama</option>
-                        </select>
                     </div>
                     <div class="col-12">
                         <label for="totalStokMaterial" class="form-label">Total Stok</label>
@@ -54,11 +44,12 @@
             // Get form values
             const nama = document.getElementById('namaMaterial').value;
             const kode = document.getElementById('kodeMaterial').value;
-            const spbeBpt = document.getElementById('spbeBptMaterial').value;
+            // The SPBE/BPT value is now hardcoded as 'P.Layang (Pusat)'
+            const spbeBpt = 'P.Layang (Pusat)'; 
             const stok = parseInt(document.getElementById('totalStokMaterial').value);
 
             // Simple validation
-            if (!nama || !kode || !spbeBpt || isNaN(stok) || stok < 0) {
+            if (!nama || !kode || isNaN(stok) || stok < 0) {
                 Swal.fire('Gagal!', 'Harap lengkapi semua kolom dengan benar.', 'error');
                 return;
             }

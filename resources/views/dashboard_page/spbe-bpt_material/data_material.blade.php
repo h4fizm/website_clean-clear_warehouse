@@ -23,11 +23,19 @@
                     </button>
                 </div>
                 
-                {{-- Row for Search Input --}}
-                <div class="d-flex justify-content-end align-items-center mt-3">
-                    <div class="input-group input-group-sm search-input-desktop-aligned" style="max-width: 250px;">
-                        <input type="text" id="search-input-material" class="form-control" placeholder="Cari Nama atau Kode Material...">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                {{-- Row for Search Input and Date Filters --}}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-12 col-md-6 mb-2 mb-md-0">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="search-input-material" class="form-control" placeholder="Cari Nama atau Kode Material...">
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-center justify-content-start justify-content-md-end date-range-picker">
+                        <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Dari:</label>
+                        <input type="date" id="startDate" class="form-control me-2 date-input">
+                        <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Sampai:</label>
+                        <input type="date" id="endDate" class="form-control date-input">
                     </div>
                 </div>
             </div>
@@ -268,19 +276,41 @@
     ];
 
     let searchMaterialQuery = '';
+    let startDateFilter = '';
+    let endDateFilter = '';
     let currentMaterialPage = 0;
     const itemsPerMaterialPage = 10;
     const maxMaterialPagesToShow = 5;
 
+    function formatTanggal(tgl) {
+        const d = new Date(tgl);
+        const options = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+        const formattedDate = d.toLocaleDateString('id-ID', options);
+        return formattedDate.replace(/\./g, ''); // Menghilangkan titik dari singkatan hari
+    }
+
     function filterMaterialData() {
-        const filteredData = dataMaterialDummy.filter(item => {
-            const matchSpbeBpt = item.spbe_bpt_nama === selectedSpbeBptName;
-            const matchSearch = searchMaterialQuery ?
-                                (item.nama.toLowerCase().includes(searchMaterialQuery.toLowerCase()) ||
-                                item.kode.toLowerCase().includes(searchMaterialQuery.toLowerCase()))
-                                : true;
-            return matchSpbeBpt && matchSearch;
-        });
+        let filteredData = dataMaterialDummy.filter(item => item.spbe_bpt_nama === selectedSpbeBptName);
+
+        if (searchMaterialQuery) {
+            filteredData = filteredData.filter(item =>
+                item.nama.toLowerCase().includes(searchMaterialQuery.toLowerCase()) ||
+                item.kode.toLowerCase().includes(searchMaterialQuery.toLowerCase())
+            );
+        }
+
+        if (startDateFilter || endDateFilter) {
+            filteredData = filteredData.filter(item => {
+                const itemDate = new Date(item.tanggal);
+                const start = startDateFilter ? new Date(startDateFilter) : null;
+                const end = endDateFilter ? new Date(endDateFilter) : null;
+
+                if (start) start.setHours(0, 0, 0, 0);
+                if (end) end.setHours(23, 59, 59, 999);
+                
+                return (!start || itemDate >= start) && (!end || itemDate <= end);
+            });
+        }
         
         return filteredData;
     }
@@ -296,12 +326,10 @@
         tbody.innerHTML = '';
         if (paginated.length === 0) {
             noData.style.display = 'block';
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">Tidak ada data material untuk ${selectedSpbeBptName}.</td></tr>`;
         } else {
             noData.style.display = 'none';
             const rowsHtml = paginated.map((item, index) => {
                 const rowIndex = start + index + 1;
-                // Fungsi helper untuk menentukan warna badge
                 function getBadgeColor(stock) {
                     if (stock === 0) return 'danger';
                     if (stock <= 50) return 'warning';
@@ -333,17 +361,17 @@
                             <span class="badge bg-gradient-${totalStokColor} text-white text-xs">${item.total_stok}</span>
                         </td>
                         <td class="text-center">
-                            <p class="text-xs text-secondary mb-0">${item.tanggal}</p>
+                            <p class="text-xs text-secondary mb-0">${formatTanggal(item.tanggal)}</p>
                         </td>
                         <td class="align-middle text-center">
-                            <button class="btn btn-icon btn-rounded btn-success kirim-material-btn p-1" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal" data-id="${item.id}" data-nama="${item.nama}" data-spbe-bpt="${item.spbe_bpt_nama}" title="Kirim Material">
-                                <i class="fas fa-paper-plane text-white"></i>
+                            <button class="btn btn-sm btn-success text-white me-1 kirim-material-btn" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal" data-id="${item.id}" data-spbe-bpt="${item.spbe_bpt_nama}" title="Kirim Material">
+                                <i class="fas fa-paper-plane"></i>
                             </button>
-                            <button class="btn btn-icon btn-rounded btn-info edit-material-btn p-1 ms-1" data-id="${item.id}" title="Edit Data">
-                                <i class="fas fa-edit text-white"></i>
+                            <button class="btn btn-sm btn-info text-white me-1 edit-material-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editMaterialModal" title="Edit Data">
+                                <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-icon btn-rounded btn-danger delete-material-btn p-1 ms-1" data-id="${item.id}" title="Hapus Data">
-                                <i class="fas fa-trash-alt text-white"></i>
+                            <button class="btn btn-sm btn-danger text-white delete-material-btn" data-id="${item.id}" title="Hapus Data">
+                                <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
                     </tr>
@@ -366,9 +394,8 @@
                     document.getElementById('editKodeMaterial').value = material.kode;
                     document.getElementById('editTotalStok').value = material.total_stok;
                     
-                    // Populate the dropdown with all locations and select the current one
                     const editSpbeBptSelect = document.getElementById('editSpbeBpt');
-                    editSpbeBptSelect.innerHTML = ''; // Clear existing options
+                    editSpbeBptSelect.innerHTML = '';
                     allLocations.forEach(location => {
                         const option = document.createElement('option');
                         option.value = location;
@@ -378,9 +405,6 @@
                         }
                         editSpbeBptSelect.appendChild(option);
                     });
-                    
-                    const editMaterialModal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
-                    editMaterialModal.show();
                 }
             });
         });
@@ -414,31 +438,27 @@
             });
         });
 
-        // Kirim button listener
         document.querySelectorAll('.kirim-material-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const materialId = parseInt(this.getAttribute('data-id'));
                 const spbeBptName = this.getAttribute('data-spbe-bpt');
                 
-                // Find the material and SPBE/BPT info
                 const material = dataMaterialDummy.find(item => item.id === materialId);
                 const spbeBptInfo = spbeBptInfoDummy.find(info => info.nama === spbeBptName);
                 
                 if (material && spbeBptInfo) {
+                    document.getElementById('kirimMaterialId').value = material.id;
                     document.getElementById('kirimMaterialModalLabel').textContent = `Kirim Material "${material.nama}"`;
                     
-                    // Populate the Information Card
                     document.getElementById('kirimNamaSpbeBpt').textContent = spbeBptInfo.nama;
                     document.getElementById('kirimKodePlant').textContent = spbeBptInfo.kode_plant;
                     document.getElementById('kirimRegionSa').textContent = spbeBptInfo.region_sa;
                     document.getElementById('kirimKabupaten').textContent = spbeBptInfo.kabupaten;
                     document.getElementById('kirimStok').textContent = `${material.total_stok} unit`;
                     
-                    // Populate Asal Transaksi input and hidden value
                     document.getElementById('asalTransaksiText').value = spbeBptName;
                     document.getElementById('asalTransaksi').value = spbeBptName;
 
-                    // Populate Tujuan Transaksi dropdown with all locations
                     const tujuanTransaksi = document.getElementById('tujuanTransaksi');
                     tujuanTransaksi.innerHTML = `<option value="">Pilih Tujuan</option>`;
                     allLocations.forEach(location => {
@@ -451,7 +471,6 @@
                     });
                 }
                 
-                // Set a default for jenisTransaksi and jumlahStok
                 document.getElementById('jenisPenambahan').checked = true;
                 document.getElementById('jumlahStok').value = '';
             });
@@ -546,6 +565,49 @@
         }
     });
 
+    document.getElementById('kirimMaterialForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('kirimMaterialId').value;
+        const asal = document.getElementById('asalTransaksi').value;
+        const tujuan = document.getElementById('tujuanTransaksi').value;
+        const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
+        const jumlah = parseInt(document.getElementById('jumlahStok').value);
+
+        if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
+            Swal.fire('Gagal!', 'Harap isi form dengan benar.', 'error');
+            return;
+        }
+
+        const material = dataMaterialDummy.find(item => item.id == id);
+        if (!material) {
+            Swal.fire('Error!', 'Data material tidak ditemukan.', 'error');
+            return;
+        }
+
+        let stokAkhir;
+        if (jenis === 'penambahan') {
+            stokAkhir = material.total_stok + jumlah;
+            material.penerimaan += jumlah;
+        } else if (jenis === 'pengurangan') {
+            if (material.total_stok < jumlah) {
+                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk pengurangan.', 'warning');
+                return;
+            }
+            stokAkhir = material.total_stok - jumlah;
+            material.penyaluran += jumlah;
+        }
+        
+        material.total_stok = stokAkhir;
+        material.tanggal = new Date().toISOString().split('T')[0];
+        
+        renderMaterialTable();
+
+        const kirimModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
+        kirimModal.hide();
+
+        Swal.fire('Berhasil Dikirim!', `Stok **${material.nama}** di **${asal}** saat ini adalah **${stokAkhir} unit**.`, 'success');
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('search-input-material').addEventListener('input', function () {
             searchMaterialQuery = this.value;
@@ -553,31 +615,16 @@
             renderMaterialTable();
         });
 
-        document.getElementById('kirimMaterialForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const asal = document.getElementById('asalTransaksi').value;
-            const tujuan = document.getElementById('tujuanTransaksi').value;
-            const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
-            const jumlah = document.getElementById('jumlahStok').value;
+        document.getElementById('startDate').addEventListener('change', function() {
+            startDateFilter = this.value;
+            currentMaterialPage = 0;
+            renderMaterialTable();
+        });
 
-            // Simple validation
-            if (!asal || !tujuan || !jumlah) {
-                Swal.fire('Gagal!', 'Harap lengkapi semua form.', 'error');
-                return;
-            }
-
-            if (asal === tujuan) {
-                Swal.fire('Gagal!', 'Asal dan tujuan tidak boleh sama.', 'error');
-                return;
-            }
-
-            console.log(`Kirim material: Asal: ${asal}, Tujuan: ${tujuan}, Jenis: ${jenis}, Jumlah: ${jumlah}`);
-
-            // Reset form and close modal
-            this.reset();
-            const kirimModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
-            kirimModal.hide();
-            Swal.fire('Berhasil Dikirim!', 'Transaksi material telah berhasil dicatat.', 'success');
+        document.getElementById('endDate').addEventListener('change', function() {
+            endDateFilter = this.value;
+            currentMaterialPage = 0;
+            renderMaterialTable();
         });
 
         renderMaterialTable();
@@ -585,306 +632,290 @@
 </script>
 @endpush
 
+
 {{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
 <style>
-    /* General styles for welcome card */
-    .welcome-card {
-        background-color: white;
-        color: #344767;
-        border-radius: 1rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        overflow: hidden;
-        position: relative;
-        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
-    }
+    /* General styles for welcome card */
+    .welcome-card {
+        background-color: white;
+        color: #344767;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        position: relative;
+        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
+    }
 
-    .welcome-card-icon {
-        height: 60px;
-        width: auto;
-        opacity: 0.9;
-    }
+    .welcome-card-icon {
+        height: 60px;
+        width: auto;
+        opacity: 0.9;
+    }
 
-    .welcome-card-background {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-        background-size: 60px 60px;
-        opacity: 0.2;
-        pointer-events: none;
-    }
+    .welcome-card-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        background-size: 60px 60px;
+        opacity: 0.2;
+        pointer-events: none;
+    }
 
-    /* Desktop styles for filters and search */
-    @media (min-width: 768px) {
-        /* Apply these styles from 'md' breakpoint and up */
-        .desktop-filter-row-top {
-            justify-content: space-between !important;
-            /* Distribute items with space between */
-            align-items: flex-end;
-            /* Align items to the bottom */
-            margin-bottom: 0.5rem;
-            /* Add some space below this row */
-        }
+    /* Desktop styles for filters and search */
+    @media (min-width: 768px) {
+        /* Apply these styles from 'md' breakpoint and up */
+        .desktop-filter-row-top {
+            justify-content: space-between !important;
+            /* Distribute items with space between */
+            align-items: flex-end;
+            /* Align items to the bottom */
+            margin-bottom: 0.5rem;
+            /* Add some space below this row */
+        }
 
-        .branch-selection-text-desktop {
-            margin-bottom: 0.5rem;
-            /* Standard margin for text above buttons */
-            white-space: nowrap;
-            /* Prevent text wrapping */
-        }
+        .branch-selection-text-desktop {
+            margin-bottom: 0.5rem;
+            /* Standard margin for text above buttons */
+            white-space: nowrap;
+            /* Prevent text wrapping */
+        }
 
-        .btn-branch-custom {
-            padding: 0.4rem 0.6rem;
-            /* Slightly smaller padding for buttons */
-            font-size: 0.78rem;
-            /* Slightly smaller font size */
-        }
+        .btn-branch-custom {
+            padding: 0.4rem 0.6rem;
+            /* Slightly smaller padding for buttons */
+            font-size: 0.78rem;
+            /* Slightly smaller font size */
+        }
 
-        .date-filter-desktop-container {
-            /* This container holds "Dari" date input and "Sampai" date input */
-            /* We need to measure its total width */
-            display: flex;
-            /* Ensure it's a flex container */
-            align-items: center;
-            /* Align items vertically */
-            gap: 0.5rem;
-            /* Standard gap */
-            flex-wrap: nowrap;
-            /* Keep all elements in one line */
-            width: auto;
-            /* Allow content to define width */
-            flex-shrink: 0;
-            margin-left: auto;
-            /* Push to the right */
-        }
+        .date-filter-desktop-container {
+            /* This container holds "Dari" date input and "Sampai" date input */
+            /* We need to measure its total width */
+            display: flex;
+            /* Ensure it's a flex container */
+            align-items: center;
+            /* Align items vertically */
+            gap: 0.5rem;
+            /* Standard gap */
+            flex-wrap: nowrap;
+            /* Keep all elements in one line */
+            width: auto;
+            /* Allow content to define width */
+            flex-shrink: 0;
+            margin-left: auto;
+            /* Push to the right */
+        }
 
-        .date-input {
-            width: 120px;
-            /* Specific width for date inputs on desktop */
-            height: 40px;
-            /* Adjusted height for date inputs */
-            min-width: unset;
-            /* Remove min-width inherited from mobile */
-        }
+        .date-input {
+            width: 120px;
+            /* Specific width for date inputs on desktop */
+            height: 40px;
+            /* Adjusted height for date inputs */
+            min-width: unset;
+            /* Remove min-width inherited from mobile */
+        }
 
-        .date-range-picker label {
-            /* Reusing existing class, targetting labels inside it */
-            white-space: nowrap;
-            /* Prevent label wrapping */
-            flex-shrink: 0;
-            /* Prevent label from shrinking */
-        }
+        .date-range-picker label {
+            /* Reusing existing class, targetting labels inside it */
+            white-space: nowrap;
+            /* Prevent label wrapping */
+            flex-shrink: 0;
+            /* Prevent label from shrinking */
+        }
 
-        /* Search input specific styles for desktop alignment */
-        .search-input-desktop-aligned {
-            height: 40px;
-            /* Adjusted height for desktop search input */
-            max-width: 310px;
-            /* Set a max-width to control its overall size */
-            /* Instead of fixed width, we will dynamically set it via JS or use a calculated max-width */
-            /* Using 'auto' and 'margin-left: auto' with its parent's 'justify-content: flex-end' for positioning */
-        }
+        /* Search input specific styles for desktop alignment */
+        .search-input-desktop-aligned {
+            height: 40px;
+            /* Adjusted height for desktop search input */
+            max-width: 310px;
+            /* Set a max-width to control its overall size */
+            /* Instead of fixed width, we will dynamically set it via JS or use a calculated max-width */
+            /* Using 'auto' and 'margin-left: auto' with its parent's 'justify-content: flex-end' for positioning */
+        }
 
-        .search-input-desktop-aligned .form-control,
-        .search-input-aligned .input-group-text {
-            height: 40px;
-            /* Match the new height */
-        }
+        .search-input-desktop-aligned .form-control,
+        .search-input-aligned .input-group-text {
+            height: 40px;
+            /* Match the new height */
+        }
 
-        /* Order of columns for desktop */
-        .order-md-1 {
-            order: 1;
-        }
+        /* Order of columns for desktop */
+        .order-md-1 {
+            order: 1;
+        }
 
-        .order-md-2 {
-            order: 2;
-        }
+        .order-md-2 {
+            order: 2;
+        }
 
-        .order-md-3 {
-            order: 3;
-        }
+        .order-md-3 {
+            order: 3;
+        }
 
-        /* Ensuring columns adjust correctly for flex layout */
-        .desktop-filter-row-top>div {
-            flex-grow: 0;
-            flex-shrink: 0;
-        }
+        /* Ensuring columns adjust correctly for flex layout */
+        .desktop-filter-row-top>div {
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
 
-        .col-12.mt-3.order-3.order-md-3 {
-            /* The row containing only the search input */
-            display: flex;
-            /* Make it a flex container */
-            justify-content: flex-end;
-            /* Push content (search bar) to the right */
-            width: 100%;
-            /* Ensure it takes full width of the row */
-        }
-    }
+        .col-12.mt-3.order-3.order-md-3 {
+            /* The row containing only the search input */
+            display: flex;
+            /* Make it a flex container */
+            justify-content: flex-end;
+            /* Push content (search bar) to the right */
+            width: 100%;
+            /* Ensure it takes full width of the row */
+        }
+    }
 
-    /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
-    @media (max-width: 767.98px) {
-        /* --- Welcome Section Title Adjustment for Mobile --- */
-        .welcome-card {
-            padding: 1rem !important; /* Reduce padding for mobile */
-        }
+    /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
+    @media (max-width: 767.98px) {
+        /* --- Welcome Section Title Adjustment for Mobile --- */
+        .welcome-card {
+            padding: 1rem !important; /* Reduce padding for mobile */
+        }
 
-        .welcome-card .card-body {
-            flex-direction: column; /* Stack items vertically */
-            align-items: center; /* Center items horizontally */
-        }
+        .welcome-card .card-body {
+            flex-direction: column; /* Stack items vertically */
+            align-items: center; /* Center items horizontally */
+        }
 
-        .welcome-card .card-body > div {
-            width: 100%; /* Take full width */
-            text-align: center; /* Center text within these divs */
-        }
+        .welcome-card .card-body > div {
+            width: 100%; /* Take full width */
+            text-align: center; /* Center text within these divs */
+        }
 
-        .welcome-card-icon {
-            margin-bottom: 0.5rem; /* Space below icon on mobile */
-            margin-top: 0.5rem; /* Space above icon on mobile */
-        }
+        .welcome-card-icon {
+            margin-bottom: 0.5rem; /* Space below icon on mobile */
+            margin-top: 0.5rem; /* Space above icon on mobile */
+        }
 
-        #summary-title, #summary-text {
-            text-align: center !important;
-        }
-        #summary-title {
-            font-size: 1.25rem !important;
-        }
-        #summary-text {
-            font-size: 0.8rem !important;
-        }
-        /* End Welcome Section */
-
-
-        /* --- Table Branch Name Title Adjustment for Mobile --- */
-        #table-branch-name {
-            text-align: center !important;
-            font-size: 1.25rem !important; /* Adjust as needed, e.g., 1rem or 0.9rem */
-            margin-bottom: 1rem !important; /* Add some space below the title */
-        }
+        #summary-title, #summary-text {
+            text-align: center !important;
+        }
+        #summary-title {
+            font-size: 1.25rem !important;
+        }
+        #summary-text {
+            font-size: 0.8rem !important;
+        }
+        /* End Welcome Section */
 
 
-        .export-excel-btn {
-            height: 38px !important;
-            /* Make button smaller */
-            font-size: 0.8rem;
-            /* Smaller font size */
-            padding: 0.5rem 1rem;
-            /* Adjust padding */
-            margin-top: 1rem;
-            /* Adjust padding */
-        }
+        /* --- Table Branch Name Title Adjustment for Mobile --- */
+        #table-branch-name {
+            text-align: center !important;
+            font-size: 1.25rem !important; /* Adjust as needed, e.g., 1rem or 0.9rem */
+            margin-bottom: 1rem !important; /* Add some space below the title */
+        }
 
-        .export-excel-btn .fas {
-            margin-right: 0.5rem;
-            /* Adjust icon spacing */
-        }
 
-        .branch-selection-text {
-            text-align: center !important;
-            /* Center the text */
-            margin-bottom: 0.5rem !important;
-            /* Reduce bottom margin */
-        }
+        .export-excel-btn {
+            height: 38px !important;
+            /* Make button smaller */
+            font-size: 0.8rem;
+            /* Smaller font size */
+            padding: 0.5rem 1rem;
+            /* Adjust padding */
+            margin-top: 1rem;
+            /* Adjust padding */
+        }
 
-        .branch-buttons {
-            justify-content: center !important;
-            /* Center buttons */
-            gap: 0.25rem;
-            /* Reduce gap between buttons */
-            margin-bottom: 1rem;
-            /* Add margin below buttons for mobile */
-        }
+        .export-excel-btn .fas {
+            margin-right: 0.5rem;
+            /* Adjust icon spacing */
+        }
 
-        .btn-branch-custom {
-            padding: 0.3rem 0.6rem;
-            /* Smaller padding for buttons */
-            font-size: 0.75rem;
-            /* Smaller font size for buttons */
-            flex-grow: 1;
-            /* Allow buttons to grow in mobile to fill space */
-            min-width: unset;
-            /* Remove min-width to allow more flexibility */
-        }
+        .branch-selection-text {
+            text-align: center !important;
+            /* Center the text */
+            margin-bottom: 0.5rem !important;
+            /* Reduce bottom margin */
+        }
 
-        /* Adjust button width for smaller screens if they are too wide */
-        .branch-buttons button {
-            flex: 1 1 auto;
-            /* Allow buttons to wrap and occupy available space */
-            margin: 2px;
-            /* Small margin for visual separation */
-        }
+        .branch-buttons {
+            justify-content: center !important;
+            /* Center buttons */
+            gap: 0.25rem;
+            /* Reduce gap between buttons */
+            margin-bottom: 1rem;
+            /* Add margin below buttons for mobile */
+        }
 
-        .date-range-picker {
-            flex-direction: column;
-            /* Stack date pickers vertically */
-            align-items: center;
-            /* Center items in column */
-            width: 100%;
-            /* Full width */
-            gap: 0.5rem !important;
-            /* Gap between stacked items */
-        }
+        .btn-branch-custom {
+            padding: 0.3rem 0.6rem;
+            /* Smaller padding for buttons */
+            font-size: 0.75rem;
+            /* Smaller font size for buttons */
+            flex-grow: 1;
+            /* Allow buttons to grow in mobile to fill space */
+            min-width: unset;
+            /* Remove min-width to allow more flexibility */
+        }
 
-        .date-filter-desktop-container {
-            flex-direction: column !important;
-            width: 100% !important;
-            align-items: center !important;
-            margin-top: 0.5rem !important;
-            margin-left: 0 !important;
-        }
+        /* Adjust button width for smaller screens if they are too wide */
+        .branch-buttons button {
+            flex: 1 1 auto;
+            /* Allow buttons to wrap and occupy available space */
+            margin: 2px;
+            /* Small margin for visual separation */
+        }
 
-        .date-input {
-            width: 100% !important;
-            height: 38px !important;
-        }
+        .date-range-picker {
+            flex-direction: column;
+            /* Stack date pickers vertically */
+            align-items: center;
+            /* Center items in column */
+            width: 100%;
+            /* Full width */
+            gap: 0.5rem !important;
+            /* Gap between stacked items */
+        }
 
-        .date-range-picker label {
-            margin-right: 0 !important;
-            margin-left: 0 !important;
-        }
+        .date-input {
+            width: 100% !important;
+            height: 38px !important;
+        }
 
-        /* --- Specific changes for Search Input Group in Mobile --- */
-        .search-input-group {
-            width: 100% !important;
-            height: 38px !important;
-            margin-top: 0.5rem;
-        }
+        .date-range-picker label {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        
+        .input-group.input-group-sm {
+            height: 38px !important;
+        }
 
-        .search-input-group .form-control {
-            height: 38px !important;
-            font-size: 0.85rem !important;
-            padding-right: 0.5rem;
-        }
+        .input-group.input-group-sm .form-control,
+        .input-group.input-group-sm .input-group-text {
+            height: 38px !important;
+            font-size: 0.85rem !important;
+            padding: 0.4rem 0.8rem !important;
+        }
 
-        .search-input-group .input-group-text {
-            height: 38px !important;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem !important;
-        }
-        /* --- End of Mobile Specific changes for Search Input Group --- */
+        /* Adjust padding for card-header in mobile to give more space */
+        .card-header {
+            padding: 1rem !important;
+        }
 
-        .card-header {
-            padding: 1rem !important;
-        }
+        /* Make table header text smaller in mobile */
+        #table-material thead th {
+            font-size: 0.65rem !important;
+        }
 
-        #table-material-1 thead th {
-            font-size: 0.65rem !important;
-        }
+        /* Make table body text smaller in mobile */
+        #table-material tbody td {
+            font-size: 0.75rem !important;
+        }
 
-        #table-material-1 tbody td {
-            font-size: 0.75rem !important;
-        }
-
-        #table-material-1 tbody td,
-        #table-material-1 thead th {
-            padding: 0.5rem 0.5rem !important;
-        }
-
-        .order-1 { order: 1; }
-        .order-2 { order: 2; }
-        .order-3 { order: 3; }
-    }
+        /* Adjust padding for table cells */
+        #table-material tbody td,
+        #table-material thead th {
+            padding: 0.5rem 0.5rem !important;
+        }
+    }
 </style>
 @endsection

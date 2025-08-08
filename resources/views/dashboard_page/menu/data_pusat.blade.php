@@ -8,8 +8,8 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                     alt="Branch Icon"
-                     class="welcome-card-icon">
+                    alt="Branch Icon"
+                    class="welcome-card-icon">
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
@@ -97,6 +97,75 @@
     </div>
 </div>
 
+{{-- Modal for Send Material Data --}}
+<div class="modal fade" id="kirimMaterialModal" tabindex="-1" aria-labelledby="kirimMaterialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kirimMaterialModalLabel">Kirim Material <span id="modal-nama-material"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card p-3 mb-3 bg-light">
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">NAMA MATERIAL</p>
+                    <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material-display"></p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">KODE MATERIAL</p>
+                    <p class="mb-2 text-sm font-weight-bold" id="modal-kode-material-display"></p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">TOTAL STOK</p>
+                    <p class="mb-0 text-sm font-weight-bold" id="modal-total-stok-display"></p>
+                </div>
+                
+                <form id="kirimMaterialForm">
+                    <input type="hidden" id="kirim-material-id">
+
+                    <div class="mb-3">
+                        <label for="asal-transaksi" class="form-label">Asal Transaksi</label>
+                        <input type="text" class="form-control" id="asal-transaksi" value="P.Layang" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tujuan-transaksi" class="form-label">Tujuan Transaksi</label>
+                        <select class="form-control" id="tujuan-transaksi" required>
+                            <option value="">Pilih Tujuan</option>
+                            <option value="SPBE_Sukamaju">SPBE Sukamaju</option>
+                            <option value="SPBE_Makmur">SPBE Makmur</option>
+                            <option value="SPBE_Sentosa">SPBE Sentosa</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Transaksi</label>
+                        <div class="d-flex">
+                            <div class="form-check me-4">
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-tambah" value="penambahan" checked>
+                                <label class="form-check-label" for="jenis-tambah">
+                                    Penambahan
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-kurang" value="pengurangan">
+                                <label class="form-check-label" for="jenis-kurang">
+                                    Pengurangan
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jumlah-stok" class="form-label">Jumlah Stok</label>
+                        <input type="number" class="form-control" id="jumlah-stok" required>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="submitKirim">Kirim</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Modal for Editing Material Data --}}
 <div class="modal fade" id="editMaterialModal" tabindex="-1" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -150,7 +219,7 @@
 
     const perPage = 10;
     let currentPage = 1;
-    let filteredData = [...tableData]; // FIXED - awalnya langsung isi semua data
+    let filteredData = [...tableData];
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -167,7 +236,7 @@
         if (searchQuery) {
             tempFilteredData = tempFilteredData.filter(item => {
                 return item.nama_material.toLowerCase().includes(searchQuery) ||
-                       item.kode_material.toLowerCase().includes(searchQuery);
+                        item.kode_material.toLowerCase().includes(searchQuery);
             });
         }
         
@@ -184,7 +253,7 @@
             });
         }
         
-        filteredData = tempFilteredData; // FIXED - selalu update hasil filter
+        filteredData = tempFilteredData;
         currentPage = 1;
         renderTable();
     }
@@ -194,7 +263,7 @@
         const noData = document.querySelector('#no-data-material-1');
         
         const start = (currentPage - 1) * perPage;
-        const dataPage = filteredData.slice(start, start + perPage); // FIXED - selalu ambil dari filteredData
+        const dataPage = filteredData.slice(start, start + perPage);
 
         tbody.innerHTML = '';
         if (dataPage.length === 0) {
@@ -218,6 +287,9 @@
                         <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">${item.total_stok} pcs</span></td>
                         <td class="text-center"><p class="text-xs text-secondary font-weight-bold mb-0">${formatTanggal(item.tanggal)}</p></td>
                         <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
                             <button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editMaterialModal">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -230,10 +302,25 @@
             });
             attachActionListeners();
         }
-        renderPagination(filteredData.length); // FIXED - jumlah dari filteredData
+        renderPagination(filteredData.length);
     }
 
     function attachActionListeners() {
+        // Event listener for "Kirim" button
+        document.querySelectorAll('.kirim-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const material = tableData.find(item => item.id == id);
+                if (material) {
+                    document.getElementById('kirim-material-id').value = material.id;
+                    document.getElementById('modal-nama-material-display').textContent = material.nama_material;
+                    document.getElementById('modal-kode-material-display').textContent = material.kode_material;
+                    document.getElementById('modal-total-stok-display').textContent = `${material.total_stok} pcs`;
+                }
+            });
+        });
+
+        // Event listener for "Edit" button
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.dataset.id;
@@ -247,6 +334,7 @@
             });
         });
 
+        // Event listener for "Hapus" button
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.dataset.id;
@@ -310,26 +398,76 @@
         pagination.appendChild(createButton('»', totalPages, currentPage === totalPages));
     }
     
+    document.getElementById('submitKirim').addEventListener('click', function() {
+        const id = document.getElementById('kirim-material-id').value;
+        const tujuan = document.getElementById('tujuan-transaksi').value;
+        const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
+        const jumlah = parseInt(document.getElementById('jumlah-stok').value);
+
+        // Validation
+        if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
+            Swal.fire('Gagal!', 'Harap isi form dengan benar.', 'error');
+            return;
+        }
+
+        // Find the material data to get the current stock
+        const material = tableData.find(item => item.id == id);
+        if (!material) {
+            Swal.fire('Error!', 'Data material tidak ditemukan.', 'error');
+            return;
+        }
+
+        let stokAkhir;
+        if (jenis === 'penambahan') {
+            stokAkhir = material.total_stok + jumlah;
+        } else if (jenis === 'pengurangan') {
+            if (material.total_stok < jumlah) {
+                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk pengurangan.', 'warning');
+                return;
+            }
+            stokAkhir = material.total_stok - jumlah;
+        }
+
+        // Update the data in our mock array and re-render the table
+        material.total_stok = stokAkhir;
+        material.tanggal = new Date().toISOString().slice(0, 10);
+        renderTable();
+
+        const myModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
+        myModal.hide();
+
+        Swal.fire('Berhasil Dikirim!', `Stok material saat ini adalah **${stokAkhir} pcs**.`, 'success');
+    });
+
     document.getElementById('saveMaterialChanges').addEventListener('click', function() {
         const id = document.getElementById('edit-material-id').value;
         const nama = document.getElementById('edit-nama-material').value;
         const kode = document.getElementById('edit-kode-material').value;
-        const stok = document.getElementById('edit-total-stok').value;
-
-        console.log('Menyimpan perubahan untuk material ID:', id);
-        console.log('Nama Material:', nama);
-        console.log('Kode Material:', kode);
-        console.log('Total Stok:', stok);
-
+        const stok = parseInt(document.getElementById('edit-total-stok').value);
+    
+        if (!nama || !kode || isNaN(stok)) {
+            Swal.fire('Gagal!', 'Harap isi semua form edit dengan benar.', 'error');
+            return;
+        }
+    
+        const materialIndex = tableData.findIndex(item => item.id == id);
+        if (materialIndex > -1) {
+            tableData[materialIndex].nama_material = nama;
+            tableData[materialIndex].kode_material = kode;
+            tableData[materialIndex].total_stok = stok;
+            renderTable();
+        }
+    
         const myModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
         myModal.hide();
-
+    
         Swal.fire('Berhasil Disimpan!', 'Perubahan data material berhasil disimpan.', 'success');
     });
 
+
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('searchInput').addEventListener('input', filterData); // FIXED
-        filterData(); // initial render
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        filterData();
     });
 </script>
 @endpush
