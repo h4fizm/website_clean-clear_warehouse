@@ -15,8 +15,8 @@
             {{-- Logo for mobile (order-md-2 to push it after text on desktop) --}}
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                     alt="Branch Icon"
-                     style="height: 60px; width: auto; opacity: 0.9;">
+                    alt="Branch Icon"
+                    style="height: 60px; width: auto; opacity: 0.9;">
             </div>
 
             {{-- Text Content (order-md-1 to put it first on desktop) --}}
@@ -28,7 +28,7 @@
                     Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.
                 </p>
                 <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm"
-                      style="font-size: 0.8rem;">Nama Role</span>
+                        style="font-size: 0.8rem;">Nama Role</span>
             </div>
         </div>
 
@@ -50,10 +50,10 @@
 <div class="row">
     @php
         $cards = [
-            ['title' => 'Total User', 'value' => '1,234', 'icon' => 'ni-single-02', 'bg' => 'primary'],
-            ['title' => 'Total Cabang', 'value' => '24', 'icon' => 'ni-building', 'bg' => 'info'],
-            ['title' => 'Transaksi Bulan Ini', 'value' => '12,567', 'icon' => 'ni-send', 'bg' => 'success'],
-            ['title' => 'UPP Material Bulan ini', 'value' => '189', 'icon' => 'fas fa-sync-alt', 'bg' => 'danger'],
+            ['title' => 'Total SPBE', 'value' => '1,234', 'icon' => 'fas fa-industry', 'bg' => 'primary'],
+            ['title' => 'Total BPT', 'value' => '24', 'icon' => 'fas fa-warehouse', 'bg' => 'info'],
+            ['title' => 'Transaksi Penerimaan', 'value' => '12,567', 'icon' => 'fas fa-arrow-down', 'bg' => 'success'],
+            ['title' => 'Transaksi Penyaluran', 'value' => '1,890', 'icon' => 'fas fa-arrow-up', 'bg' => 'danger'],
         ];
     @endphp
     @foreach ($cards as $card)
@@ -71,7 +71,7 @@
                         </div>
                         <div class="col-3 text-end d-flex align-items-center">
                             <div class="icon icon-shape bg-gradient-{{ $card['bg'] }} shadow-{{ $card['bg'] }} text-center rounded-circle">
-                                <i class="ni {{ $card['icon'] }} text-lg opacity-10"></i>
+                                <i class="{{ $card['icon'] }} text-lg opacity-10"></i>
                             </div>
                         </div>
                     </div>
@@ -81,14 +81,13 @@
     @endforeach
 </div>
 
-{{-- Tabel & Grafik --}}
+{{-- Tabel Data Material (Row 1) --}}
 <div class="row mt-4">
-    {{-- Tabel Daftar Cabang --}}
-    <div class="col-md-6">
-        <div class="card" style="height: 420px;">
+    <div class="col-12">
+        <div class="card">
             <div class="card-header pb-0 p-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Data Material - Nama Cabang</h6>
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Data Material - Regional Sumbangsel</h6>
                     <div class="input-group input-group-sm" style="width: 200px;">
                         <input type="text" id="search-input-cabang" class="form-control" placeholder="Search..." aria-label="Search">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -121,33 +120,52 @@
             </div>
         </div>
     </div>
+</div>
 
-    {{-- Grafik --}}
-    <div class="col-md-6">
-        <div class="card" style="height: 420px;">
-            <div class="card-header pb-0 p-3 d-flex justify-content-between align-items-center">
-                <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Grafik Data Transaksi Bulan Ini Tiap Cabang</h6>
-
-                {{-- Dropdown Pilih Cabang (UNTUK GRAFIK) --}}
-                <div class="dropdown">
-                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 13px;">
-                        Pilih Cabang
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" data-value="Cabang 1">Cabang 1</a></li>
-                        <li><a class="dropdown-item" href="#" data-value="Cabang 2">Cabang 2</a></li>
-                        <li><a class="dropdown-item" href="#" data-value="Cabang 3">Cabang 3</a></li>
-                        <li><a class="dropdown-item" href="#" data-value="Cabang 4">Cabang 4</a></li>
-                        <li><a class="dropdown-item" href="#" data-value="Cabang 5">Cabang 5</a></li>
-                    </ul>
+{{-- Tabel Stok Material (Row 2) --}}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">STOCK MATERIAL REGION SUMBAGSEL</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMaterial" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 13px;">
+                            Pilih Material
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMaterial">
+                            <li><a class="dropdown-item" href="#" data-value="Material 1">Material 1</a></li>
+                            <li><a class="dropdown-item" href="#" data-value="Material 2">Material 2</a></li>
+                            <li><a class="dropdown-item" href="#" data-value="Material 3">Material 3</a></li>
+                        </ul>
+                    </div>
                 </div>
+                <p class="text-center text-dark mb-3 fw-bold fs-5" id="stock-title">Stok Juli 2025</p>
             </div>
-            <div class="card-body p-3 d-flex justify-content-center align-items-center">
-                <canvas id="grafik-transaksi" style="max-height: 330px; width: 100%;"></canvas>
+            <div class="card-body p-2" style="padding-top: 0 !important;">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0" id="table-stock-material-custom">
+                        <thead>
+                            <tr class="bg-primary text-white">
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 ps-2" style="width: 25%;">Material</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Gudang</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Baru</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Baik</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Rusak</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Afkir</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Layak Luar (Baru + Baik)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Data akan diisi oleh JavaScript --}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -196,9 +214,9 @@
             { id: 25, nama_material: 'Material Y (Pompa Kecil)', kode_material: generateRandomMaterialCode(5), stok_fisik: 25 }
         ];
 
-        // --- Custom Pagination & Search untuk Tabel Material ---
-        const itemsPerPage = 5; // Jumlah baris per halaman
-        const tableBody = document.querySelector('#table-cabang-custom tbody'); // This ID is still 'table-cabang-custom'
+        // --- Custom Pagination & Search untuk Tabel Material --
+        const itemsPerPage = 5;
+        const tableBody = document.querySelector('#table-cabang-custom tbody');
         const paginationContainer = document.getElementById('custom-pagination');
         let currentFilteredData = [];
         let currentPage = 0;
@@ -210,7 +228,6 @@
             const paginatedItems = data.slice(start, end);
 
             if (paginatedItems.length === 0) {
-                // Adjusted colspan to 4 for the new table structure
                 tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Tidak ada data material ditemukan.</td></tr>';
             } else {
                 paginatedItems.forEach((material, index) => {
@@ -223,7 +240,7 @@
                             <td class="w-30">
                                 <div class="d-flex px-2 py-1 align-items-center">
                                     <div class="icon icon-shape icon-sm me-3 bg-gradient-secondary shadow-secondary text-center rounded">
-                                        <i class="fas fa-box text-white opacity-10"></i> {{-- Changed icon to fa-box for material --}}
+                                        <i class="fas fa-box text-white opacity-10"></i>
                                     </div>
                                     <div class="ms-1">
                                         <h6 class="text-sm mb-0">${material.nama_material}</h6>
@@ -298,106 +315,108 @@
         // Event listener untuk input search
         document.getElementById('search-input-cabang').addEventListener('keyup', function () {
             const searchTerm = this.value.toLowerCase();
-            currentFilteredData = allMaterialData.filter(material => // Changed from allCabangData to allMaterialData
+            currentFilteredData = allMaterialData.filter(material =>
                 material.nama_material.toLowerCase().includes(searchTerm) ||
-                material.kode_material.toLowerCase().includes(searchTerm) // Added search by kode_material
+                material.kode_material.toLowerCase().includes(searchTerm)
             );
             currentPage = 0;
             renderTable(currentFilteredData, currentPage);
         });
 
         // Inisialisasi awal tabel dan paginasi
-        currentFilteredData = allMaterialData; // Changed from allCabangData to allMaterialData
+        currentFilteredData = allMaterialData;
         renderTable(currentFilteredData, currentPage);
 
 
-        // --- Inisialisasi Chart.js untuk Grafik Transaksi ---
-        const ctxGrafik = document.getElementById('grafik-transaksi').getContext('2d');
+        // --- Data Dummy dan Logika untuk Tabel Stok Material --
+        const materialStockData = {
+            'Material 1': [
+                { material_name: 'Tabung LPG 3 Kg', gudang: 'Gudang Region Sumbagsel', baru: 840, baik: 0, rusak: 0, afkir: 28416, layak_luar: 840 },
+                { material_name: 'Tabung LPG 3 Kg', gudang: 'SPBE/BPT Region Sumbagsel', baru: 33157, baik: 5533, rusak: 36515, afkir: 70813, layak_luar: 38690 }
+            ],
+            'Material 2': [
+                { material_name: 'Material 2', gudang: 'Gudang Region Sumbagsel', baru: 500, baik: 100, rusak: 50, afkir: 1500, layak_luar: 600 },
+                { material_name: 'Material 2', gudang: 'SPBE/BPT Region Sumbagsel', baru: 15000, baik: 2000, rusak: 1000, afkir: 30000, layak_luar: 17000 }
+            ],
+            'Material 3': [
+                { material_name: 'Material 3', gudang: 'Gudang Region Sumbagsel', baru: 200, baik: 50, rusak: 20, afkir: 1000, layak_luar: 250 },
+                { material_name: 'Material 3', gudang: 'SPBE/BPT Region Sumbagsel', baru: 25000, baik: 3500, rusak: 2500, afkir: 45000, layak_luar: 28500 }
+            ]
+        };
 
-        // Data dummy untuk 7 hari terakhir dari tanggal saat ini (menggunakan objek Date aktual)
-        const labelsGrafik = [];
-        const dataPointsGrafik = [];
-        // Use the actual current date for dynamic date generation
-        const todayActual = new Date(); 
-        // For consistent dummy data in the context of this request, 
-        // I will keep the fixed date `2025-07-28` for dummy generation, 
-        // but note that `new Date()` would be more appropriate for a live system.
-        const dummyFixedToday = new Date('2025-07-28T00:00:00'); 
-        
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date(dummyFixedToday);
-            date.setDate(date.getDate() - i);
-            const day = date.toLocaleString('id-ID', { weekday: 'short' });
-            const formattedDate = date.toLocaleString('id-ID', { day: '2-digit', month: 'short' }).replace('.', '');
-            labelsGrafik.push(`${day}, ${formattedDate}`);
-            dataPointsGrafik.push(Math.floor(Math.random() * (180 - 100 + 1)) + 100);
+        const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
+        const dropdownButton = document.getElementById('dropdownMaterial');
+        const stockTitle = document.getElementById('stock-title');
+
+        function renderStockTable(data, materialName) {
+            stockTableBody.innerHTML = '';
+            stockTitle.innerText = `Stok ${materialName} Juli 2025`;
+
+            if (data && data.length > 0) {
+                // Iterasi setiap item gudang untuk material yang dipilih
+                data.forEach((item, index) => {
+                    // Baris pertama: Nama Gudang, Baru, Baik, Rusak, Afkir
+                    const row1 = `
+                        <tr>
+                            ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${data.length * 2}" style="width: 25%;">
+                                <h6 class="text-sm font-weight-bold mb-0">${materialName}</h6>
+                            </td>` : ''}
+                            <td class="text-secondary text-center text-xs">
+                                <span class="text-xs font-weight-bold">${item.gudang}</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs">
+                                <span class="text-xs font-weight-bold">${item.baru.toLocaleString('id-ID')}</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs">
+                                <span class="text-xs font-weight-bold">${item.baik.toLocaleString('id-ID')}</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs">
+                                <span class="text-xs font-weight-bold">${item.rusak.toLocaleString('id-ID')}</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs">
+                                <span class="text-xs font-weight-bold">${item.afkir.toLocaleString('id-ID')}</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs">
+                                </td>
+                        </tr>
+                    `;
+                    stockTableBody.insertAdjacentHTML('beforeend', row1);
+
+                    // Baris kedua: Total Layak Luar
+                    const row2 = `
+                        <tr>
+                            <td class="text-secondary text-start text-xs bg-gray-100 ps-4">
+                                <span class="text-xs font-weight-bold">Layak Luar (Baru + Baik)</span>
+                            </td>
+                            <td class="text-secondary text-center text-xs bg-gray-100" colspan="4">
+                                </td>
+                            <td class="text-secondary text-center text-xs bg-gray-100">
+                                <h6 class="text-sm font-weight-bolder mb-0">${item.layak_luar.toLocaleString('id-ID')}</h6>
+                            </td>
+                        </tr>
+                    `;
+                    stockTableBody.insertAdjacentHTML('beforeend', row2);
+                });
+            } else {
+                stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Pilih material untuk menampilkan data.</td></tr>`;
+            }
         }
 
-        const grafikTransaksi = new Chart(ctxGrafik, {
-            type: 'line',
-            data: {
-                labels: labelsGrafik,
-                datasets: [{
-                    label: 'Total Stok',
-                    data: dataPointsGrafik,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Hari, Tanggal Bulan',
-                            font: {
-                                weight: 'bold'
-                            }
-                        },
-                        ticks: {
-                            font: {
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Total Stok',
-                            font: {
-                                weight: 'bold'
-                            }
-                        },
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                weight: 'bold'
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // --- Dropdown functionality untuk Grafik ---
-        document.querySelectorAll('.dropdown-item').forEach(item => {
+        // Event listener untuk dropdown
+        document.querySelectorAll('#dropdownMaterial + .dropdown-menu .dropdown-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
-                const selectedCabang = this.dataset.value;
-                document.getElementById('dropdownMenuButton').innerText = this.innerText;
-                console.log('Selected Cabang for Chart:', selectedCabang || 'Semua Cabang');
-                // Logika untuk memperbarui data grafik di sini (jika data dinamis)
+                const selectedMaterial = this.dataset.value;
+                const selectedMaterialText = this.innerText;
+                dropdownButton.innerText = selectedMaterialText;
+                const dataToShow = materialStockData[selectedMaterial];
+                renderStockTable(dataToShow, selectedMaterialText);
             });
         });
+
+        // Inisialisasi: Tampilkan tabel "Material 1" sebagai default
+        renderStockTable(materialStockData['Material 1'], 'Material 1');
+        dropdownButton.innerText = 'Material 1';
     });
 </script>
 @endpush

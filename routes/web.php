@@ -24,6 +24,9 @@ Route::get('/register', function () {
 Route::get('/dashboard', function () {
     return view('dashboard_page.menu.dashboard');
 });
+Route::get('/pusat', function () {
+    return view('dashboard_page.menu.data_pusat');
+});
 Route::get('/transaksi', function () {
     return view('dashboard_page.menu.data_transaksi');
 });

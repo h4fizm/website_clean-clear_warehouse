@@ -1,13 +1,8 @@
 @extends('dashboard_page.main')
-@section('title', 'Laman Transaksi')
+@section('title', 'Daftar Data P.Layang (Pusat)')
 @section('content')
 
-{{-- Define initialSalesArea for Blade and JavaScript access --}}
-<?php
-    $initialSalesArea = request()->query('sales_area', 'SA Jambi');
-?>
-
-{{-- Welcome Section (Refactored Title) --}}
+{{-- Welcome Section (Title for P.Layang) --}}
 <div class="col-12 mb-3">
     <div class="card p-4 position-relative welcome-card">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
@@ -18,11 +13,10 @@
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
-                    Ringkasan Data Transaksi SPBE/BPT
+                    Ringkasan Data P.Layang (Pusat)
                 </h4>
                 <p class="mb-2 opacity-8" id="summary-text">
-                    Lihat dan kelola data stok dan transaksi SPBE/BPT untuk region :
-                    <strong class="text-primary"><span id="dynamic-branch-name">SA Jambi</span></strong>.
+                    Lihat dan kelola data stok material dari Pusat Layang.
                 </p>
             </div>
         </div>
@@ -30,7 +24,7 @@
     </div>
 </div>
 
-{{-- Tabel SPBE/BPT --}}
+{{-- Tabel Data P.Layang (Pusat) --}}
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
@@ -38,7 +32,7 @@
                 {{-- Row for Table Title and Export Button --}}
                 <div class="row mb-3 align-items-center">
                     <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
-                        <h4 class="mb-0" id="table-branch-name">Tabel Stok SPBE/BPT - Nama Cabang</h4>
+                        <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                     </div>
                     <div class="col-12 col-md-auto">
                         <button type="button" class="btn btn-success d-flex align-items-center justify-content-center w-100 w-md-auto export-excel-btn">
@@ -46,39 +40,22 @@
                         </button>
                     </div>
                 </div>
-                {{-- Filters --}}
-                <div class="row mt-3">
-                    {{-- Row 1: Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) and Date Range Picker (Right Side on Desktop) --}}
-                    <div class="col-12 d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center desktop-filter-row-top">
-                        {{-- Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) --}}
-                        <div class="col-12 col-md-auto mb-2 mb-md-0 d-flex flex-column order-1 order-md-1">
-                            <p class="text-sm text-secondary mb-1 branch-selection-text-desktop">
-                                *Pilih salah satu tombol di bawah ini untuk melihat data SPBE/BPT berdasarkan Sales Region : *
-                            </p>
-                            <div class="btn-group d-flex flex-wrap branch-buttons" role="group" aria-label="Branch selection">
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Jambi">SA Jambi</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Bengkulu">SA Bengkulu</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Lampung">SA Lampung</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Sumsel">SA Sumsel</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Babel">SA Babel</button>
-                            </div>
-                        </div>
 
-                        {{-- Date Range Picker (Right Side on Desktop) --}}
-                        <div class="col-12 col-md-auto d-flex flex-wrap flex-md-nowrap gap-2 justify-content-start justify-content-md-end align-items-center mt-3 mt-md-0 order-2 order-md-2 date-filter-desktop-container">
-                            <label for="start-date-material-1" class="text-xs mb-0 me-1">Dari</label>
-                            <input type="date" id="start-date-material-1" class="form-control form-control-sm date-input">
-                            <label for="end-date-material-1" class="text-xs mb-0 ms-2 me-1">Sampai</label>
-                            <input type="date" id="end-date-material-1" class="form-control form-control-sm date-input">
+                {{-- New row for search and date filters --}}
+                <div class="row mb-3 align-items-center">
+                    {{-- Search Bar --}}
+                    <div class="col-12 col-md-6 mb-2 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Cari material..." onkeyup="filterData()">
                         </div>
                     </div>
-
-                    {{-- Row 2: Search Input (Full width on Desktop, below Date Range Picker) --}}
-                    <div class="col-12 mt-3 order-3 order-md-3 d-flex justify-content-end">
-                        <div class="input-group input-group-sm search-input-group search-input-desktop-aligned">
-                            <input type="text" id="search-input-material-1" class="form-control" placeholder="Cari Nama atau Kode Plant...">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        </div>
+                    {{-- Date Range Filter --}}
+                    <div class="col-12 col-md-6 d-flex align-items-center justify-content-start justify-content-md-end date-range-picker">
+                        <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Dari:</label>
+                        <input type="date" id="startDate" class="form-control me-2 date-input" onchange="filterData()">
+                        <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Sampai:</label>
+                        <input type="date" id="endDate" class="form-control date-input" onchange="filterData()">
                     </div>
                 </div>
            </div>
@@ -88,10 +65,13 @@
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama SPBE/BPT</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Plant</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Provinsi</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Kabupaten</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penerimaan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penyaluran</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -117,61 +97,34 @@
     </div>
 </div>
 
-<div class="modal fade" id="editSpbeBptModal" tabindex="-1" aria-labelledby="editSpbeBptModalLabel" aria-hidden="true">
+{{-- Modal for Editing Material Data --}}
+<div class="modal fade" id="editMaterialModal" tabindex="-1" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editSpbeBptModalLabel">Edit Data SPBE/BPT</h5>
+                <h5 class="modal-title" id="editMaterialModalLabel">Edit Data Material</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editSpbeBptForm">
-                    <input type="hidden" id="edit-id">
+                <form id="editMaterialForm">
+                    <input type="hidden" id="edit-material-id">
                     <div class="mb-3">
-                        <label for="edit-nama" class="form-label">Nama SPBE/BPT</label>
-                        <input type="text" class="form-control" id="edit-nama" required>
+                        <label for="edit-nama-material" class="form-label">Nama Material</label>
+                        <input type="text" class="form-control" id="edit-nama-material" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-kode-plant" class="form-label">Kode Plant</label>
-                        <input type="text" class="form-control" id="edit-kode-plant" required>
+                        <label for="edit-kode-material" class="form-label">Kode Material</label>
+                        <input type="text" class="form-control" id="edit-kode-material" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tipe</label>
-                        <div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="edit-tipe" id="tipe-spbe" value="SPBE">
-                                <label class="form-check-label" for="tipe-spbe">SPBE</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="edit-tipe" id="tipe-bpt" value="BPT">
-                                <label class="form-check-label" for="tipe-bpt">BPT</label>
-                            </div>
-                        </div>
-                    </div>
-                    {{-- Form field baru untuk Nama Provinsi --}}
-                    <div class="mb-3">
-                        <label for="edit-provinsi" class="form-label">Nama Provinsi</label>
-                        <input type="text" class="form-control" id="edit-provinsi" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-sa-region" class="form-label">SA Region/Sales</label>
-                        <select class="form-select" id="edit-sa-region" required>
-                            <option value="SA Jambi">SA Jambi</option>
-                            <option value="SA Bengkulu">SA Bengkulu</option>
-                            <option value="SA Lampung">SA Lampung</option>
-                            <option value="SA Sumsel">SA Sumsel</option>
-                            <option value="SA Babel">SA Babel</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-kabupaten" class="form-label">Nama Kabupaten</label>
-                        <input type="text" class="form-control" id="edit-kabupaten" required>
+                        <label for="edit-total-stok" class="form-label">Total Stok</label>
+                        <input type="number" class="form-control" id="edit-total-stok" required>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="saveSpbeBpt">Simpan Perubahan</button>
+                <button type="button" class="btn btn-primary" id="saveMaterialChanges">Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -180,74 +133,68 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    let selectedBranch = "{{ $initialSalesArea }}";
-
-    // Dummy data for SPBE/BPT with new columns
-    const spbeBptData = [
-        { id: 1, nama: 'SPBE Sukamaju', kode_plant: 'PL-001', tipe: 'SPBE', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Muaro Jambi' },
-        { id: 2, nama: 'BPT Sejahtera', kode_plant: 'PL-002', tipe: 'BPT', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Tanjung Jabung Timur' },
-        { id: 3, nama: 'SPBE Mandiri', kode_plant: 'PL-003', tipe: 'SPBE', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Bengkulu Utara' },
-        { id: 4, nama: 'BPT Jaya Abadi', kode_plant: 'PL-004', tipe: 'BPT', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Rejang Lebong' },
-        { id: 5, nama: 'SPBE Maju Bersama', kode_plant: 'PL-005', tipe: 'SPBE', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Lampung Selatan' },
-        { id: 6, nama: 'BPT Sentosa', kode_plant: 'PL-006', tipe: 'BPT', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Pringsewu' },
-        { id: 7, nama: 'SPBE Mufakat', kode_plant: 'PL-007', tipe: 'SPBE', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Palembang' },
-        { id: 8, nama: 'BPT Harapan', kode_plant: 'PL-008', tipe: 'BPT', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Ogan Ilir' },
-        { id: 9, nama: 'SPBE Bahagia', kode_plant: 'PL-009', tipe: 'SPBE', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Bangka' },
-        { id: 10, nama: 'BPT Makmur', kode_plant: 'PL-010', tipe: 'BPT', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Belitung' },
+    const tableData = [
+        { id: 1, nama_material: 'Material A (Kertas)', kode_material: 'KT-01', stok_awal: 500, penerimaan: 1200, penyaluran: 1000, total_stok: 700, tanggal: '2025-08-05' },
+        { id: 2, nama_material: 'Material B (Tinta Cetak)', kode_material: 'TINT-02', stok_awal: 100, penerimaan: 250, penyaluran: 200, total_stok: 150, tanggal: '2025-08-04' },
+        { id: 3, nama_material: 'Material C (Seal Karet)', kode_material: 'SK-03', stok_awal: 200, penerimaan: 400, penyaluran: 350, total_stok: 250, tanggal: '2025-08-03' },
+        { id: 4, nama_material: 'Material D (Pelumas)', kode_material: 'PLM-04', stok_awal: 60, penerimaan: 100, penyaluran: 80, total_stok: 80, tanggal: '2025-08-02' },
+        { id: 5, nama_material: 'Material E (Spare Part)', kode_material: 'SP-05', stok_awal: 30, penerimaan: 50, penyaluran: 20, total_stok: 60, tanggal: '2025-08-01' },
+        { id: 6, nama_material: 'Material F (Kabel)', kode_material: 'KBL-06', stok_awal: 1500, penerimaan: 300, penyaluran: 200, total_stok: 1600, tanggal: '2025-07-31' },
+        { id: 7, nama_material: 'Material G (Baut)', kode_material: 'BT-07', stok_awal: 2000, penerimaan: 500, penyaluran: 750, total_stok: 1750, tanggal: '2025-07-30' },
+        { id: 8, nama_material: 'Material H (Cat)', kode_material: 'CAT-08', stok_awal: 80, penerimaan: 50, penyaluran: 30, total_stok: 100, tanggal: '2025-07-29' },
+        { id: 9, nama_material: 'Material I (Gasket)', kode_material: 'GSK-09', stok_awal: 120, penerimaan: 40, penyaluran: 60, total_stok: 100, tanggal: '2025-07-28' },
+        { id: 10, nama_material: 'Material J (Filter)', kode_material: 'FLTR-10', stok_awal: 400, penerimaan: 150, penyaluran: 200, total_stok: 350, tanggal: '2025-07-27' },
+        { id: 11, nama_material: 'Material K (Pipa)', kode_material: 'PIP-11', stok_awal: 100, penerimaan: 50, penyaluran: 30, total_stok: 120, tanggal: '2025-07-26' },
+        { id: 12, nama_material: 'Material L (Kawat)', kode_material: 'KWT-12', stok_awal: 200, penerimaan: 100, penyaluran: 50, total_stok: 250, tanggal: '2025-07-25' },
     ];
 
     const perPage = 10;
-    let currentPage1 = 1;
-    let searchQuery1 = '';
+    let currentPage = 1;
+    let filteredData = [...tableData]; // FIXED - awalnya langsung isi semua data
 
-    // Format date is no longer needed but kept for general utility
     function formatTanggal(tgl) {
         const d = new Date(tgl);
         return d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     }
+    
+    function filterData() {
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
 
-    // Update displayed branch names
-    function updateBranchNames(branchName) {
-        document.getElementById('dynamic-branch-name').textContent = branchName;
-        document.getElementById('table-branch-name').textContent = `Tabel Data SPBE/BPT - ${branchName}`;
-    }
+        let tempFilteredData = [...tableData];
 
-    // Render active state of branch buttons
-    function renderBranchButtons() {
-        const branchButtons = document.querySelectorAll('.btn-group button');
-        branchButtons.forEach(button => {
-            if (button.dataset.branch === selectedBranch) {
-                button.classList.remove('btn-outline-primary');
-                button.classList.add('btn-primary');
-            } else {
-                button.classList.remove('btn-primary');
-                button.classList.add('btn-outline-primary');
-            }
-        });
-    }
-
-    // Filter data based on selected SA and search query
-    function filterData1() {
-        let filteredData = spbeBptData.filter(item => item.sa_region === selectedBranch);
-
-        if (searchQuery1) {
-            filteredData = filteredData.filter(item =>
-                item.nama.toLowerCase().includes(searchQuery1.toLowerCase()) ||
-                item.kode_plant.toLowerCase().includes(searchQuery1.toLowerCase()) ||
-                item.nama_provinsi.toLowerCase().includes(searchQuery1.toLowerCase()) ||
-                item.nama_kabupaten.toLowerCase().includes(searchQuery1.toLowerCase())
-            );
+        if (searchQuery) {
+            tempFilteredData = tempFilteredData.filter(item => {
+                return item.nama_material.toLowerCase().includes(searchQuery) ||
+                       item.kode_material.toLowerCase().includes(searchQuery);
+            });
         }
-        return filteredData;
+        
+        if (startDate || endDate) {
+            tempFilteredData = tempFilteredData.filter(item => {
+                const itemDate = new Date(item.tanggal);
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+
+                if (start) start.setHours(0, 0, 0, 0);
+                if (end) end.setHours(23, 59, 59, 999);
+                
+                return (!start || itemDate >= start) && (!end || itemDate <= end);
+            });
+        }
+        
+        filteredData = tempFilteredData; // FIXED - selalu update hasil filter
+        currentPage = 1;
+        renderTable();
     }
 
-    // Render table rows
-    function renderTable1() {
+    function renderTable() {
         const tbody = document.querySelector('#table-material-1 tbody');
         const noData = document.querySelector('#no-data-material-1');
-        const filtered = filterData1();
-        const start = (currentPage1 - 1) * perPage;
-        const dataPage = filtered.slice(start, start + perPage);
+        
+        const start = (currentPage - 1) * perPage;
+        const dataPage = filteredData.slice(start, start + perPage); // FIXED - selalu ambil dari filteredData
 
         tbody.innerHTML = '';
         if (dataPage.length === 0) {
@@ -255,34 +202,23 @@
         } else {
             noData.style.display = 'none';
             dataPage.forEach((item, index) => {
-                const detailUrl = `{{ url('/material') }}?sa_region=${encodeURIComponent(item.sa_region)}&spbe_bpt_nama=${encodeURIComponent(item.nama)}`;
+                const rowIndex = start + index + 1;
                 tbody.innerHTML += `
                     <tr>
-                        <td class="text-center">
-                            <p class="text-xs font-weight-bold mb-0">${start + index + 1}</p>
-                        </td>
-                        <td>
-                            <div class="d-flex px-2 py-1 align-items-center">
-                                <div class="d-flex flex-column justify-content-center">
-                                    <a href="${detailUrl}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
-                                        ${item.nama}
-                                    </a>
-                                </div>
-                            </div>
-                        </td>
+                        <td class="text-center"><p class="text-xs font-weight-bold mb-0">${rowIndex}</p></td>
                         <td>
                             <div class="d-flex flex-column justify-content-center">
-                                <p class="text-xs text-secondary mb-0">${item.kode_plant}</p>
+                                <p class="mb-0 text-sm font-weight-bolder text-primary">${item.nama_material}</p>
                             </div>
                         </td>
-                        <td>
-                            <p class="text-xs text-secondary font-weight-bold mb-0">${item.nama_provinsi}</p>
-                        </td>
-                        <td>
-                            <p class="text-xs text-secondary font-weight-bold mb-0">${item.nama_kabupaten}</p>
-                        </td>
+                        <td><p class="text-xs text-secondary mb-0">${item.kode_material}</p></td>
+                        <td class="text-center"><span class="badge bg-gradient-secondary text-white text-xs">${item.stok_awal} pcs</span></td>
+                        <td class="text-center"><span class="badge bg-gradient-primary text-white text-xs">${item.penerimaan} pcs</span></td>
+                        <td class="text-center"><span class="badge bg-gradient-info text-white text-xs">${item.penyaluran} pcs</span></td>
+                        <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">${item.total_stok} pcs</span></td>
+                        <td class="text-center"><p class="text-xs text-secondary font-weight-bold mb-0">${formatTanggal(item.tanggal)}</p></td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editSpbeBptModal">
+                            <button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editMaterialModal">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger text-white delete-btn" data-id="${item.id}">
@@ -292,37 +228,25 @@
                     </tr>
                 `;
             });
-
-            // Re-attach event listeners after rendering
             attachActionListeners();
         }
-        renderPagination1(filtered.length);
+        renderPagination(filteredData.length); // FIXED - jumlah dari filteredData
     }
 
-    // Attach event listeners for edit and delete buttons
     function attachActionListeners() {
-        // Edit button listener
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.dataset.id;
-                const spbe = spbeBptData.find(item => item.id == id);
-                if (spbe) {
-                    document.getElementById('edit-id').value = spbe.id;
-                    document.getElementById('edit-nama').value = spbe.nama;
-                    document.getElementById('edit-kode-plant').value = spbe.kode_plant;
-                    document.getElementById('edit-provinsi').value = spbe.nama_provinsi; // Mengisi form provinsi
-                    document.getElementById('edit-sa-region').value = spbe.sa_region;
-                    document.getElementById('edit-kabupaten').value = spbe.nama_kabupaten;
-                    if (spbe.tipe === 'SPBE') {
-                        document.getElementById('tipe-spbe').checked = true;
-                    } else {
-                        document.getElementById('tipe-bpt').checked = true;
-                    }
+                const material = tableData.find(item => item.id == id);
+                if (material) {
+                    document.getElementById('edit-material-id').value = material.id;
+                    document.getElementById('edit-nama-material').value = material.nama_material;
+                    document.getElementById('edit-kode-material').value = material.kode_material;
+                    document.getElementById('edit-total-stok').value = material.total_stok;
                 }
             });
         });
 
-        // Delete button listener
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const id = this.dataset.id;
@@ -339,7 +263,7 @@
                     if (result.isConfirmed) {
                         Swal.fire(
                             'Berhasil Dihapus!',
-                            'Data SPBE/BPT telah berhasil dihapus.',
+                            'Data material telah berhasil dihapus.',
                             'success'
                         );
                     }
@@ -348,8 +272,7 @@
         });
     }
 
-    // Render pagination buttons
-    function renderPagination1(totalItems) {
+    function renderPagination(totalItems) {
         const pagination = document.getElementById('pagination-material-1');
         const totalPages = Math.ceil(totalItems / perPage);
         pagination.innerHTML = '';
@@ -361,66 +284,56 @@
             if (!disabled) {
                 li.querySelector('a').addEventListener('click', e => {
                     e.preventDefault();
-                    currentPage1 = page;
-                    renderTable1();
+                    currentPage = page;
+                    renderTable();
                 });
             }
             return li;
         }
 
-        pagination.appendChild(createButton('«', 1, currentPage1 === 1));
-        pagination.appendChild(createButton('‹', currentPage1 - 1, currentPage1 === 1));
+        pagination.appendChild(createButton('«', 1, currentPage === 1));
+        pagination.appendChild(createButton('‹', currentPage - 1, currentPage === 1));
 
-        for (let i = 1; i <= totalPages; i++) {
-            pagination.appendChild(createButton(i, i, false, i === currentPage1));
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
 
-        pagination.appendChild(createButton('›', currentPage1 + 1, currentPage1 === totalPages));
-        pagination.appendChild(createButton('»', totalPages, currentPage1 === totalPages));
+        for (let i = startPage; i <= endPage; i++) {
+            pagination.appendChild(createButton(i, i, false, i === currentPage));
+        }
+
+        pagination.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
+        pagination.appendChild(createButton('»', totalPages, currentPage === totalPages));
     }
+    
+    document.getElementById('saveMaterialChanges').addEventListener('click', function() {
+        const id = document.getElementById('edit-material-id').value;
+        const nama = document.getElementById('edit-nama-material').value;
+        const kode = document.getElementById('edit-kode-material').value;
+        const stok = document.getElementById('edit-total-stok').value;
 
-    document.getElementById('saveSpbeBpt').addEventListener('click', function() {
-        const id = document.getElementById('edit-id').value;
-        const nama = document.getElementById('edit-nama').value;
-        const kode_plant = document.getElementById('edit-kode-plant').value;
-        const tipe = document.querySelector('input[name="edit-tipe"]:checked').value;
-        const provinsi = document.getElementById('edit-provinsi').value; // Mengambil nilai provinsi
-        const sa_region = document.getElementById('edit-sa-region').value;
-        const kabupaten = document.getElementById('edit-kabupaten').value;
+        console.log('Menyimpan perubahan untuk material ID:', id);
+        console.log('Nama Material:', nama);
+        console.log('Kode Material:', kode);
+        console.log('Total Stok:', stok);
 
-        console.log('Saving changes:', { id, nama, kode_plant, tipe, provinsi, sa_region, kabupaten });
-        const myModal = bootstrap.Modal.getInstance(document.getElementById('editSpbeBptModal'));
+        const myModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
         myModal.hide();
-        Swal.fire('Berhasil Disimpan!', 'Perubahan data SPBE/BPT berhasil disimpan.', 'success');
+
+        Swal.fire('Berhasil Disimpan!', 'Perubahan data material berhasil disimpan.', 'success');
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Search input event listener
-        document.getElementById('search-input-material-1').addEventListener('input', function () {
-            searchQuery1 = this.value;
-            currentPage1 = 1;
-            renderTable1();
-        });
-
-        // Branch selection buttons event listener
-        const branchButtons = document.querySelectorAll('.btn-group button');
-        branchButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                selectedBranch = this.dataset.branch;
-                updateBranchNames(selectedBranch);
-                renderBranchButtons();
-                currentPage1 = 1;
-                renderTable1();
-            });
-        });
-
-        // Initial render
-        updateBranchNames(selectedBranch);
-        renderBranchButtons();
-        renderTable1();
+        document.getElementById('searchInput').addEventListener('input', filterData); // FIXED
+        filterData(); // initial render
     });
 </script>
 @endpush
+
 
 {{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
 <style>
@@ -516,6 +429,7 @@
 
         /* Search input specific styles for desktop alignment */
         .search-input-desktop-aligned {
+            /* This class will ensure the search bar width matches the date filters */
             height: 40px;
             /* Adjusted height for desktop search input */
             max-width: 310px;
@@ -679,54 +593,84 @@
 
         .date-input {
             width: 100% !important;
+            /* Full width for date inputs */
             height: 38px !important;
+            /* Smaller height for date inputs */
         }
 
         .date-range-picker label {
             margin-right: 0 !important;
+            /* Remove right margin */
             margin-left: 0 !important;
+            /* Remove left margin */
         }
 
         /* --- Specific changes for Search Input Group in Mobile --- */
         .search-input-group {
             width: 100% !important;
+            /* Full width for the whole group */
             height: 38px !important;
+            /* Smaller height for the whole group */
             margin-top: 0.5rem;
+            /* Add some top margin when stacked below date pickers */
         }
 
         .search-input-group .form-control {
             height: 38px !important;
+            /* Ensure input field matches group height */
             font-size: 0.85rem !important;
+            /* Match font size */
             padding-right: 0.5rem;
+            /* Adjust padding to make space for icon */
         }
 
         .search-input-group .input-group-text {
             height: 38px !important;
+            /* Match height of input */
             padding: 0.4rem 0.8rem;
+            /* Adjust padding */
             font-size: 0.85rem !important;
+            /* Match font size */
         }
+
         /* --- End of Mobile Specific changes for Search Input Group --- */
 
+
+        /* Adjust padding for card-header in mobile to give more space */
         .card-header {
             padding: 1rem !important;
         }
 
+        /* Make table header text smaller in mobile */
         #table-material-1 thead th {
             font-size: 0.65rem !important;
+            /* Smaller text for table headers */
         }
 
+        /* Make table body text smaller in mobile */
         #table-material-1 tbody td {
             font-size: 0.75rem !important;
+            /* Smaller text for table body */
         }
 
+        /* Adjust padding for table cells */
         #table-material-1 tbody td,
         #table-material-1 thead th {
             padding: 0.5rem 0.5rem !important;
         }
 
-        .order-1 { order: 1; }
-        .order-2 { order: 2; }
-        .order-3 { order: 3; }
+        /* Ensure default order for mobile when using order-md-* */
+        .order-1 {
+            order: 1;
+        }
+
+        .order-2 {
+            order: 2;
+        }
+
+        .order-3 {
+            order: 3;
+        }
     }
 </style>
 @endsection

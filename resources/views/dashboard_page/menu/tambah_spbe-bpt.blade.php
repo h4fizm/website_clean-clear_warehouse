@@ -44,6 +44,10 @@
                         </select>
                     </div>
                     <div class="col-12">
+                        <label for="namaProvinsi" class="form-label">Nama Provinsi</label>
+                        <input type="text" class="form-control" id="namaProvinsi" required>
+                    </div>
+                    <div class="col-12">
                         <label for="namaKabupaten" class="form-label">Nama Kabupaten</label>
                         <input type="text" class="form-control" id="namaKabupaten" required>
                     </div>
@@ -70,10 +74,11 @@
             const kode = document.getElementById('kodePlant').value;
             const jenis = document.querySelector('input[name="jenisSpbeBpt"]:checked').value;
             const saRegion = document.getElementById('saRegion').value;
+            const provinsi = document.getElementById('namaProvinsi').value; // Ambil nilai provinsi
             const kabupaten = document.getElementById('namaKabupaten').value;
 
             // Simple validation
-            if (!nama || !kode || !jenis || !saRegion || !kabupaten) {
+            if (!nama || !kode || !jenis || !saRegion || !provinsi || !kabupaten) { // Tambah validasi provinsi
                 Swal.fire('Gagal!', 'Harap lengkapi semua kolom dengan benar.', 'error');
                 return;
             }
@@ -84,6 +89,7 @@
                 kode,
                 jenis,
                 saRegion,
+                provinsi, // Masukkan provinsi ke log
                 kabupaten
             });
 
