@@ -22,7 +22,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="cabangName" class="form-label">Nama Cabang</label>
+                            <label for="cabangName" class="form-label">Sales Area/Region</label>
                             <input type="text" class="form-control" id="cabangName" readonly>
                         </div>
                         <div class="col-md-6">
@@ -32,7 +32,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="pjUser" class="form-label">Penanggung Jawab Cabang</label>
+                        <label for="pjUser" class="form-label">Penanggung Jawab Sales Area/Region</label>
                         <input type="text" class="form-control" id="pjUser" value="Adi Wijaya (Penanggung Jawab)" readonly>
                     </div>
 
@@ -61,6 +61,7 @@
 @push('scripts')
 {{-- CKEditor 5 CDN (Classic build) --}}
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     let keteranganEditor;
@@ -101,32 +102,56 @@
         const materialId = urlParams.get('material_id'); 
         const materialNama = urlParams.get('material_nama'); 
         const namaBPT = urlParams.get('nama_bpt');
-        const namaCabang = urlParams.get('nama_cabang');
+        const namaCabang = urlParams.get('nama_cabang'); // This variable holds the SA/Region name
         const stokMaterial = urlParams.get('stok_material'); 
 
         // Isi form autofill
         document.getElementById('materialName').value = materialNama ? decodeURIComponent(materialNama) : 'Data Tidak Ditemukan';
         document.getElementById('bptName').value = namaBPT ? decodeURIComponent(namaBPT) : 'Data Tidak Ditemukan';
         document.getElementById('cabangName').value = namaCabang ? decodeURIComponent(namaCabang) : 'Data Tidak Ditemukan';
+        
+        // Update label PJ to be consistent
+        document.querySelector('label[for="pjUser"]').textContent = `Penanggung Jawab ${document.getElementById('cabangName').value}`;
 
-        // Opsional: Handle form submission (contoh alert sederhana)
+        // Handle form submission with Swal confirmation
         document.getElementById('pemusnahanForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Dapatkan konten dari CKEditor
-            const keteranganContent = keteranganEditor.getData();
-            const aktivitasContent = aktivitasEditor.getData();
+            Swal.fire({
+                title: 'Konfirmasi Pemusnahan',
+                text: "Apakah Anda yakin ingin menyelesaikan proses pemusnahan ini?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Lanjutkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Dapatkan konten dari CKEditor
+                    const keteranganContent = keteranganEditor.getData();
+                    const aktivitasContent = aktivitasEditor.getData();
 
-            console.log('Tanggal:', document.getElementById('tanggal').value);
-            console.log('Penanggung Jawab Cabang:', document.getElementById('pjUser').value);
-            console.log('Nama Material (Autofill):', document.getElementById('materialName').value);
-            console.log('Nama BPT (Autofill):', document.getElementById('bptName').value);
-            console.log('Nama Cabang (Autofill):', document.getElementById('cabangName').value);
-            console.log('Keterangan:', keteranganContent);
-            console.log('Aktivitas:', aktivitasContent);
+                    // Log data to console (simulasi kirim ke backend)
+                    console.log('Tanggal:', document.getElementById('tanggal').value);
+                    console.log('Penanggung Jawab:', document.getElementById('pjUser').value);
+                    console.log('Nama Material:', document.getElementById('materialName').value);
+                    console.log('Nama BPT:', document.getElementById('bptName').value);
+                    console.log('Sales Area/Region:', document.getElementById('cabangName').value);
+                    console.log('Keterangan:', keteranganContent);
+                    console.log('Aktivitas:', aktivitasContent);
 
-            alert('Form Keterangan Pemusnahan berhasil disubmit! (Cek console log untuk data)');
-            // Di sini Anda akan mengirim data ini ke backend menggunakan AJAX/fetch API
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: 'Keterangan pemusnahan berhasil disubmit.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = "{{ url('/upp-material') }}";
+                    });
+                }
+            });
         });
     });
 </script>

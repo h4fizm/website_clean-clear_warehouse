@@ -12,14 +12,13 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0">
-                {{-- Row for Title and Add Button --}}
+                {{-- Row for Title and Export Button --}}
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="mb-0">Daftar Stok Material - {{ $spbeBptName }}</h3>
-                    {{-- Tombol Tambah Material untuk sementara disembunyikan --}}
-                    <button class="btn btn-success d-none align-items-center justify-content-center"
-                            data-bs-toggle="modal" data-bs-target="#addMaterialModal"
-                            title="Tambah Data Material">
-                        <i class="fas fa-plus me-2"></i> Tambah Material
+                    <button class="btn btn-success d-flex align-items-center justify-content-center"
+                            id="export-excel-btn"
+                            title="Export Data ke Excel">
+                        <i class="fas fa-file-excel me-2"></i> Export Excel
                     </button>
                 </div>
                 
@@ -50,7 +49,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
@@ -110,7 +109,7 @@
                         <label class="form-label">Tipe</label>
                         <div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="addTipe" id="add-tipe-spbe" value="SPBE">
+                                <input class="form-check-input" type="radio" name="addTipe" id="add-tipe-spbe" value="SPBE" checked>
                                 <label class="form-check-label" for="add-tipe-spbe">SPBE</label>
                             </div>
                             <div class="form-check form-check-inline">
@@ -153,10 +152,11 @@
                         <input type="text" class="form-control" id="editKodeMaterial" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editSpbeBpt" class="form-label">Nama SPBE/BPT</label>
-                        <select class="form-select" id="editSpbeBpt" required>
-                             {{-- Options will be populated by JavaScript --}}
-                        </select>
+                        <label for="editSpbeBptSearch" class="form-label">Nama SPBE/BPT</label>
+                        <input type="text" class="form-control" id="editSpbeBptSearch" placeholder="Cari SPBE/BPT..." required>
+                        <ul id="editSpbeBptList" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none; position: absolute; z-index: 1000; width: 93%;">
+                            {{-- List items will be populated by JavaScript --}}
+                        </ul>
                     </div>
                     <div class="mb-3">
                         <label for="editTotalStok" class="form-label">Total Stok</label>
@@ -200,22 +200,26 @@
                         <input type="text" class="form-control" id="asalTransaksiText" disabled>
                         <input type="hidden" id="asalTransaksi" name="asalTransaksi">
                     </div>
+                    
+                    {{-- Searchable input for Tujuan Transaksi --}}
                     <div class="mb-3">
-                        <label for="tujuanTransaksi" class="form-label">Tujuan Transaksi</label>
-                        <select class="form-select" id="tujuanTransaksi" required>
-                            <option value="">Pilih Tujuan</option>
-                        </select>
+                        <label for="tujuanTransaksiSearch" class="form-label">Tujuan Transaksi</label>
+                        <input type="text" class="form-control" id="tujuanTransaksiSearch" placeholder="Cari tujuan..." required>
+                        <ul id="tujuanTransaksiList" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none; position: absolute; z-index: 1000; width: 93%;">
+                            {{-- List items will be populated by JavaScript --}}
+                        </ul>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenisPenambahan" value="penambahan" checked>
-                                <label class="form-check-label" for="jenisPenambahan">Penambahan</label>
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenisPenerimaan" value="penambahan" checked>
+                                <label class="form-check-label" for="jenisPenerimaan">Penerimaan</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenisPengurangan" value="pengurangan">
-                                <label class="form-check-label" for="jenisPengurangan">Pengurangan</label>
+                                <label class="form-check-label" for="jenisPengurangan">Penyaluran</label>
                             </div>
                         </div>
                     </div>
@@ -257,6 +261,27 @@
         { id: 13, nama: 'Konektor Gas', kode: 'KNG-002', stok_awal: 500, penerimaan: 50, penyaluran: 150, total_stok: 400, tanggal: '2025-07-16', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
         { id: 14, nama: 'Manometer', kode: 'MAN-002', stok_awal: 100, penerimaan: 20, penyaluran: 30, total_stok: 90, tanggal: '2025-07-15', spbe_bpt_nama: 'SPBE Mandiri', tipe: 'SPBE', sa_region: 'SA Bengkulu', kabupaten: 'Bengkulu Utara' },
         { id: 15, nama: 'Gas 3kg', kode: 'LPG3-002', stok_awal: 50, penerimaan: 100, penyaluran: 120, total_stok: 30, tanggal: '2025-07-14', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
+        { id: 16, nama: 'Gas LPG 3kg', kode: 'LPG3-003', stok_awal: 250, penerimaan: 800, penyaluran: 600, total_stok: 450, tanggal: '2025-07-13', spbe_bpt_nama: 'SPBE Maju Bersama', tipe: 'SPBE', sa_region: 'SA Lampung', kabupaten: 'Pringsewu' },
+        { id: 17, nama: 'Gas LPG 12kg', kode: 'LPG12-002', stok_awal: 180, penerimaan: 300, penyaluran: 250, total_stok: 230, tanggal: '2025-07-12', spbe_bpt_nama: 'SPBE Sukamaju', tipe: 'SPBE', sa_region: 'SA Jambi', kabupaten: 'Muaro Jambi' },
+        { id: 18, nama: 'Tabung 3kg', kode: 'TBG3-002', stok_awal: 75, penerimaan: 80, penyaluran: 90, total_stok: 65, tanggal: '2025-07-11', spbe_bpt_nama: 'BPT Sejahtera', tipe: 'BPT', sa_region: 'SA Jambi', kabupaten: 'Tanjung Jabung Timur' },
+        { id: 19, nama: 'Seal Karet', kode: 'SEAL-02', stok_awal: 300, penerimaan: 100, penyaluran: 150, total_stok: 250, tanggal: '2025-07-10', spbe_bpt_nama: 'SPBE Mandiri', tipe: 'SPBE', sa_region: 'SA Bengkulu', kabupaten: 'Bengkulu Utara' },
+        { id: 20, nama: 'Regulator', kode: 'REG-006', stok_awal: 120, penerimaan: 50, penyaluran: 70, total_stok: 100, tanggal: '2025-07-09', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
+        { id: 21, nama: 'Selang Gas', kode: 'SLG-011', stok_awal: 90, penerimaan: 20, penyaluran: 30, total_stok: 80, tanggal: '2025-07-08', spbe_bpt_nama: 'SPBE Maju Bersama', tipe: 'SPBE', sa_region: 'SA Lampung', kabupaten: 'Pringsewu' },
+        { id: 22, nama: 'Kompor Portable', kode: 'KPR-016', stok_awal: 50, penerimaan: 5, penyaluran: 15, total_stok: 40, tanggal: '2025-07-07', spbe_bpt_nama: 'SPBE Sukamaju', tipe: 'SPBE', sa_region: 'SA Jambi', kabupaten: 'Muaro Jambi' },
+        { id: 23, nama: 'Gas 5.5kg', kode: 'LPG5.5-002', stok_awal: 250, penerimaan: 75, penyaluran: 50, total_stok: 275, tanggal: '2025-07-06', spbe_bpt_nama: 'BPT Sejahtera', tipe: 'BPT', sa_region: 'SA Jambi', kabupaten: 'Tanjung Jabung Timur' },
+        { id: 24, nama: 'Tabung 5.5kg', kode: 'TBG5.5-002', stok_awal: 180, penerimaan: 15, penyaluran: 25, total_stok: 170, tanggal: '2025-07-05', spbe_bpt_nama: 'SPBE Mandiri', tipe: 'SPBE', sa_region: 'SA Bengkulu', kabupaten: 'Bengkulu Utara' },
+        { id: 25, nama: 'Manometer', kode: 'MAN-003', stok_awal: 100, penerimaan: 25, penyaluran: 30, total_stok: 95, tanggal: '2025-07-04', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
+        { id: 26, nama: 'Konektor Gas', kode: 'KNG-003', stok_awal: 500, penerimaan: 70, penyaluran: 80, total_stok: 490, tanggal: '2025-07-03', spbe_bpt_nama: 'SPBE Maju Bersama', tipe: 'SPBE', sa_region: 'SA Lampung', kabupaten: 'Pringsewu' },
+        { id: 27, nama: 'Flow Meter', kode: 'FLM-003', stok_awal: 0, penerimaan: 0, penyaluran: 0, total_stok: 0, tanggal: '2025-07-02', spbe_bpt_nama: 'SPBE Sukamaju', tipe: 'SPBE', sa_region: 'SA Jambi', kabupaten: 'Muaro Jambi' },
+        { id: 28, nama: 'Konektor Gas', kode: 'KNG-004', stok_awal: 500, penerimaan: 100, penyaluran: 200, total_stok: 400, tanggal: '2025-07-01', spbe_bpt_nama: 'BPT Sejahtera', tipe: 'BPT', sa_region: 'SA Jambi', kabupaten: 'Tanjung Jabung Timur' },
+        { id: 29, nama: 'Manometer', kode: 'MAN-004', stok_awal: 100, penerimaan: 50, penyaluran: 25, total_stok: 125, tanggal: '2025-06-30', spbe_bpt_nama: 'SPBE Mandiri', tipe: 'SPBE', sa_region: 'SA Bengkulu', kabupaten: 'Bengkulu Utara' },
+        { id: 30, nama: 'Gas 3kg', kode: 'LPG3-004', stok_awal: 50, penerimaan: 75, penyaluran: 40, total_stok: 85, tanggal: '2025-06-29', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
+        { id: 31, nama: 'Gas LPG 3kg', kode: 'LPG3-005', stok_awal: 250, penerimaan: 1000, penyaluran: 800, total_stok: 450, tanggal: '2025-06-28', spbe_bpt_nama: 'SPBE Maju Bersama', tipe: 'SPBE', sa_region: 'SA Lampung', kabupaten: 'Pringsewu' },
+        { id: 32, nama: 'Gas LPG 12kg', kode: 'LPG12-005', stok_awal: 180, penerimaan: 500, penyaluran: 350, total_stok: 330, tanggal: '2025-06-27', spbe_bpt_nama: 'SPBE Sukamaju', tipe: 'SPBE', sa_region: 'SA Jambi', kabupaten: 'Muaro Jambi' },
+        { id: 33, nama: 'Tabung 3kg', kode: 'TBG3-005', stok_awal: 75, penerimaan: 120, penyaluran: 100, total_stok: 95, tanggal: '2025-06-26', spbe_bpt_nama: 'BPT Sejahtera', tipe: 'BPT', sa_region: 'SA Jambi', kabupaten: 'Tanjung Jabung Timur' },
+        { id: 34, nama: 'Seal Karet', kode: 'SEAL-05', stok_awal: 300, penerimaan: 50, penyaluran: 200, total_stok: 150, tanggal: '2025-06-25', spbe_bpt_nama: 'SPBE Mandiri', tipe: 'SPBE', sa_region: 'SA Bengkulu', kabupaten: 'Bengkulu Utara' },
+        { id: 35, nama: 'Regulator', kode: 'REG-007', stok_awal: 120, penerimaan: 40, penyaluran: 60, total_stok: 100, tanggal: '2025-06-24', spbe_bpt_nama: 'BPT Jaya Abadi', tipe: 'BPT', sa_region: 'SA Bengkulu', kabupaten: 'Rejang Lebong' },
+        { id: 36, nama: 'Selang Gas', kode: 'SLG-015', stok_awal: 90, penerimaan: 30, penyaluran: 50, total_stok: 70, tanggal: '2025-06-23', spbe_bpt_nama: 'SPBE Maju Bersama', tipe: 'SPBE', sa_region: 'SA Lampung', kabupaten: 'Pringsewu' },
     ];
     
     // List of all unique SPBE/BPT names for the 'Kirim Material' modal dropdown
@@ -281,6 +306,10 @@
     let currentMaterialPage = 0;
     const itemsPerMaterialPage = 10;
     const maxMaterialPagesToShow = 5;
+
+    // Objek untuk menyimpan nilai terakhir
+    const lastTransactionQuantities = {};
+    const lastTransactionDestination = {};
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -394,17 +423,8 @@
                     document.getElementById('editKodeMaterial').value = material.kode;
                     document.getElementById('editTotalStok').value = material.total_stok;
                     
-                    const editSpbeBptSelect = document.getElementById('editSpbeBpt');
-                    editSpbeBptSelect.innerHTML = '';
-                    allLocations.forEach(location => {
-                        const option = document.createElement('option');
-                        option.value = location;
-                        option.textContent = location;
-                        if (location === material.spbe_bpt_nama) {
-                            option.selected = true;
-                        }
-                        editSpbeBptSelect.appendChild(option);
-                    });
+                    document.getElementById('editSpbeBptSearch').value = material.spbe_bpt_nama;
+                    document.getElementById('editSpbeBptList').style.display = 'none';
                 }
             });
         });
@@ -459,20 +479,15 @@
                     document.getElementById('asalTransaksiText').value = spbeBptName;
                     document.getElementById('asalTransaksi').value = spbeBptName;
 
-                    const tujuanTransaksi = document.getElementById('tujuanTransaksi');
-                    tujuanTransaksi.innerHTML = `<option value="">Pilih Tujuan</option>`;
-                    allLocations.forEach(location => {
-                        if (location !== spbeBptName) {
-                            const option = document.createElement('option');
-                            option.value = location;
-                            option.textContent = location;
-                            tujuanTransaksi.appendChild(option);
-                        }
-                    });
+                    const lastDestination = lastTransactionDestination[material.id];
+                    const lastQuantity = lastTransactionQuantities[material.id];
+                    
+                    document.getElementById('tujuanTransaksiSearch').value = lastDestination || '';
+                    document.getElementById('jumlahStok').value = lastQuantity || '';
+                    document.getElementById('tujuanTransaksiList').style.display = 'none';
+
+                    document.getElementById('jenisPenerimaan').checked = true;
                 }
-                
-                document.getElementById('jenisPenambahan').checked = true;
-                document.getElementById('jumlahStok').value = '';
             });
         });
     }
@@ -498,18 +513,20 @@
             return li;
         }
 
-        const startPage = Math.max(0, currentMaterialPage - Math.floor(maxMaterialPagesToShow / 2));
-        const endPage = Math.min(totalPages, startPage + maxMaterialPagesToShow);
+        if (totalPages > 1) {
+            ul.appendChild(createButton('«', 0, currentMaterialPage === 0));
+            ul.appendChild(createButton('‹', currentMaterialPage - 1, currentMaterialPage === 0));
 
-        ul.appendChild(createButton('«', 0, currentMaterialPage === 0));
-        ul.appendChild(createButton('‹', currentMaterialPage - 1, currentMaterialPage === 0));
+            const startPage = Math.max(0, currentMaterialPage - Math.floor(maxMaterialPagesToShow / 2));
+            const endPage = Math.min(totalPages, startPage + maxMaterialPagesToShow);
 
-        for (let i = startPage; i < endPage; i++) {
-            ul.appendChild(createButton(i + 1, i, false, i === currentMaterialPage));
+            for (let i = startPage; i < endPage; i++) {
+                ul.appendChild(createButton(i + 1, i, false, i === currentMaterialPage));
+            }
+
+            ul.appendChild(createButton('›', currentMaterialPage + 1, currentMaterialPage === totalPages - 1 || totalPages === 0));
+            ul.appendChild(createButton('»', totalPages - 1, currentMaterialPage === totalPages - 1 || totalPages === 0));
         }
-
-        ul.appendChild(createButton('›', currentMaterialPage + 1, currentMaterialPage === totalPages - 1 || totalPages === 0));
-        ul.appendChild(createButton('»', totalPages - 1, currentMaterialPage === totalPages - 1 || totalPages === 0));
     }
     
     document.getElementById('editMaterialForm').addEventListener('submit', function(e) {
@@ -517,9 +534,20 @@
         const id = parseInt(document.getElementById('editMaterialId').value);
         const material = dataMaterialDummy.find(item => item.id === id);
         if (material) {
+            const newSpbeBptName = document.getElementById('editSpbeBptSearch').value;
+            const spbeBptInfo = spbeBptInfoDummy.find(info => info.nama === newSpbeBptName);
+
+            if (!spbeBptInfo) {
+                Swal.fire('Gagal!', 'Nama SPBE/BPT tidak valid.', 'error');
+                return;
+            }
+
             material.nama = document.getElementById('editNamaMaterial').value;
             material.kode = document.getElementById('editKodeMaterial').value;
-            material.spbe_bpt_nama = document.getElementById('editSpbeBpt').value;
+            material.spbe_bpt_nama = newSpbeBptName;
+            material.tipe = spbeBptInfo.nama.startsWith('SPBE') ? 'SPBE' : 'BPT';
+            material.sa_region = spbeBptInfo.region_sa;
+            material.kabupaten = spbeBptInfo.kabupaten;
             material.total_stok = parseInt(document.getElementById('editTotalStok').value);
             
             const editModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
@@ -540,6 +568,13 @@
         const stok = parseInt(document.getElementById('addTotalStok').value);
 
         if (nama && kode && spbeBpt && tipe && !isNaN(stok) && stok >= 0) {
+            const spbeBptInfo = spbeBptInfoDummy.find(info => info.nama === spbeBpt);
+            
+            if (!spbeBptInfo) {
+                Swal.fire('Gagal!', 'Nama SPBE/BPT tidak valid.', 'error');
+                return;
+            }
+            
             const newData = {
                 id: dataMaterialDummy.length > 0 ? Math.max(...dataMaterialDummy.map(d => d.id)) + 1 : 1,
                 nama: nama,
@@ -551,8 +586,8 @@
                 tanggal: new Date().toISOString().split('T')[0],
                 spbe_bpt_nama: spbeBpt,
                 tipe: tipe,
-                sa_region: saRegion, // Use the SA region from the URL
-                kabupaten: 'Dummy Kabupaten'
+                sa_region: spbeBptInfo.region_sa,
+                kabupaten: spbeBptInfo.kabupaten
             };
             dataMaterialDummy.push(newData);
             this.reset();
@@ -569,12 +604,18 @@
         e.preventDefault();
         const id = document.getElementById('kirimMaterialId').value;
         const asal = document.getElementById('asalTransaksi').value;
-        const tujuan = document.getElementById('tujuanTransaksi').value;
+        const tujuan = document.getElementById('tujuanTransaksiSearch').value;
         const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
         const jumlah = parseInt(document.getElementById('jumlahStok').value);
 
         if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
             Swal.fire('Gagal!', 'Harap isi form dengan benar.', 'error');
+            return;
+        }
+        
+        const isTujuanValid = allLocations.some(location => location === tujuan);
+        if (!isTujuanValid) {
+            Swal.fire('Gagal!', 'Tujuan transaksi tidak valid.', 'error');
             return;
         }
 
@@ -590,12 +631,15 @@
             material.penerimaan += jumlah;
         } else if (jenis === 'pengurangan') {
             if (material.total_stok < jumlah) {
-                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk pengurangan.', 'warning');
+                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk penyaluran.', 'warning');
                 return;
             }
             stokAkhir = material.total_stok - jumlah;
             material.penyaluran += jumlah;
         }
+        
+        lastTransactionQuantities[id] = jumlah;
+        lastTransactionDestination[id] = tujuan;
         
         material.total_stok = stokAkhir;
         material.tanggal = new Date().toISOString().split('T')[0];
@@ -607,6 +651,46 @@
 
         Swal.fire('Berhasil Dikirim!', `Stok **${material.nama}** di **${asal}** saat ini adalah **${stokAkhir} unit**.`, 'success');
     });
+
+    const spbeBptEditData = [...allLocations];
+    const editSpbeBptSearch = document.getElementById('editSpbeBptSearch');
+    const editSpbeBptList = document.getElementById('editSpbeBptList');
+
+    const tujuanTransaksiSearch = document.getElementById('tujuanTransaksiSearch');
+    const tujuanTransaksiList = document.getElementById('tujuanTransaksiList');
+
+    function filterAndRenderList(inputElement, listElement, dataArray, excludeValue) {
+        inputElement.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            listElement.innerHTML = '';
+            
+            const filteredList = dataArray.filter(item =>
+                item.toLowerCase().includes(query) && item !== excludeValue
+            );
+
+            if (query.length > 0 && filteredList.length > 0) {
+                listElement.style.display = 'block';
+                filteredList.forEach(item => {
+                    const li = document.createElement('li');
+                    li.classList.add('list-group-item', 'list-group-item-action');
+                    li.textContent = item;
+                    li.addEventListener('click', () => {
+                        inputElement.value = item;
+                        listElement.style.display = 'none';
+                    });
+                    listElement.appendChild(li);
+                });
+            } else if (query.length > 0 && filteredList.length === 0) {
+                listElement.style.display = 'block';
+                const li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.textContent = 'Tidak ada hasil.';
+                listElement.appendChild(li);
+            } else {
+                listElement.style.display = 'none';
+            }
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('search-input-material').addEventListener('input', function () {
@@ -628,6 +712,38 @@
         });
 
         renderMaterialTable();
+
+        // Attach listeners for Edit Modal
+        editSpbeBptSearch.addEventListener('input', function() {
+            filterAndRenderList(editSpbeBptSearch, editSpbeBptList, allLocations, null);
+        });
+
+        // Attach listeners for Kirim Modal
+        const kirimModal = document.getElementById('kirimMaterialModal');
+        kirimModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const asalTransaksiValue = button.getAttribute('data-spbe-bpt');
+
+            // Reset dan atur ulang pencarian tujuan setiap kali modal dibuka
+            tujuanTransaksiSearch.value = '';
+            tujuanTransaksiList.innerHTML = '';
+            tujuanTransaksiList.style.display = 'none';
+
+            // Panggil fungsi filter dengan nilai yang harus dikecualikan
+            filterAndRenderList(tujuanTransaksiSearch, tujuanTransaksiList, allLocations, asalTransaksiValue);
+        });
+
+        // Hide list when clicking outside for both modals
+        document.addEventListener('click', function(e) {
+            // Check for edit modal
+            if (!editSpbeBptSearch.contains(e.target) && !editSpbeBptList.contains(e.target)) {
+                editSpbeBptList.style.display = 'none';
+            }
+            // Check for kirim modal
+            if (!tujuanTransaksiSearch.contains(e.target) && !tujuanTransaksiList.contains(e.target)) {
+                tujuanTransaksiList.style.display = 'none';
+            }
+        });
     });
 </script>
 @endpush
@@ -635,287 +751,189 @@
 
 {{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
 <style>
-    /* General styles for welcome card */
-    .welcome-card {
-        background-color: white;
-        color: #344767;
-        border-radius: 1rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        overflow: hidden;
-        position: relative;
-        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
-    }
+    /* General styles for welcome card */
+    .welcome-card {
+        background-color: white;
+        color: #344767;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        position: relative;
+        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
+    }
 
-    .welcome-card-icon {
-        height: 60px;
-        width: auto;
-        opacity: 0.9;
-    }
+    .welcome-card-icon {
+        height: 60px;
+        width: auto;
+        opacity: 0.9;
+    }
 
-    .welcome-card-background {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-        background-size: 60px 60px;
-        opacity: 0.2;
-        pointer-events: none;
-    }
+    .welcome-card-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        background-size: 60px 60px;
+        opacity: 0.2;
+        pointer-events: none;
+    }
 
-    /* Desktop styles for filters and search */
-    @media (min-width: 768px) {
-        /* Apply these styles from 'md' breakpoint and up */
-        .desktop-filter-row-top {
-            justify-content: space-between !important;
-            /* Distribute items with space between */
-            align-items: flex-end;
-            /* Align items to the bottom */
-            margin-bottom: 0.5rem;
-            /* Add some space below this row */
-        }
+    /* Desktop styles for filters and search */
+    @media (min-width: 768px) {
+        .search-input-group {
+            max-width: 250px;
+        }
 
-        .branch-selection-text-desktop {
-            margin-bottom: 0.5rem;
-            /* Standard margin for text above buttons */
-            white-space: nowrap;
-            /* Prevent text wrapping */
-        }
+        .date-range-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-        .btn-branch-custom {
-            padding: 0.4rem 0.6rem;
-            /* Slightly smaller padding for buttons */
-            font-size: 0.78rem;
-            /* Slightly smaller font size */
-        }
+        .date-input {
+            width: 120px;
+            height: 40px;
+            min-width: unset;
+        }
 
-        .date-filter-desktop-container {
-            /* This container holds "Dari" date input and "Sampai" date input */
-            /* We need to measure its total width */
-            display: flex;
-            /* Ensure it's a flex container */
-            align-items: center;
-            /* Align items vertically */
-            gap: 0.5rem;
-            /* Standard gap */
-            flex-wrap: nowrap;
-            /* Keep all elements in one line */
-            width: auto;
-            /* Allow content to define width */
-            flex-shrink: 0;
-            margin-left: auto;
-            /* Push to the right */
-        }
+        .date-range-picker label {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .branch-selection-text-desktop {
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+        }
 
-        .date-input {
-            width: 120px;
-            /* Specific width for date inputs on desktop */
-            height: 40px;
-            /* Adjusted height for date inputs */
-            min-width: unset;
-            /* Remove min-width inherited from mobile */
-        }
+        .btn-branch-custom {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.78rem;
+        }
 
-        .date-range-picker label {
-            /* Reusing existing class, targetting labels inside it */
-            white-space: nowrap;
-            /* Prevent label wrapping */
-            flex-shrink: 0;
-            /* Prevent label from shrinking */
-        }
+        /* Order of columns for desktop */
+        .order-md-1 {
+            order: 1;
+        }
+        .order-md-2 {
+            order: 2;
+        }
+        .order-md-3 {
+            order: 3;
+        }
+        .desktop-filter-row-top > div {
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+    }
 
-        /* Search input specific styles for desktop alignment */
-        .search-input-desktop-aligned {
-            height: 40px;
-            /* Adjusted height for desktop search input */
-            max-width: 310px;
-            /* Set a max-width to control its overall size */
-            /* Instead of fixed width, we will dynamically set it via JS or use a calculated max-width */
-            /* Using 'auto' and 'margin-left: auto' with its parent's 'justify-content: flex-end' for positioning */
-        }
+    /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
+    @media (max-width: 767.98px) {
+        /* --- Welcome Section Title Adjustment for Mobile --- */
+        .welcome-card {
+            padding: 1rem !important;
+        }
+        .welcome-card .card-body {
+            flex-direction: column;
+            align-items: center;
+        }
+        .welcome-card .card-body > div {
+            width: 100%;
+            text-align: center;
+        }
+        .welcome-card-icon {
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        #summary-title, #summary-text {
+            text-align: center !important;
+        }
+        #summary-title {
+            font-size: 1.25rem !important;
+        }
+        #summary-text {
+            font-size: 0.8rem !important;
+        }
+        /* End Welcome Section */
 
-        .search-input-desktop-aligned .form-control,
-        .search-input-aligned .input-group-text {
-            height: 40px;
-            /* Match the new height */
-        }
+        /* --- Table Branch Name Title Adjustment for Mobile --- */
+        #table-branch-name {
+            text-align: center !important;
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .export-excel-btn {
+            width: 100% !important;
+            margin-top: 1rem;
+        }
 
-        /* Order of columns for desktop */
-        .order-md-1 {
-            order: 1;
-        }
+        .branch-selection-text {
+            text-align: center !important;
+            margin-bottom: 0.5rem !important;
+        }
+        .branch-buttons {
+            justify-content: center !important;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+        }
+        .btn-branch-custom {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+            flex-grow: 1;
+            min-width: unset;
+        }
+        .branch-buttons button {
+            flex: 1 1 auto;
+            margin: 2px;
+        }
 
-        .order-md-2 {
-            order: 2;
-        }
+        /* --- Specific changes for Search Input Group in Mobile --- */
+        .input-group.input-group-sm {
+            height: 38px !important;
+            margin-top: 0.5rem;
+        }
+        .input-group.input-group-sm .form-control,
+        .input-group.input-group-sm .input-group-text {
+            height: 38px !important;
+            font-size: 0.85rem !important;
+            padding: 0.4rem 0.8rem !important;
+        }
+        
+        .date-range-picker {
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 0.5rem !important;
+        }
+        .date-input {
+            width: 100% !important;
+            height: 38px !important;
+        }
+        .date-range-picker label {
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+        
 
-        .order-md-3 {
-            order: 3;
-        }
+        /* --- End of Mobile Specific changes for Search Input Group and Date Picker--- */
 
-        /* Ensuring columns adjust correctly for flex layout */
-        .desktop-filter-row-top>div {
-            flex-grow: 0;
-            flex-shrink: 0;
-        }
+        .card-header {
+            padding: 1rem !important;
+        }
 
-        .col-12.mt-3.order-3.order-md-3 {
-            /* The row containing only the search input */
-            display: flex;
-            /* Make it a flex container */
-            justify-content: flex-end;
-            /* Push content (search bar) to the right */
-            width: 100%;
-            /* Ensure it takes full width of the row */
-        }
-    }
-
-    /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
-    @media (max-width: 767.98px) {
-        /* --- Welcome Section Title Adjustment for Mobile --- */
-        .welcome-card {
-            padding: 1rem !important; /* Reduce padding for mobile */
-        }
-
-        .welcome-card .card-body {
-            flex-direction: column; /* Stack items vertically */
-            align-items: center; /* Center items horizontally */
-        }
-
-        .welcome-card .card-body > div {
-            width: 100%; /* Take full width */
-            text-align: center; /* Center text within these divs */
-        }
-
-        .welcome-card-icon {
-            margin-bottom: 0.5rem; /* Space below icon on mobile */
-            margin-top: 0.5rem; /* Space above icon on mobile */
-        }
-
-        #summary-title, #summary-text {
-            text-align: center !important;
-        }
-        #summary-title {
-            font-size: 1.25rem !important;
-        }
-        #summary-text {
-            font-size: 0.8rem !important;
-        }
-        /* End Welcome Section */
-
-
-        /* --- Table Branch Name Title Adjustment for Mobile --- */
-        #table-branch-name {
-            text-align: center !important;
-            font-size: 1.25rem !important; /* Adjust as needed, e.g., 1rem or 0.9rem */
-            margin-bottom: 1rem !important; /* Add some space below the title */
-        }
-
-
-        .export-excel-btn {
-            height: 38px !important;
-            /* Make button smaller */
-            font-size: 0.8rem;
-            /* Smaller font size */
-            padding: 0.5rem 1rem;
-            /* Adjust padding */
-            margin-top: 1rem;
-            /* Adjust padding */
-        }
-
-        .export-excel-btn .fas {
-            margin-right: 0.5rem;
-            /* Adjust icon spacing */
-        }
-
-        .branch-selection-text {
-            text-align: center !important;
-            /* Center the text */
-            margin-bottom: 0.5rem !important;
-            /* Reduce bottom margin */
-        }
-
-        .branch-buttons {
-            justify-content: center !important;
-            /* Center buttons */
-            gap: 0.25rem;
-            /* Reduce gap between buttons */
-            margin-bottom: 1rem;
-            /* Add margin below buttons for mobile */
-        }
-
-        .btn-branch-custom {
-            padding: 0.3rem 0.6rem;
-            /* Smaller padding for buttons */
-            font-size: 0.75rem;
-            /* Smaller font size for buttons */
-            flex-grow: 1;
-            /* Allow buttons to grow in mobile to fill space */
-            min-width: unset;
-            /* Remove min-width to allow more flexibility */
-        }
-
-        /* Adjust button width for smaller screens if they are too wide */
-        .branch-buttons button {
-            flex: 1 1 auto;
-            /* Allow buttons to wrap and occupy available space */
-            margin: 2px;
-            /* Small margin for visual separation */
-        }
-
-        .date-range-picker {
-            flex-direction: column;
-            /* Stack date pickers vertically */
-            align-items: center;
-            /* Center items in column */
-            width: 100%;
-            /* Full width */
-            gap: 0.5rem !important;
-            /* Gap between stacked items */
-        }
-
-        .date-input {
-            width: 100% !important;
-            height: 38px !important;
-        }
-
-        .date-range-picker label {
-            margin-right: 0 !important;
-            margin-left: 0 !important;
-        }
-        
-        .input-group.input-group-sm {
-            height: 38px !important;
-        }
-
-        .input-group.input-group-sm .form-control,
-        .input-group.input-group-sm .input-group-text {
-            height: 38px !important;
-            font-size: 0.85rem !important;
-            padding: 0.4rem 0.8rem !important;
-        }
-
-        /* Adjust padding for card-header in mobile to give more space */
-        .card-header {
-            padding: 1rem !important;
-        }
-
-        /* Make table header text smaller in mobile */
-        #table-material thead th {
-            font-size: 0.65rem !important;
-        }
-
-        /* Make table body text smaller in mobile */
-        #table-material tbody td {
-            font-size: 0.75rem !important;
-        }
-
-        /* Adjust padding for table cells */
-        #table-material tbody td,
-        #table-material thead th {
-            padding: 0.5rem 0.5rem !important;
-        }
-    }
+        #table-material thead th {
+            font-size: 0.65rem !important;
+        }
+        #table-material tbody td {
+            font-size: 0.75rem !important;
+        }
+        #table-material tbody td,
+        #table-material thead th {
+            padding: 0.5rem 0.5rem !important;
+        }
+    }
 </style>
 @endsection

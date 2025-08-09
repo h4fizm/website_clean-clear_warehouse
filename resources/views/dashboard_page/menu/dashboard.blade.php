@@ -50,18 +50,20 @@
 <div class="row">
     @php
         $cards = [
-            ['title' => 'Total SPBE', 'value' => '1,234', 'icon' => 'fas fa-industry', 'bg' => 'primary'],
-            ['title' => 'Total BPT', 'value' => '24', 'icon' => 'fas fa-warehouse', 'bg' => 'info'],
-            ['title' => 'Transaksi Penerimaan', 'value' => '12,567', 'icon' => 'fas fa-arrow-down', 'bg' => 'success'],
-            ['title' => 'Transaksi Penyaluran', 'value' => '1,890', 'icon' => 'fas fa-arrow-up', 'bg' => 'danger'],
+            ['title' => 'Total User', 'value' => '15', 'icon' => 'fas fa-users', 'bg' => 'secondary', 'link' => '#'],
+            ['title' => 'Total SPBE', 'value' => '1,234', 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
+            ['title' => 'Total BPT', 'value' => '24', 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
+            ['title' => 'Transaksi Penerimaan', 'value' => '12,567', 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
+            ['title' => 'Transaksi Penyaluran', 'value' => '1,890', 'icon' => 'fas fa-arrow-up', 'bg' => 'danger', 'link' => '#'],
+            ['title' => 'UPP Material', 'value' => '25', 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
         ];
     @endphp
     @foreach ($cards as $card)
-        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-            <div class="card h-100">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
                 <div class="card-body p-3">
                     <div class="row">
-                        <div class="col-9">
+                        <div class="col-12">
                             <div class="numbers">
                                 <p class="text-xs text-uppercase font-weight-bold mb-1 text-wrap" style="min-height: 38px;">
                                     {{ \Illuminate\Support\Str::limit($card['title'], 40) }}
@@ -69,14 +71,14 @@
                                 <h5 class="font-weight-bolder mb-0">{{ $card['value'] }}</h5>
                             </div>
                         </div>
-                        <div class="col-3 text-end d-flex align-items-center">
+                        <div class="col-12 text-end d-flex align-items-center justify-content-end">
                             <div class="icon icon-shape bg-gradient-{{ $card['bg'] }} shadow-{{ $card['bg'] }} text-center rounded-circle">
                                 <i class="{{ $card['icon'] }} text-lg opacity-10"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     @endforeach
 </div>
@@ -87,8 +89,8 @@
         <div class="card">
             <div class="card-header pb-0 p-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Data Material - Regional Sumbangsel</h6>
-                    <div class="input-group input-group-sm" style="width: 200px;">
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">Data Material - Regional Sumbagsel</h6>
+                    <div class="input-group input-group-sm mb-2" style="width: 200px;">
                         <input type="text" id="search-input-cabang" class="form-control" placeholder="Search..." aria-label="Search">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
@@ -114,7 +116,7 @@
                 {{-- Custom Pagination --}}
                 <div class="mt-2 d-flex justify-content-center">
                     <nav>
-                        <ul id="custom-pagination" class="pagination pagination-sm mb-0"></ul>
+                        <ul id="custom-pagination-cabang" class="pagination pagination-sm mb-0"></ul>
                     </nav>
                 </div>
             </div>
@@ -153,13 +155,54 @@
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Baik</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Rusak</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Afkir</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Layak Luar (Baru + Baik)</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Layak Edar (Baru + Baik)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Data dan baris kapasitas akan diisi oleh JavaScript --}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Tabel UPP Material (Row 3) --}}
+<div class="row mt-4" id="upp-material-section">
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header p-3 pb-0">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">DAFTAR UPP MATERIAL</h6>
+                    <div class="input-group input-group-sm mb-2" style="width: 200px;">
+                        <input type="text" id="search-input-upp" class="form-control" placeholder="Cari Material UPP..." aria-label="Search">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-2" style="padding-top: 0 !important;">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0" id="table-upp-material">
+                        <thead>
+                            <tr class="bg-warning text-white">
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center" style="width: 40px;">No.</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Kode Material</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Nama BPT</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{-- Data akan diisi oleh JavaScript --}}
                         </tbody>
                     </table>
+                </div>
+                {{-- Custom Pagination untuk tabel UPP --}}
+                <div class="mt-2 d-flex justify-content-center">
+                    <nav>
+                        <ul id="custom-pagination-upp" class="pagination pagination-sm mb-0"></ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -170,6 +213,7 @@
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -213,22 +257,22 @@
             { id: 24, nama_material: 'Material X (Klem Pipa)', kode_material: generateRandomMaterialCode(5), stok_fisik: 1200 },
             { id: 25, nama_material: 'Material Y (Pompa Kecil)', kode_material: generateRandomMaterialCode(5), stok_fisik: 25 }
         ];
-
+        
         // --- Custom Pagination & Search untuk Tabel Material --
         const itemsPerPage = 5;
-        const tableBody = document.querySelector('#table-cabang-custom tbody');
-        const paginationContainer = document.getElementById('custom-pagination');
-        let currentFilteredData = [];
-        let currentPage = 0;
+        const tableBodyCabang = document.querySelector('#table-cabang-custom tbody');
+        const paginationContainerCabang = document.getElementById('custom-pagination-cabang');
+        let currentFilteredDataCabang = [];
+        let currentPageCabang = 0;
 
-        function renderTable(data, page) {
-            tableBody.innerHTML = '';
+        function renderTableCabang(data, page) {
+            tableBodyCabang.innerHTML = '';
             const start = page * itemsPerPage;
             const end = start + itemsPerPage;
             const paginatedItems = data.slice(start, end);
 
             if (paginatedItems.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Tidak ada data material ditemukan.</td></tr>';
+                tableBodyCabang.innerHTML = '<tr><td colspan="4" class="text-center py-4">Tidak ada data material ditemukan.</td></tr>';
             } else {
                 paginatedItems.forEach((material, index) => {
                     const rowIndex = start + index + 1;
@@ -257,76 +301,72 @@
                             </td>
                         </tr>
                     `;
-                    tableBody.insertAdjacentHTML('beforeend', row);
+                    tableBodyCabang.insertAdjacentHTML('beforeend', row);
                 });
             }
-            updatePaginationButtons(page, Math.ceil(data.length / itemsPerPage));
+            updatePaginationButtons(paginationContainerCabang, page, Math.ceil(data.length / itemsPerPage), (newPage) => {
+                currentPageCabang = newPage;
+                renderTableCabang(currentFilteredDataCabang, currentPageCabang);
+            });
         }
 
-        function updatePaginationButtons(activePage, totalPages) {
-            paginationContainer.innerHTML = '';
-
-            const firstPageButton = document.createElement('li');
-            firstPageButton.classList.add('page-item');
-            if (activePage === 0 || totalPages === 0) firstPageButton.classList.add('disabled');
-            firstPageButton.innerHTML = `<a class="page-link" href="javascript:;" data-page="0">&laquo;</a>`;
-            if (activePage > 0 && totalPages > 0) {
-                firstPageButton.querySelector('a').addEventListener('click', () => {
-                    currentPage = 0;
-                    renderTable(currentFilteredData, currentPage);
-                });
-            }
-            paginationContainer.appendChild(firstPageButton);
+        function updatePaginationButtons(container, activePage, totalPages, callback) {
+            container.innerHTML = '';
+            if (totalPages <= 1) return;
 
             const maxVisible = 5;
             let startPage = Math.max(0, activePage - Math.floor(maxVisible / 2));
             let endPage = Math.min(totalPages, startPage + maxVisible);
 
-            if (endPage - startPage < maxVisible && startPage > 0) {
-                startPage = Math.max(0, endPage - maxVisible);
+            if (endPage - startPage < maxVisible) {
+                startPage = Math.max(0, totalPages - maxVisible);
             }
 
+            // Tombol ke halaman pertama
+            const firstPageButton = document.createElement('li');
+            firstPageButton.classList.add('page-item');
+            if (activePage === 0) firstPageButton.classList.add('disabled');
+            firstPageButton.innerHTML = `<a class="page-link" href="javascript:;">&laquo;</a>`;
+            firstPageButton.addEventListener('click', () => {
+                if (activePage > 0) callback(0);
+            });
+            container.appendChild(firstPageButton);
+
+            // Tombol halaman
             for (let i = startPage; i < endPage; i++) {
                 const pageItem = document.createElement('li');
                 pageItem.classList.add('page-item');
                 if (i === activePage) pageItem.classList.add('active');
-                pageItem.innerHTML = `<a class="page-link" href="javascript:;" data-page="${i}">${i + 1}</a>`;
-                pageItem.querySelector('a').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    currentPage = i;
-                    renderTable(currentFilteredData, currentPage);
-                });
-                paginationContainer.appendChild(pageItem);
+                pageItem.innerHTML = `<a class="page-link" href="javascript:;">${i + 1}</a>`;
+                pageItem.addEventListener('click', () => callback(i));
+                container.appendChild(pageItem);
             }
 
+            // Tombol ke halaman terakhir
             const lastPageButton = document.createElement('li');
             lastPageButton.classList.add('page-item');
-            if (activePage === totalPages - 1 || totalPages === 0) lastPageButton.classList.add('disabled');
-            lastPageButton.innerHTML = `<a class="page-link" href="javascript:;" data-page="${totalPages - 1}">&raquo;</a>`;
-            if (activePage < totalPages - 1 && totalPages > 0) {
-                lastPageButton.querySelector('a').addEventListener('click', () => {
-                    currentPage = totalPages - 1;
-                    renderTable(currentFilteredData, currentPage);
-                });
-            }
-            paginationContainer.appendChild(lastPageButton);
+            if (activePage === totalPages - 1) lastPageButton.classList.add('disabled');
+            lastPageButton.innerHTML = `<a class="page-link" href="javascript:;">&raquo;</a>`;
+            lastPageButton.addEventListener('click', () => {
+                if (activePage < totalPages - 1) callback(totalPages - 1);
+            });
+            container.appendChild(lastPageButton);
         }
 
         // Event listener untuk input search
         document.getElementById('search-input-cabang').addEventListener('keyup', function () {
             const searchTerm = this.value.toLowerCase();
-            currentFilteredData = allMaterialData.filter(material =>
+            currentFilteredDataCabang = allMaterialData.filter(material =>
                 material.nama_material.toLowerCase().includes(searchTerm) ||
                 material.kode_material.toLowerCase().includes(searchTerm)
             );
-            currentPage = 0;
-            renderTable(currentFilteredData, currentPage);
+            currentPageCabang = 0;
+            renderTableCabang(currentFilteredDataCabang, currentPageCabang);
         });
 
         // Inisialisasi awal tabel dan paginasi
-        currentFilteredData = allMaterialData;
-        renderTable(currentFilteredData, currentPage);
-
+        currentFilteredDataCabang = allMaterialData;
+        renderTableCabang(currentFilteredDataCabang, currentPageCabang);
 
         // --- Data Dummy dan Logika untuk Tabel Stok Material --
         const materialStockData = {
@@ -344,21 +384,27 @@
             ]
         };
 
+        const materialCapacityData = {
+            'Material 1': 50000,
+            'Material 2': 40000,
+            'Material 3': 60000
+        };
+
         const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
         const dropdownButton = document.getElementById('dropdownMaterial');
         const stockTitle = document.getElementById('stock-title');
+        let currentMaterialName = 'Material 1';
 
         function renderStockTable(data, materialName) {
             stockTableBody.innerHTML = '';
             stockTitle.innerText = `Stok ${materialName} Juli 2025`;
+            currentMaterialName = materialName;
 
             if (data && data.length > 0) {
-                // Iterasi setiap item gudang untuk material yang dipilih
                 data.forEach((item, index) => {
-                    // Baris pertama: Nama Gudang, Baru, Baik, Rusak, Afkir
                     const row1 = `
                         <tr>
-                            ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${data.length * 2}" style="width: 25%;">
+                            ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${data.length}" style="width: 25%;">
                                 <h6 class="text-sm font-weight-bold mb-0">${materialName}</h6>
                             </td>` : ''}
                             <td class="text-secondary text-center text-xs">
@@ -377,28 +423,66 @@
                                 <span class="text-xs font-weight-bold">${item.afkir.toLocaleString('id-ID')}</span>
                             </td>
                             <td class="text-secondary text-center text-xs">
-                                </td>
-                        </tr>
-                    `;
-                    stockTableBody.insertAdjacentHTML('beforeend', row1);
-
-                    // Baris kedua: Total Layak Luar
-                    const row2 = `
-                        <tr>
-                            <td class="text-secondary text-start text-xs bg-gray-100 ps-4">
-                                <span class="text-xs font-weight-bold">Layak Luar (Baru + Baik)</span>
-                            </td>
-                            <td class="text-secondary text-center text-xs bg-gray-100" colspan="4">
-                                </td>
-                            <td class="text-secondary text-center text-xs bg-gray-100">
                                 <h6 class="text-sm font-weight-bolder mb-0">${item.layak_luar.toLocaleString('id-ID')}</h6>
                             </td>
                         </tr>
                     `;
-                    stockTableBody.insertAdjacentHTML('beforeend', row2);
+                    stockTableBody.insertAdjacentHTML('beforeend', row1);
                 });
             } else {
                 stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Pilih material untuk menampilkan data.</td></tr>`;
+            }
+
+            // Tambahkan baris Kapasitas Daya Tampung di bagian bawah tabel
+            const capacityValue = materialCapacityData[currentMaterialName] ? materialCapacityData[currentMaterialName].toLocaleString('id-ID') : 'N/A';
+            const capacityRowHtml = `
+                <tr class="bg-gray-200">
+                    <td colspan="2" class="p-2 align-middle">
+                        <p class="text-sm font-weight-bold mb-0">Kapasitas Daya Tampung ${materialName} :</p>
+                    </td>
+                    <td colspan="5" class="p-2 text-end">
+                        <form id="capacity-form" class="d-flex align-items-center justify-content-end" onsubmit="return false;">
+                            <input type="number" id="capacity-input" class="form-control form-control-sm me-2 text-end" value="${materialCapacityData[currentMaterialName]}" style="width: 150px;" disabled>
+                            <button type="button" id="edit-capacity-btn" class="btn btn-sm btn-info me-2 text-white">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button type="submit" id="submit-capacity-btn" class="btn btn-sm btn-primary" disabled>
+                                <i class="fas fa-save"></i> Submit
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            `;
+            stockTableBody.insertAdjacentHTML('beforeend', capacityRowHtml);
+            
+            // Re-attach event listeners after re-rendering the row
+            const capacityInput = document.getElementById('capacity-input');
+            const editCapacityBtn = document.getElementById('edit-capacity-btn');
+            const submitCapacityBtn = document.getElementById('submit-capacity-btn');
+
+            if (editCapacityBtn) {
+                editCapacityBtn.addEventListener('click', function() {
+                    capacityInput.disabled = false;
+                    editCapacityBtn.disabled = true;
+                    submitCapacityBtn.disabled = false;
+                });
+            }
+
+            if (submitCapacityBtn) {
+                submitCapacityBtn.addEventListener('click', function() {
+                    const newCapacity = parseInt(capacityInput.value);
+                    if (isNaN(newCapacity) || newCapacity < 0) {
+                        Swal.fire('Error!', 'Kapasitas harus berupa angka positif.', 'error');
+                        return;
+                    }
+
+                    materialCapacityData[currentMaterialName] = newCapacity;
+                    
+                    // Re-render the table to show the updated value
+                    renderStockTable(materialStockData[currentMaterialName], currentMaterialName);
+                    
+                    Swal.fire('Berhasil!', 'Kapasitas daya tampung berhasil diperbarui.', 'success');
+                });
             }
         }
 
@@ -417,6 +501,84 @@
         // Inisialisasi: Tampilkan tabel "Material 1" sebagai default
         renderStockTable(materialStockData['Material 1'], 'Material 1');
         dropdownButton.innerText = 'Material 1';
+
+
+        // --- Data Dummy dan Logika untuk Tabel UPP Material --
+        const uppMaterialData = [
+            { nama_material: 'Gas LPG 3kg', kode_material: 'LPG3-001', nama_bpt: 'BPT Sejahtera', stok_akhir: 330 },
+            { nama_material: 'Tabung 3kg', kode_material: 'TBG3-001', nama_bpt: 'BPT Sejahtera', stok_akhir: 95 },
+            { nama_material: 'Seal Karet', kode_material: 'SEAL-01', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 150 },
+            { nama_material: 'Kompor Portable', kode_material: 'KPR-015', nama_bpt: 'BPT Sejahtera', stok_akhir: 35 },
+            { nama_material: 'Tabung 5.5kg', kode_material: 'TBG5.5-001', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 170 },
+            { nama_material: 'Konektor Gas', kode_material: 'KNG-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 400 },
+            { nama_material: 'Gas 3kg', kode_material: 'LPG3-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 30 },
+            { nama_material: 'Tabung 3kg', kode_material: 'TBG3-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 65 },
+            { nama_material: 'Regulator', kode_material: 'REG-006', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 100 },
+            { nama_material: 'Gas 5.5kg', kode_material: 'LPG5.5-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 275 },
+            { nama_material: 'Tabung 5.5kg', kode_material: 'TBG5.5-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 170 },
+            { nama_material: 'Manometer', kode_material: 'MAN-003', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 95 },
+            { nama_material: 'Konektor Gas', kode_material: 'KNG-004', nama_bpt: 'BPT Sejahtera', stok_akhir: 400 },
+            { nama_material: 'Gas 3kg', kode_material: 'LPG3-004', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 85 }
+        ];
+
+        const uppTableBody = document.querySelector('#table-upp-material tbody');
+        const uppSearchInput = document.getElementById('search-input-upp');
+        const paginationContainerUpp = document.getElementById('custom-pagination-upp');
+        let currentFilteredDataUpp = uppMaterialData;
+        let currentPageUpp = 0;
+
+        function renderUppTable(data, page) {
+            uppTableBody.innerHTML = '';
+            const start = page * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedItems = data.slice(start, end);
+
+            if (paginatedItems.length === 0) {
+                uppTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Tidak ada data UPP material.</td></tr>';
+            } else {
+                paginatedItems.forEach((item, index) => {
+                    const rowIndex = start + index + 1;
+                    const row = `
+                        <tr>
+                            <td class="text-center">
+                                <p class="text-xs font-weight-bold mb-0">${rowIndex}</p>
+                            </td>
+                            <td class="ps-2 text-wrap">
+                                <h6 class="text-sm font-weight-bold mb-0">${item.nama_material}</h6>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs font-weight-bold">${item.kode_material}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs font-weight-bold">${item.nama_bpt}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs font-weight-bold">${item.stok_akhir}</span>
+                            </td>
+                        </tr>
+                    `;
+                    uppTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+            updatePaginationButtons(paginationContainerUpp, page, Math.ceil(data.length / itemsPerPage), (newPage) => {
+                currentPageUpp = newPage;
+                renderUppTable(currentFilteredDataUpp, currentPageUpp);
+            });
+        }
+
+        uppSearchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            currentFilteredDataUpp = uppMaterialData.filter(item =>
+                item.nama_material.toLowerCase().includes(searchTerm) ||
+                item.nama_bpt.toLowerCase().includes(searchTerm) ||
+                item.kode_material.toLowerCase().includes(searchTerm)
+            );
+            currentPageUpp = 0;
+            renderUppTable(currentFilteredDataUpp, currentPageUpp);
+        });
+
+        // Inisialisasi awal tabel UPP
+        renderUppTable(currentFilteredDataUpp, currentPageUpp);
     });
 </script>
 @endpush

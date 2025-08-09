@@ -70,7 +70,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jml Penyaluran</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
@@ -111,7 +111,7 @@
                     <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material-display"></p>
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">KODE MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-kode-material-display"></p>
-                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">TOTAL STOK</p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK AKHIR</p>
                     <p class="mb-0 text-sm font-weight-bold" id="modal-total-stok-display"></p>
                 </div>
                 
@@ -123,29 +123,28 @@
                         <input type="text" class="form-control" id="asal-transaksi" value="P.Layang" readonly>
                     </div>
 
+                    {{-- Searchable input for Tujuan Transaksi --}}
                     <div class="mb-3">
-                        <label for="tujuan-transaksi" class="form-label">Tujuan Transaksi</label>
-                        <select class="form-control" id="tujuan-transaksi" required>
-                            <option value="">Pilih Tujuan</option>
-                            <option value="SPBE_Sukamaju">SPBE Sukamaju</option>
-                            <option value="SPBE_Makmur">SPBE Makmur</option>
-                            <option value="SPBE_Sentosa">SPBE Sentosa</option>
-                        </select>
+                        <label for="tujuan-transaksi-search" class="form-label">Tujuan Transaksi</label>
+                        <input type="text" class="form-control" id="tujuan-transaksi-search" placeholder="Cari tujuan..." required>
+                        <ul id="tujuan-transaksi-list" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none;">
+                            {{-- List items will be populated by JavaScript --}}
+                        </ul>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-tambah" value="penambahan" checked>
-                                <label class="form-check-label" for="jenis-tambah">
-                                    Penambahan
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan" checked>
+                                <label class="form-check-label" for="jenis-penerimaan">
+                                    Penerimaan
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-kurang" value="pengurangan">
-                                <label class="form-check-label" for="jenis-kurang">
-                                    Pengurangan
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran">
+                                <label class="form-check-label" for="jenis-penyaluran">
+                                    Penyaluran
                                 </label>
                             </div>
                         </div>
@@ -186,7 +185,7 @@
                         <input type="text" class="form-control" id="edit-kode-material" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-total-stok" class="form-label">Total Stok</label>
+                        <label for="edit-total-stok" class="form-label">Stok Akhir</label>
                         <input type="number" class="form-control" id="edit-total-stok" required>
                     </div>
                 </form>
@@ -220,6 +219,10 @@
     const perPage = 10;
     let currentPage = 1;
     let filteredData = [...tableData];
+    // Object to store the last entered quantity for each material ID
+    const lastTransactionQuantities = {};
+    // Object to store the last entered destination for each material ID
+    const lastTransactionDestination = {};
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -316,6 +319,18 @@
                     document.getElementById('modal-nama-material-display').textContent = material.nama_material;
                     document.getElementById('modal-kode-material-display').textContent = material.kode_material;
                     document.getElementById('modal-total-stok-display').textContent = `${material.total_stok} pcs`;
+                    
+                    // Populate jumlah-stok with the last saved value
+                    const lastValue = lastTransactionQuantities[id];
+                    document.getElementById('jumlah-stok').value = lastValue || '';
+                    
+                    // Populate tujuan-transaksi-search with the last saved value
+                    const lastDestination = lastTransactionDestination[id];
+                    document.getElementById('tujuan-transaksi-search').value = lastDestination || '';
+
+                    document.getElementById('tujuan-transaksi-list').style.display = 'none';
+                    // Reset radio button to default (Penerimaan)
+                    document.getElementById('jenis-penerimaan').checked = true;
                 }
             });
         });
@@ -379,28 +394,30 @@
             return li;
         }
 
-        pagination.appendChild(createButton('«', 1, currentPage === 1));
-        pagination.appendChild(createButton('‹', currentPage - 1, currentPage === 1));
+        if (totalPages > 1) {
+            pagination.appendChild(createButton('«', 1, currentPage === 1));
+            pagination.appendChild(createButton('‹', currentPage - 1, currentPage === 1));
 
-        const maxPagesToShow = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-        if (endPage - startPage + 1 < maxPagesToShow) {
-            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.appendChild(createButton(i, i, false, i === currentPage));
+            }
+
+            pagination.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
+            pagination.appendChild(createButton('»', totalPages, currentPage === totalPages));
         }
-
-        for (let i = startPage; i <= endPage; i++) {
-            pagination.appendChild(createButton(i, i, false, i === currentPage));
-        }
-
-        pagination.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
-        pagination.appendChild(createButton('»', totalPages, currentPage === totalPages));
     }
     
     document.getElementById('submitKirim').addEventListener('click', function() {
         const id = document.getElementById('kirim-material-id').value;
-        const tujuan = document.getElementById('tujuan-transaksi').value;
+        const tujuan = document.getElementById('tujuan-transaksi-search').value;
         const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
         const jumlah = parseInt(document.getElementById('jumlah-stok').value);
 
@@ -418,25 +435,31 @@
         }
 
         let stokAkhir;
-        if (jenis === 'penambahan') {
+        if (jenis === 'penerimaan') {
             stokAkhir = material.total_stok + jumlah;
-        } else if (jenis === 'pengurangan') {
+            material.penerimaan += jumlah; // Update penerimaan count
+        } else if (jenis === 'penyaluran') {
             if (material.total_stok < jumlah) {
-                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk pengurangan.', 'warning');
+                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk penyaluran.', 'warning');
                 return;
             }
             stokAkhir = material.total_stok - jumlah;
+            material.penyaluran += jumlah; // Update penyaluran count
         }
+
+        // Save the last transaction quantity and destination
+        lastTransactionQuantities[id] = jumlah;
+        lastTransactionDestination[id] = tujuan;
 
         // Update the data in our mock array and re-render the table
         material.total_stok = stokAkhir;
         material.tanggal = new Date().toISOString().slice(0, 10);
-        renderTable();
+        filterData(); // Re-render table to reflect changes
 
         const myModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
         myModal.hide();
 
-        Swal.fire('Berhasil Dikirim!', `Stok material saat ini adalah **${stokAkhir} pcs**.`, 'success');
+        Swal.fire('Berhasil Dikirim!', `Stok akhir material saat ini adalah **${stokAkhir} pcs**.`, 'success');
     });
 
     document.getElementById('saveMaterialChanges').addEventListener('click', function() {
@@ -455,13 +478,58 @@
             tableData[materialIndex].nama_material = nama;
             tableData[materialIndex].kode_material = kode;
             tableData[materialIndex].total_stok = stok;
-            renderTable();
+            filterData(); // Re-render table to reflect changes
         }
     
         const myModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
         myModal.hide();
     
         Swal.fire('Berhasil Disimpan!', 'Perubahan data material berhasil disimpan.', 'success');
+    });
+
+
+    // Dummy data for searchable tujuan transaksi
+    const tujuanTransaksiData = ['SPBE Sukamaju', 'SPBE Makmur', 'SPBE Sentosa', 'SPBE Jaya', 'SPBE Maju Jaya'];
+    const tujuanTransaksiInput = document.getElementById('tujuan-transaksi-search');
+    const tujuanTransaksilist = document.getElementById('tujuan-transaksi-list');
+
+    tujuanTransaksiInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        tujuanTransaksilist.innerHTML = '';
+        tujuanTransaksilist.style.display = 'block';
+
+        if (query.length > 0) {
+            const filteredTujuan = tujuanTransaksiData.filter(tujuan =>
+                tujuan.toLowerCase().includes(query)
+            );
+
+            if (filteredTujuan.length > 0) {
+                filteredTujuan.forEach(tujuan => {
+                    const li = document.createElement('li');
+                    li.classList.add('list-group-item', 'list-group-item-action');
+                    li.textContent = tujuan;
+                    li.addEventListener('click', () => {
+                        tujuanTransaksiInput.value = tujuan;
+                        tujuanTransaksilist.style.display = 'none';
+                    });
+                    tujuanTransaksilist.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.textContent = 'Tidak ada hasil.';
+                tujuanTransaksilist.appendChild(li);
+            }
+        } else {
+            tujuanTransaksilist.style.display = 'none';
+        }
+    });
+
+    // Hide list when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!tujuanTransaksiInput.contains(e.target) && !tujuanTransaksilist.contains(e.target)) {
+            tujuanTransaksilist.style.display = 'none';
+        }
     });
 
 

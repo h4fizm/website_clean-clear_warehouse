@@ -13,8 +13,8 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                     alt="Branch Icon"
-                     class="welcome-card-icon">
+                    alt="Branch Icon"
+                    class="welcome-card-icon">
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
@@ -35,23 +35,22 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
            <div class="card-header pb-0">
-                {{-- Row for Table Title and Export Button --}}
+                {{-- Row for Table Title and Search Filter --}}
                 <div class="row mb-3 align-items-center">
                     <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
                         <h4 class="mb-0" id="table-branch-name">Tabel Stok SPBE/BPT - Nama Cabang</h4>
                     </div>
-                    <div class="col-12 col-md-auto">
-                        <button type="button" class="btn btn-success d-flex align-items-center justify-content-center w-100 w-md-auto export-excel-btn">
-                            <i class="fas fa-file-excel me-2"></i> Export Excel
-                        </button>
+                    <div class="col-12 col-md-4 d-flex justify-content-end">
+                        <div class="input-group input-group-sm search-input-group">
+                            <input type="text" id="search-input-material-1" class="form-control" placeholder="Cari Nama atau Kode Plant...">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
                     </div>
                 </div>
                 {{-- Filters --}}
-                <div class="row mt-3">
-                    {{-- Row 1: Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) and Date Range Picker (Right Side on Desktop) --}}
-                    <div class="col-12 d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center desktop-filter-row-top">
-                        {{-- Branch Selection Buttons (Left Side on Desktop, stacked on Mobile) --}}
-                        <div class="col-12 col-md-auto mb-2 mb-md-0 d-flex flex-column order-1 order-md-1">
+                <div class="row">
+                    <div class="col-12 d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center">
+                        <div class="col-12 col-md-auto mb-2 mb-md-0 d-flex flex-column order-1">
                             <p class="text-sm text-secondary mb-1 branch-selection-text-desktop">
                                 *Pilih salah satu tombol di bawah ini untuk melihat data SPBE/BPT berdasarkan Sales Region : *
                             </p>
@@ -62,22 +61,6 @@
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Sumsel">SA Sumsel</button>
                                 <button type="button" class="btn btn-outline-primary btn-sm btn-branch-custom" data-branch="SA Babel">SA Babel</button>
                             </div>
-                        </div>
-
-                        {{-- Date Range Picker (Right Side on Desktop) --}}
-                        <div class="col-12 col-md-auto d-flex flex-wrap flex-md-nowrap gap-2 justify-content-start justify-content-md-end align-items-center mt-3 mt-md-0 order-2 order-md-2 date-filter-desktop-container">
-                            <label for="start-date-material-1" class="text-xs mb-0 me-1">Dari</label>
-                            <input type="date" id="start-date-material-1" class="form-control form-control-sm date-input">
-                            <label for="end-date-material-1" class="text-xs mb-0 ms-2 me-1">Sampai</label>
-                            <input type="date" id="end-date-material-1" class="form-control form-control-sm date-input">
-                        </div>
-                    </div>
-
-                    {{-- Row 2: Search Input (Full width on Desktop, below Date Range Picker) --}}
-                    <div class="col-12 mt-3 order-3 order-md-3 d-flex justify-content-end">
-                        <div class="input-group input-group-sm search-input-group search-input-desktop-aligned">
-                            <input type="text" id="search-input-material-1" class="form-control" placeholder="Cari Nama atau Kode Plant...">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
                         </div>
                     </div>
                 </div>
@@ -186,25 +169,27 @@
     const spbeBptData = [
         { id: 1, nama: 'SPBE Sukamaju', kode_plant: 'PL-001', tipe: 'SPBE', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Muaro Jambi' },
         { id: 2, nama: 'BPT Sejahtera', kode_plant: 'PL-002', tipe: 'BPT', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Tanjung Jabung Timur' },
-        { id: 3, nama: 'SPBE Mandiri', kode_plant: 'PL-003', tipe: 'SPBE', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Bengkulu Utara' },
-        { id: 4, nama: 'BPT Jaya Abadi', kode_plant: 'PL-004', tipe: 'BPT', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Rejang Lebong' },
-        { id: 5, nama: 'SPBE Maju Bersama', kode_plant: 'PL-005', tipe: 'SPBE', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Lampung Selatan' },
-        { id: 6, nama: 'BPT Sentosa', kode_plant: 'PL-006', tipe: 'BPT', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Pringsewu' },
-        { id: 7, nama: 'SPBE Mufakat', kode_plant: 'PL-007', tipe: 'SPBE', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Palembang' },
-        { id: 8, nama: 'BPT Harapan', kode_plant: 'PL-008', tipe: 'BPT', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Ogan Ilir' },
-        { id: 9, nama: 'SPBE Bahagia', kode_plant: 'PL-009', tipe: 'SPBE', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Bangka' },
-        { id: 10, nama: 'BPT Makmur', kode_plant: 'PL-010', tipe: 'BPT', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Belitung' },
+        { id: 3, nama: 'SPBE Indah', kode_plant: 'PL-003', tipe: 'SPBE', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Kota Jambi' },
+        { id: 4, nama: 'BPT Makmur', kode_plant: 'PL-004', tipe: 'BPT', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Batanghari' },
+        { id: 5, nama: 'SPBE Bersama', kode_plant: 'PL-005', tipe: 'SPBE', sa_region: 'SA Jambi', nama_provinsi: 'Jambi', nama_kabupaten: 'Sarolangun' },
+        { id: 6, nama: 'SPBE Mandiri', kode_plant: 'PL-006', tipe: 'SPBE', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Bengkulu Utara' },
+        { id: 7, nama: 'BPT Jaya Abadi', kode_plant: 'PL-007', tipe: 'BPT', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Rejang Lebong' },
+        { id: 8, nama: 'SPBE Barokah', kode_plant: 'PL-008', tipe: 'SPBE', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Mukomuko' },
+        { id: 9, nama: 'BPT Maju', kode_plant: 'PL-009', tipe: 'BPT', sa_region: 'SA Bengkulu', nama_provinsi: 'Bengkulu', nama_kabupaten: 'Seluma' },
+        { id: 10, nama: 'SPBE Unggul', kode_plant: 'PL-010', tipe: 'SPBE', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Lampung Selatan' },
+        { id: 11, nama: 'BPT Sentosa', kode_plant: 'PL-011', tipe: 'BPT', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Pringsewu' },
+        { id: 12, nama: 'SPBE Damai', kode_plant: 'PL-012', tipe: 'SPBE', sa_region: 'SA Lampung', nama_provinsi: 'Lampung', nama_kabupaten: 'Kota Metro' },
+        { id: 13, nama: 'BPT Mufakat', kode_plant: 'PL-013', tipe: 'BPT', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Palembang' },
+        { id: 14, nama: 'SPBE Sentral', kode_plant: 'PL-014', tipe: 'SPBE', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Ogan Ilir' },
+        { id: 15, nama: 'BPT Harmoni', kode_plant: 'PL-015', tipe: 'BPT', sa_region: 'SA Sumsel', nama_provinsi: 'Sumatera Selatan', nama_kabupaten: 'Lahat' },
+        { id: 16, nama: 'SPBE Bahagia', kode_plant: 'PL-016', tipe: 'SPBE', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Bangka' },
+        { id: 17, nama: 'BPT Lancar', kode_plant: 'PL-017', tipe: 'BPT', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Belitung' },
+        { id: 18, nama: 'SPBE Maju', kode_plant: 'PL-018', tipe: 'SPBE', sa_region: 'SA Babel', nama_provinsi: 'Bangka Belitung', nama_kabupaten: 'Pangkal Pinang' },
     ];
 
     const perPage = 10;
     let currentPage1 = 1;
     let searchQuery1 = '';
-
-    // Format date is no longer needed but kept for general utility
-    function formatTanggal(tgl) {
-        const d = new Date(tgl);
-        return d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-    }
 
     // Update displayed branch names
     function updateBranchNames(branchName) {
@@ -310,7 +295,7 @@
                     document.getElementById('edit-id').value = spbe.id;
                     document.getElementById('edit-nama').value = spbe.nama;
                     document.getElementById('edit-kode-plant').value = spbe.kode_plant;
-                    document.getElementById('edit-provinsi').value = spbe.nama_provinsi; // Mengisi form provinsi
+                    document.getElementById('edit-provinsi').value = spbe.nama_provinsi;
                     document.getElementById('edit-sa-region').value = spbe.sa_region;
                     document.getElementById('edit-kabupaten').value = spbe.nama_kabupaten;
                     if (spbe.tipe === 'SPBE') {
@@ -368,15 +353,28 @@
             return li;
         }
 
-        pagination.appendChild(createButton('«', 1, currentPage1 === 1));
-        pagination.appendChild(createButton('‹', currentPage1 - 1, currentPage1 === 1));
+        if (totalPages > 1) {
+            // First and Previous buttons (optional, simplified for brevity)
+            pagination.appendChild(createButton('«', 1, currentPage1 === 1));
+            pagination.appendChild(createButton('‹', currentPage1 - 1, currentPage1 === 1));
 
-        for (let i = 1; i <= totalPages; i++) {
-            pagination.appendChild(createButton(i, i, false, i === currentPage1));
+            // Page number buttons
+            const maxPagesToShow = 5;
+            let startPage = Math.max(1, currentPage1 - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pagination.appendChild(createButton(i, i, false, i === currentPage1));
+            }
+
+            // Next and Last buttons (optional, simplified for brevity)
+            pagination.appendChild(createButton('›', currentPage1 + 1, currentPage1 === totalPages));
+            pagination.appendChild(createButton('»', totalPages, currentPage1 === totalPages));
         }
-
-        pagination.appendChild(createButton('›', currentPage1 + 1, currentPage1 === totalPages));
-        pagination.appendChild(createButton('»', totalPages, currentPage1 === totalPages));
     }
 
     document.getElementById('saveSpbeBpt').addEventListener('click', function() {
@@ -384,14 +382,30 @@
         const nama = document.getElementById('edit-nama').value;
         const kode_plant = document.getElementById('edit-kode-plant').value;
         const tipe = document.querySelector('input[name="edit-tipe"]:checked').value;
-        const provinsi = document.getElementById('edit-provinsi').value; // Mengambil nilai provinsi
+        const provinsi = document.getElementById('edit-provinsi').value;
         const sa_region = document.getElementById('edit-sa-region').value;
         const kabupaten = document.getElementById('edit-kabupaten').value;
 
-        console.log('Saving changes:', { id, nama, kode_plant, tipe, provinsi, sa_region, kabupaten });
+        // Find and update the data in our mock array
+        const spbeIndex = spbeBptData.findIndex(item => item.id == id);
+        if (spbeIndex > -1) {
+            spbeBptData[spbeIndex] = {
+                id: parseInt(id),
+                nama: nama,
+                kode_plant: kode_plant,
+                tipe: tipe,
+                sa_region: sa_region,
+                nama_provinsi: provinsi,
+                nama_kabupaten: kabupaten
+            };
+        }
+
         const myModal = bootstrap.Modal.getInstance(document.getElementById('editSpbeBptModal'));
         myModal.hide();
         Swal.fire('Berhasil Disimpan!', 'Perubahan data SPBE/BPT berhasil disimpan.', 'success');
+        
+        // Re-render the table to reflect the changes
+        renderTable1();
     });
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -422,7 +436,7 @@
 </script>
 @endpush
 
-{{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
+{{-- CSS untuk halaman transaksi --}}
 <style>
     /* General styles for welcome card */
     .welcome-card {
@@ -432,7 +446,7 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         overflow: hidden;
         position: relative;
-        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
+        padding: 1.5rem !important;
     }
 
     .welcome-card-icon {
@@ -455,108 +469,33 @@
 
     /* Desktop styles for filters and search */
     @media (min-width: 768px) {
-        /* Apply these styles from 'md' breakpoint and up */
-        .desktop-filter-row-top {
-            justify-content: space-between !important;
-            /* Distribute items with space between */
-            align-items: flex-end;
-            /* Align items to the bottom */
-            margin-bottom: 0.5rem;
-            /* Add some space below this row */
+        .search-input-group {
+            max-width: 250px;
         }
 
         .branch-selection-text-desktop {
             margin-bottom: 0.5rem;
-            /* Standard margin for text above buttons */
             white-space: nowrap;
-            /* Prevent text wrapping */
         }
 
         .btn-branch-custom {
             padding: 0.4rem 0.6rem;
-            /* Slightly smaller padding for buttons */
             font-size: 0.78rem;
-            /* Slightly smaller font size */
-        }
-
-        .date-filter-desktop-container {
-            /* This container holds "Dari" date input and "Sampai" date input */
-            /* We need to measure its total width */
-            display: flex;
-            /* Ensure it's a flex container */
-            align-items: center;
-            /* Align items vertically */
-            gap: 0.5rem;
-            /* Standard gap */
-            flex-wrap: nowrap;
-            /* Keep all elements in one line */
-            width: auto;
-            /* Allow content to define width */
-            flex-shrink: 0;
-            margin-left: auto;
-            /* Push to the right */
-        }
-
-        .date-input {
-            width: 120px;
-            /* Specific width for date inputs on desktop */
-            height: 40px;
-            /* Adjusted height for date inputs */
-            min-width: unset;
-            /* Remove min-width inherited from mobile */
-        }
-
-        .date-range-picker label {
-            /* Reusing existing class, targetting labels inside it */
-            white-space: nowrap;
-            /* Prevent label wrapping */
-            flex-shrink: 0;
-            /* Prevent label from shrinking */
-        }
-
-        /* Search input specific styles for desktop alignment */
-        .search-input-desktop-aligned {
-            height: 40px;
-            /* Adjusted height for desktop search input */
-            max-width: 310px;
-            /* Set a max-width to control its overall size */
-            /* Instead of fixed width, we will dynamically set it via JS or use a calculated max-width */
-            /* Using 'auto' and 'margin-left: auto' with its parent's 'justify-content: flex-end' for positioning */
-        }
-
-        .search-input-desktop-aligned .form-control,
-        .search-input-aligned .input-group-text {
-            height: 40px;
-            /* Match the new height */
         }
 
         /* Order of columns for desktop */
         .order-md-1 {
             order: 1;
         }
-
         .order-md-2 {
             order: 2;
         }
-
         .order-md-3 {
             order: 3;
         }
-
-        /* Ensuring columns adjust correctly for flex layout */
-        .desktop-filter-row-top>div {
+        .desktop-filter-row-top > div {
             flex-grow: 0;
             flex-shrink: 0;
-        }
-
-        .col-12.mt-3.order-3.order-md-3 {
-            /* The row containing only the search input */
-            display: flex;
-            /* Make it a flex container */
-            justify-content: flex-end;
-            /* Push content (search bar) to the right */
-            width: 100%;
-            /* Ensure it takes full width of the row */
         }
     }
 
@@ -564,24 +503,20 @@
     @media (max-width: 767.98px) {
         /* --- Welcome Section Title Adjustment for Mobile --- */
         .welcome-card {
-            padding: 1rem !important; /* Reduce padding for mobile */
+            padding: 1rem !important;
         }
-
         .welcome-card .card-body {
-            flex-direction: column; /* Stack items vertically */
-            align-items: center; /* Center items horizontally */
+            flex-direction: column;
+            align-items: center;
         }
-
         .welcome-card .card-body > div {
-            width: 100%; /* Take full width */
-            text-align: center; /* Center text within these divs */
+            width: 100%;
+            text-align: center;
         }
-
         .welcome-card-icon {
-            margin-bottom: 0.5rem; /* Space below icon on mobile */
-            margin-top: 0.5rem; /* Space above icon on mobile */
+            margin-bottom: 0.5rem;
+            margin-top: 0.5rem;
         }
-
         #summary-title, #summary-text {
             text-align: center !important;
         }
@@ -593,98 +528,34 @@
         }
         /* End Welcome Section */
 
-
         /* --- Table Branch Name Title Adjustment for Mobile --- */
         #table-branch-name {
             text-align: center !important;
-            font-size: 1.25rem !important; /* Adjust as needed, e.g., 1rem or 0.9rem */
-            margin-bottom: 1rem !important; /* Add some space below the title */
-        }
-
-
-        .export-excel-btn {
-            height: 38px !important;
-            /* Make button smaller */
-            font-size: 0.8rem;
-            /* Smaller font size */
-            padding: 0.5rem 1rem;
-            /* Adjust padding */
-            margin-top: 1rem;
-            /* Adjust padding */
-        }
-
-        .export-excel-btn .fas {
-            margin-right: 0.5rem;
-            /* Adjust icon spacing */
+            font-size: 1.25rem !important;
+            margin-bottom: 1rem !important;
         }
 
         .branch-selection-text {
             text-align: center !important;
-            /* Center the text */
             margin-bottom: 0.5rem !important;
-            /* Reduce bottom margin */
         }
-
         .branch-selection-text-desktop {
             display: none;
-            /* Hide desktop specific text on mobile */
         }
-
         .branch-buttons {
             justify-content: center !important;
-            /* Center buttons */
             gap: 0.25rem;
-            /* Reduce gap between buttons */
             margin-bottom: 1rem;
-            /* Add margin below buttons for mobile */
         }
-
         .btn-branch-custom {
             padding: 0.3rem 0.6rem;
-            /* Smaller padding for buttons */
             font-size: 0.75rem;
-            /* Smaller font size for buttons */
             flex-grow: 1;
-            /* Allow buttons to grow in mobile to fill space */
             min-width: unset;
-            /* Remove min-width to allow more flexibility */
         }
-
-        /* Adjust button width for smaller screens if they are too wide */
         .branch-buttons button {
             flex: 1 1 auto;
-            /* Allow buttons to wrap and occupy available space */
             margin: 2px;
-            /* Small margin for visual separation */
-        }
-
-        .date-range-picker {
-            flex-direction: column;
-            /* Stack date pickers vertically */
-            align-items: center;
-            /* Center items in column */
-            width: 100%;
-            /* Full width */
-            gap: 0.5rem !important;
-            /* Gap between stacked items */
-        }
-
-        .date-filter-desktop-container {
-            flex-direction: column !important;
-            width: 100% !important;
-            align-items: center !important;
-            margin-top: 0.5rem !important;
-            margin-left: 0 !important;
-        }
-
-        .date-input {
-            width: 100% !important;
-            height: 38px !important;
-        }
-
-        .date-range-picker label {
-            margin-right: 0 !important;
-            margin-left: 0 !important;
         }
 
         /* --- Specific changes for Search Input Group in Mobile --- */
@@ -693,18 +564,17 @@
             height: 38px !important;
             margin-top: 0.5rem;
         }
-
         .search-input-group .form-control {
             height: 38px !important;
             font-size: 0.85rem !important;
             padding-right: 0.5rem;
         }
-
         .search-input-group .input-group-text {
             height: 38px !important;
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem !important;
         }
+
         /* --- End of Mobile Specific changes for Search Input Group --- */
 
         .card-header {
@@ -714,16 +584,13 @@
         #table-material-1 thead th {
             font-size: 0.65rem !important;
         }
-
         #table-material-1 tbody td {
             font-size: 0.75rem !important;
         }
-
         #table-material-1 tbody td,
         #table-material-1 thead th {
             padding: 0.5rem 0.5rem !important;
         }
-
         .order-1 { order: 1; }
         .order-2 { order: 2; }
         .order-3 { order: 3; }

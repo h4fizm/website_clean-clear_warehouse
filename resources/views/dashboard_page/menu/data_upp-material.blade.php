@@ -11,7 +11,7 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto">
                     {{-- Search --}}
-                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Kode, BPT, Cabang....." style="width: 250px; height: 55px;"> {{-- Adjusted placeholder and height --}}
+                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Kode, BPT, Sales Area/Region....." style="width: 250px; height: 55px;"> {{-- Adjusted placeholder and height --}}
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
@@ -23,8 +23,8 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material & Kode</th> {{-- Now clearly Material --}}
                                 {{-- <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Jenis Material</th> --}} {{-- Removed Jenis Material column --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama BPT</th> {{-- Specific BPT for this material --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Cabang</th> {{-- Specific Cabang for this material --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Total Stok</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sales Area/Region</th> {{-- Changed "Cabang" to "Sales Area/Region" --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th> {{-- Changed "Total Stok" to "Stok Akhir" --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -65,23 +65,26 @@
         return result;
     }
 
+    // List of Sales Area/Regions
+    const saRegions = ['SA Jambi', 'SA Bengkulu', 'SA Lampung'];
+
     // --- REVISED dataDummy for UPP Material to represent ACTUAL MATERIALS ---
     const dataDummy = [
-        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: 'Cabang 1' },
-        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: 'Cabang 1' },
-        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: 'Cabang 2' }, // Stok 0
-        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: 'Cabang 2' },
-        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: 'Cabang 3' }, // Stok 0
-        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: 'Cabang 3' },
-        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: 'Cabang 4' },
-        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: 'Cabang 4' },
-        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: 'Cabang 5' },
-        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: 'Cabang 5' },
-        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: 'Cabang 1' },
-        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: 'Cabang 2' },
-        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: 'Cabang 3' },
-        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: 'Cabang 4' },
-        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: 'Cabang 5' },
+        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] }, // Stok 0
+        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] }, // Stok 0
+        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
     ];
     // --- END REVISED dataDummy ---
 
@@ -119,8 +122,8 @@
                 const iconHtml = `<span class="badge bg-gradient-warning rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-cube text-white" style="font-size: 0.75rem;"></i></span>`;
 
                 const stockDisplay = item.stok === 0 ?
-                                  '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
-                                  `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
+                                     '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
+                                     `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -140,7 +143,7 @@
                             <p class="text-xs font-weight-bold mb-0">${item.nama_bpt}</p> {{-- Display BPT Name --}}
                         </td>
                         <td>
-                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p> {{-- Display Cabang Name --}}
+                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p> {{-- Display Sales Area/Region --}}
                         </td>
                         <td class="text-center">
                             ${stockDisplay}
@@ -167,7 +170,7 @@
 
                     Swal.fire({
                         title: 'Konfirmasi Pemusnahan',
-                        html: `Apakah Anda yakin ingin melakukan pemusnahan material <strong>${materialNama}</strong><br>dari BPT <strong>${namaBPT}</strong> di <strong>Cabang ${namaCabang}</strong>?<br>Stok saat ini: <strong>${stokMaterial} pcs</strong>`,
+                        html: `Apakah Anda yakin ingin melakukan pemusnahan material <strong>${materialNama}</strong><br>dari BPT <strong>${namaBPT}</strong> di **Sales Area/Region** <strong>${namaCabang}</strong>?<br>Stok saat ini: <strong>${stokMaterial} pcs</strong>`,
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#d33',
