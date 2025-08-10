@@ -15,9 +15,11 @@ Route::get('/home', function () {
 Route::get('/login', function () {
     return view('dashboard_page.auth.login');
 });
-
 Route::get('/register', function () {
     return view('dashboard_page.auth.register');
+});
+Route::get('/profil', function () {
+    return view('dashboard_page.auth.profil');
 });
 
 // menu sidebar
@@ -44,6 +46,9 @@ Route::get('/laporan-grafik', function () {
 });
 Route::get('/aktivitas', function () {
     return view('dashboard_page.menu.aktivitas_harian');
+});
+Route::get('/pengguna', function () {
+    return view('dashboard_page.menu.data_pengguna');
 });
 
 // daftar data material tiap spbe-bpt yang dipilih

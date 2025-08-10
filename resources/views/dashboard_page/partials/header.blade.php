@@ -143,7 +143,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 invisible" aria-labelledby="userDropdown" id="userDropdownMenu">
                         <li>
-                            <a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a>
+                            <a class="dropdown-item" href="/profil"><i class="fas fa-user me-2"></i> Profile</a>
                         </li>
                         <li>
                             <a class="dropdown-item text-danger" href="#" onclick="logout()">
