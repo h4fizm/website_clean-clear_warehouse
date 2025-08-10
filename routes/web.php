@@ -42,6 +42,9 @@ Route::get('/upp-material', function () {
 Route::get('/laporan-grafik', function () {
     return view('dashboard_page.menu.data_laporan_grafik');
 });
+Route::get('/aktivitas', function () {
+    return view('dashboard_page.menu.aktivitas_harian');
+});
 
 // daftar data material tiap spbe-bpt yang dipilih
 Route::get('/material', function () {
@@ -52,4 +55,15 @@ Route::get('/material', function () {
 // form keterangan pemusnahan upp material
 Route::get('/keterangan-pemusnahan', function () {
     return view('dashboard_page.upp_material.keterangan_pemusnahan');
+});
+
+// pilihan 2 laman aktivitas transaksi dan upp
+Route::get('/aktivitas-transaksi', function () {
+    return view('dashboard_page.aktivitas_harian.data_transaksi');
+});
+Route::get('/aktivitas-upp', function () {
+    return view('dashboard_page.aktivitas_harian.data_upp');
+});
+Route::get('/preview-upp', function () {
+    return view('dashboard_page.aktivitas_harian.preview_upp');
 });

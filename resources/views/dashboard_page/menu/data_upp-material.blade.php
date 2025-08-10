@@ -10,6 +10,13 @@
                     <h6>Daftar Material yang ingin dilakukan pemusnahan</h6> {{-- Updated sub-title to be more general for materials --}}
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto">
+                    {{-- Filter Range Tanggal --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="start-date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Dari:</label>
+                        <input type="date" id="start-date" class="form-control form-control-sm" style="width: 150px;">
+                        <label for="end-date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Sampai:</label>
+                        <input type="date" id="end-date" class="form-control form-control-sm" style="width: 150px;">
+                    </div>
                     {{-- Search --}}
                     <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Kode, BPT, Sales Area/Region....." style="width: 250px; height: 55px;"> {{-- Adjusted placeholder and height --}}
                 </div>
@@ -20,11 +27,12 @@
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material & Kode</th> {{-- Now clearly Material --}}
-                                {{-- <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Jenis Material</th> --}} {{-- Removed Jenis Material column --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama BPT</th> {{-- Specific BPT for this material --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sales Area/Region</th> {{-- Changed "Cabang" to "Sales Area/Region" --}}
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th> {{-- Changed "Total Stok" to "Stok Akhir" --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material & Kode</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama BPT</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sales Area/Region</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Pengajuan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -68,41 +76,67 @@
     // List of Sales Area/Regions
     const saRegions = ['SA Jambi', 'SA Bengkulu', 'SA Lampung'];
 
-    // --- REVISED dataDummy for UPP Material to represent ACTUAL MATERIALS ---
+    // Function to generate a random date within the last 60 days
+    function getRandomDate() {
+        const now = new Date();
+        const past = new Date(now.setDate(now.getDate() - Math.floor(Math.random() * 60)));
+        const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const dayName = days[past.getDay()];
+        const day = String(past.getDate()).padStart(2, '0');
+        const monthName = months[past.getMonth()];
+        const year = past.getFullYear();
+        return `${dayName}, ${day} ${monthName} ${year}`;
+    }
+
+    // --- REVISED dataDummy with 'tanggal_pengajuan' and 'status' fields ---
     const dataDummy = [
-        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] }, // Stok 0
-        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] }, // Stok 0
-        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
-        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)] },
+        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sen, 23 Jun 2025', status: 'pending' },
+        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Jum, 28 Jun 2025', status: 'diterima' },
+        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sel, 25 Jun 2025', status: 'ditolak' },
+        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Kam, 20 Jun 2025', status: 'pending' },
+        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Jum, 05 Jul 2025', status: 'diterima' },
+        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sen, 01 Jul 2025', status: 'belum terdaftar' },
+        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Kam, 04 Jul 2025', status: 'ditolak' },
+        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sel, 09 Jul 2025', status: 'pending' },
+        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Rab, 10 Jul 2025', status: 'diterima' },
+        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Jum, 12 Jul 2025', status: 'belum terdaftar' },
+        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sen, 15 Jul 2025', status: 'diterima' },
+        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Kam, 18 Jul 2025', status: 'pending' },
+        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sel, 23 Jul 2025', status: 'ditolak' },
+        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Sen, 29 Jul 2025', status: 'diterima' },
+        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: 'Kam, 01 Agu 2025', status: 'pending' },
     ];
     // --- END REVISED dataDummy ---
 
     let searchQuery = '';
     let currentPage = 1;
+    let startDate = null;
+    let endDate = null;
     const itemsPerPage = 10;
     const maxPagesToShow = 5;
+
+    // Helper function to parse 'Sen, 23 Jun 2025' to a Date object
+    function parseDateString(dateStr) {
+        if (dateStr === 'N/A') return null;
+        const parts = dateStr.split(', ')[1].split(' ');
+        const months = { 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'Mei': 4, 'Jun': 5, 'Jul': 6, 'Agu': 7, 'Sep': 8, 'Okt': 9, 'Nov': 10, 'Des': 11 };
+        return new Date(parts[2], months[parts[1]], parts[0]);
+    }
 
     function filterData() {
         return dataDummy.filter(item => {
             const matchSearch = searchQuery ?
                                 (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 item.kode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                // item.jenis.toLowerCase().includes(searchQuery.toLowerCase()) || // Removed search by material type
                                 item.nama_bpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 item.cabang.toLowerCase().includes(searchQuery.toLowerCase()))
                                 : true;
-            return matchSearch;
+            
+            const itemDate = item.tanggal_pengajuan !== 'N/A' ? parseDateString(item.tanggal_pengajuan) : null;
+            const matchDate = (!startDate || (itemDate && itemDate >= startDate)) && (!endDate || (itemDate && itemDate <= endDate));
+
+            return matchSearch && matchDate;
         });
     }
 
@@ -124,6 +158,33 @@
                 const stockDisplay = item.stok === 0 ?
                                      '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
                                      `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
+                
+                // Logic for status badge and color
+                let statusColor;
+                let statusText;
+                let isClickable = true;
+                switch(item.status) {
+                    case 'pending':
+                        statusColor = 'bg-gradient-warning';
+                        statusText = 'Pending';
+                        break;
+                    case 'diterima':
+                        statusColor = 'bg-gradient-success';
+                        statusText = 'Diterima';
+                        break;
+                    case 'ditolak':
+                        statusColor = 'bg-gradient-danger';
+                        statusText = 'Ditolak';
+                        break;
+                    default:
+                        statusColor = 'bg-gradient-primary';
+                        statusText = 'Belum Terdaftar';
+                        isClickable = false;
+                        break;
+                }
+
+                const cursorStyle = isClickable ? 'cursor: pointer;' : 'cursor: default;';
+                const statusBadge = `<span class="badge ${statusColor} text-white text-xs font-weight-bold status-badge" style="${cursorStyle}" data-id="${item.id}" data-is-clickable="${isClickable}">${statusText}</span>`;
 
                 tbody.innerHTML += `
                     <tr>
@@ -140,13 +201,19 @@
                             </div>
                         </td>
                         <td>
-                            <p class="text-xs font-weight-bold mb-0">${item.nama_bpt}</p> {{-- Display BPT Name --}}
+                            <p class="text-xs font-weight-bold mb-0">${item.nama_bpt}</p>
                         </td>
                         <td>
-                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p> {{-- Display Sales Area/Region --}}
+                            <p class="text-xs font-weight-bold mb-0">${item.cabang}</p>
                         </td>
                         <td class="text-center">
                             ${stockDisplay}
+                        </td>
+                        <td class="text-center">
+                            <p class="text-xs text-secondary mb-0">${item.tanggal_pengajuan}</p>
+                        </td>
+                        <td class="text-center">
+                            ${statusBadge}
                         </td>
                         <td class="align-middle text-center">
                             <span class="badge bg-gradient-danger text-white text-xs confirm-pemusnahan-btn" style="cursor:pointer;" 
@@ -160,6 +227,67 @@
                 `;
             });
 
+            // Event listener for Status badge
+            document.querySelectorAll('.status-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const isClickable = this.getAttribute('data-is-clickable') === 'true';
+
+                    if (!isClickable) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Status Tidak Dapat Diubah',
+                            text: 'Status ini tidak dapat diubah karena belum ada pengajuan pemusnahan.',
+                            showConfirmButton: true
+                        });
+                        return;
+                    }
+
+                    const currentStatus = dataDummy.find(item => item.id === id).status;
+                    const statusOptions = {
+                        'pending': 'Pending',
+                        'diterima': 'Diterima',
+                        'ditolak': 'Ditolak'
+                    };
+
+                    Swal.fire({
+                        title: 'Ubah Status',
+                        html: `Pilih status baru untuk material ini:`,
+                        icon: 'question',
+                        input: 'radio',
+                        inputOptions: statusOptions,
+                        inputValue: currentStatus,
+                        showCancelButton: true,
+                        confirmButtonText: 'Simpan Perubahan',
+                        cancelButtonText: 'Batal',
+                        showLoaderOnConfirm: true,
+                        preConfirm: (newStatus) => {
+                            if (!newStatus) {
+                                Swal.showValidationMessage('Anda harus memilih salah satu status');
+                                return false;
+                            }
+                            return newStatus;
+                        },
+                        allowOutsideClick: () => !Swal.isLoading()
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Find the item and update its status
+                            const itemIndex = dataDummy.findIndex(item => item.id === id);
+                            if (itemIndex > -1) {
+                                dataDummy[itemIndex].status = result.value;
+                            }
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: `Status berhasil diubah menjadi ${statusOptions[result.value]}.`,
+                                icon: 'success'
+                            });
+                            renderTable(); // Re-render the table to show the update
+                        }
+                    });
+                });
+            });
+
+            // Existing event listener for Pemusnahan button
             document.querySelectorAll('.confirm-pemusnahan-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -276,8 +404,21 @@
         // No dropdown filters, so no need for their text initialization
     });
 
+    // Event listeners for search and date filters
     document.getElementById('search-input').addEventListener('input', function () {
         searchQuery = this.value;
+        currentPage = 1;
+        renderTable();
+    });
+
+    document.getElementById('start-date').addEventListener('change', function () {
+        startDate = this.value ? new Date(this.value) : null;
+        currentPage = 1;
+        renderTable();
+    });
+
+    document.getElementById('end-date').addEventListener('change', function () {
+        endDate = this.value ? new Date(this.value) : null;
         currentPage = 1;
         renderTable();
     });
