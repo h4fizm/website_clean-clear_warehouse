@@ -34,13 +34,18 @@
                     <h4>Tabel Data Pengguna</h4>
                     <h6>Daftar seluruh pengguna yang terdaftar dalam sistem.</h6>
                 </div>
-                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto">
-                    {{-- Search --}}
-                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Email, Role..." style="width: 250px; height: 35px;">
-                </div>
+                {{-- Button Tambah Pengguna - Ditempatkan di pojok kanan atas, sejajar dengan title --}}
+                <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center ms-auto" data-bs-toggle="modal" data-bs-target="#tambahUserModal" style="height: 38px;">
+                    <i class="fas fa-plus me-2"></i> Tambah Pengguna
+                </button>
             </div>
             
             <div class="card-body px-0 pt-0 pb-5">
+                <div class="d-flex flex-wrap gap-2 mb-3 px-3 align-items-center justify-content-end">
+                    {{-- Search - Ditempatkan di bawah tombol --}}
+                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Email, Role..." style="width: 300px; height: 35px;">
+                </div>
+
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-users">
                         <thead>
@@ -123,8 +128,58 @@
     </div>
 </div>
 
+{{-- Modal for Adding User Data --}}
+<div class="modal fade" id="tambahUserModal" tabindex="-1" aria-labelledby="tambahUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahUserModalLabel">Tambah Pengguna Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tambahUserForm">
+                    <div class="mb-3">
+                        <label for="tambah-nama" class="form-label">Nama Pengguna</label>
+                        <input type="text" class="form-control" id="tambah-nama" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tambah-email" class="form-label">Email Pengguna</label>
+                        <input type="email" class="form-control" id="tambah-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tambah-password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="tambah-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tambah-confirm-password" class="form-label">Konfirmasi Password</label>
+                        <input type="password" class="form-control" id="tambah-confirm-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tambah-role" class="form-label">Role</label>
+                        <select class="form-select" id="tambah-role" required>
+                            <option value="">Pilih Role</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Admin P.Layang">Admin P.Layang</option>
+                            <option value="User P.Layang">User P.Layang</option>
+                            <option value="User SA Jambi">User SA Jambi</option>
+                            <option value="User SA Bengkulu">User SA Bengkulu</option>
+                            <option value="User SA Lampung">User SA Lampung</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="saveNewUser">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // --- Data Dummy Pengguna ---
     const dataDummyUsers = [
@@ -151,10 +206,10 @@
     function filterData() {
         return dataDummyUsers.filter(item => {
             const matchSearch = searchQuery ?
-                                (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.role.toLowerCase().includes(searchQuery.toLowerCase()))
-                                : true;
+                (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.role.toLowerCase().includes(searchQuery.toLowerCase()))
+                : true;
             return matchSearch;
         });
     }
@@ -254,6 +309,44 @@
             myModal.hide();
 
             Swal.fire('Berhasil!', 'Data pengguna berhasil disimpan.', 'success');
+            renderTable();
+        });
+        
+        document.getElementById('saveNewUser').addEventListener('click', function() {
+            const form = document.getElementById('tambahUserForm');
+            const nama = form.querySelector('#tambah-nama').value;
+            const email = form.querySelector('#tambah-email').value;
+            const password = form.querySelector('#tambah-password').value;
+            const confirmPassword = form.querySelector('#tambah-confirm-password').value;
+            const role = form.querySelector('#tambah-role').value;
+
+            // Simple validation
+            if (!nama || !email || !password || !confirmPassword || !role) {
+                Swal.fire('Gagal!', 'Semua field harus diisi.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                Swal.fire('Gagal!', 'Password dan Konfirmasi Password tidak cocok.', 'error');
+                return;
+            }
+
+            // Create a new user object (in a real app, this would be an API call)
+            const newId = dataDummyUsers.length > 0 ? Math.max(...dataDummyUsers.map(u => u.id)) + 1 : 1;
+            const newUser = {
+                id: newId,
+                nama: nama,
+                email: email,
+                role: role
+            };
+            dataDummyUsers.push(newUser);
+
+            const myModal = bootstrap.Modal.getInstance(document.getElementById('tambahUserModal'));
+            myModal.hide();
+
+            Swal.fire('Berhasil!', 'Pengguna baru berhasil ditambahkan.', 'success');
+            form.reset(); // Reset form fields
+            currentPage = Math.ceil(dataDummyUsers.length / itemsPerPage); // Go to the last page
             renderTable();
         });
 

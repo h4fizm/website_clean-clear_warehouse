@@ -4,14 +4,14 @@
 
 {{-- Welcome Section - Opsi 1: Icon di Atas (Mobile) / Icon di Samping (Desktop) --}}
 <div class="col-12 mb-3">
-    <div class="card p-4 position-relative" style=" {{-- Increased padding to p-4 --}}
+    <div class="card p-4 position-relative" style="
         background-color: white;
         color: #344767;
         border-radius: 1rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         overflow: hidden;
     ">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0"> {{-- Removed default padding --}}
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             {{-- Logo for mobile (order-md-2 to push it after text on desktop) --}}
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
@@ -20,7 +20,7 @@
             </div>
 
             {{-- Text Content (order-md-1 to put it first on desktop) --}}
-            <div class="w-100 order-md-1 text-center text-md-start"> {{-- Added text-center for mobile --}}
+            <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="welcome-title">
                     Selamat Datang, Nama User
                 </h4>
@@ -47,10 +47,8 @@
 </div>
 
 {{-- Statistik Cards --}}
-<div class="row">
-    @php
+<div class="row gx-2"> @php
         $cards = [
-            ['title' => 'Total User', 'value' => '15', 'icon' => 'fas fa-users', 'bg' => 'secondary', 'link' => '#'],
             ['title' => 'Total SPBE', 'value' => '1,234', 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => '24', 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
             ['title' => 'Transaksi Penerimaan', 'value' => '12,567', 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
@@ -59,8 +57,7 @@
         ];
     @endphp
     @foreach ($cards as $card)
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
-            <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
+        <div class="col-lg-2 col-md-4 col-sm-6 col-12 mb-1" style="flex-basis: 20%; max-width: 20%;"> <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
                 <div class="card-body p-3">
                     <div class="row">
                         <div class="col-12">
@@ -186,11 +183,14 @@
                     <table class="table align-items-center mb-0" id="table-upp-material">
                         <thead>
                             <tr class="bg-warning text-white">
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center" style="width: 40px;">No.</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">No.</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Kode Material</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Nama BPT</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Kabupaten</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Tanggal Pengajuan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -217,7 +217,19 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        const hariIndonesia = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
+        function formatTanggal(tanggalString) {
+            const date = new Date(tanggalString + 'T00:00:00'); // Tambahkan T00:00:00 agar tidak ada masalah zona waktu
+            const hari = hariIndonesia[date.getDay()];
+            const tanggal = date.getDate();
+            const bulan = bulanIndonesia[date.getMonth()];
+            const tahun = date.getFullYear();
+            return `${hari}, ${tanggal} ${bulan} ${tahun}`;
+        }
+        
         // Function to generate a random code with a fixed number of digits
         function generateRandomMaterialCode(length) {
             let result = '';
@@ -257,7 +269,7 @@
             { id: 24, nama_material: 'Material X (Klem Pipa)', kode_material: generateRandomMaterialCode(5), stok_fisik: 1200 },
             { id: 25, nama_material: 'Material Y (Pompa Kecil)', kode_material: generateRandomMaterialCode(5), stok_fisik: 25 }
         ];
-        
+
         // --- Custom Pagination & Search untuk Tabel Material --
         const itemsPerPage = 5;
         const tableBodyCabang = document.querySelector('#table-cabang-custom tbody');
@@ -505,20 +517,21 @@
 
         // --- Data Dummy dan Logika untuk Tabel UPP Material --
         const uppMaterialData = [
-            { nama_material: 'Gas LPG 3kg', kode_material: 'LPG3-001', nama_bpt: 'BPT Sejahtera', stok_akhir: 330 },
-            { nama_material: 'Tabung 3kg', kode_material: 'TBG3-001', nama_bpt: 'BPT Sejahtera', stok_akhir: 95 },
-            { nama_material: 'Seal Karet', kode_material: 'SEAL-01', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 150 },
-            { nama_material: 'Kompor Portable', kode_material: 'KPR-015', nama_bpt: 'BPT Sejahtera', stok_akhir: 35 },
-            { nama_material: 'Tabung 5.5kg', kode_material: 'TBG5.5-001', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 170 },
-            { nama_material: 'Konektor Gas', kode_material: 'KNG-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 400 },
-            { nama_material: 'Gas 3kg', kode_material: 'LPG3-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 30 },
-            { nama_material: 'Tabung 3kg', kode_material: 'TBG3-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 65 },
-            { nama_material: 'Regulator', kode_material: 'REG-006', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 100 },
-            { nama_material: 'Gas 5.5kg', kode_material: 'LPG5.5-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 275 },
-            { nama_material: 'Tabung 5.5kg', kode_material: 'TBG5.5-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 170 },
-            { nama_material: 'Manometer', kode_material: 'MAN-003', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 95 },
-            { nama_material: 'Konektor Gas', kode_material: 'KNG-004', nama_bpt: 'BPT Sejahtera', stok_akhir: 400 },
-            { nama_material: 'Gas 3kg', kode_material: 'LPG3-004', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 85 }
+            { nama_material: 'Tabung LPG 3 Kg', kode_material: 'TBG3-001', nama_bpt: 'BPT Sejahtera', stok_akhir: 95, status: 'Diterima', kabupaten: 'Kab. Musi Banyuasin', tanggal_pengajuan: '2025-07-28' },
+            { nama_material: 'Seal Karet', kode_material: 'SEAL-01', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 150, status: 'Pending', kabupaten: 'Kota Palembang', tanggal_pengajuan: '2025-07-29' },
+            { nama_material: 'Regulator Gas', kode_material: 'REG-006', nama_bpt: 'BPT Sejahtera', stok_akhir: 35, status: 'Clear', kabupaten: 'Kab. Ogan Komering Ulu', tanggal_pengajuan: '2025-07-29' },
+            { nama_material: 'Tabung LPG 5.5 Kg', kode_material: 'TBG5.5-001', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 170, status: 'Diterima', kabupaten: 'Kab. Banyuasin', tanggal_pengajuan: '2025-07-30' },
+            { nama_material: 'Pipa PVC', kode_material: 'PPC-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 25, status: 'Pending', kabupaten: 'Kota Palembang', tanggal_pengajuan: '2025-07-31' },
+            { nama_material: 'Tabung LPG 3 Kg', kode_material: 'TBG3-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 65, status: 'Diterima', kabupaten: 'Kab. Ogan Ilir', tanggal_pengajuan: '2025-08-01' },
+            { nama_material: 'Gas 3kg', kode_material: 'LPG3-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 30, status: 'Clear', kabupaten: 'Kab. Muara Enim', tanggal_pengajuan: '2025-08-01' },
+            { nama_material: 'Konektor Gas', kode_material: 'KNG-002', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 400, status: 'Pending', kabupaten: 'Kota Palembang', tanggal_pengajuan: '2025-08-02' },
+            { nama_material: 'Regulator', kode_material: 'REG-006', nama_bpt: 'BPT Sejahtera', stok_akhir: 100, status: 'Diterima', kabupaten: 'Kab. Ogan Komering Ulu Timur', tanggal_pengajuan: '2025-08-02' },
+            { nama_material: 'Tabung LPG 5.5 Kg', kode_material: 'TBG5.5-002', nama_bpt: 'BPT Sejahtera', stok_akhir: 170, status: 'Pending', kabupaten: 'Kota Prabumulih', tanggal_pengajuan: '2025-08-03' },
+            { nama_material: 'Manometer', kode_material: 'MAN-003', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 95, status: 'Diterima', kabupaten: 'Kab. Ogan Komering Ilir', tanggal_pengajuan: '2025-08-03' },
+            { nama_material: 'Konektor Gas', kode_material: 'KNG-004', nama_bpt: 'BPT Sejahtera', stok_akhir: 400, status: 'Clear', kabupaten: 'Kab. Empat Lawang', tanggal_pengajuan: '2025-08-04' },
+            { nama_material: 'Gas 3kg', kode_material: 'LPG3-004', nama_bpt: 'BPT Jaya Abadi', stok_akhir: 85, status: 'Pending', kabupaten: 'Kab. Lahat', tanggal_pengajuan: '2025-08-04' },
+            { nama_material: 'Seal Karet', kode_material: 'SEAL-02', nama_bpt: 'BPT Makmur', stok_akhir: 210, status: 'Diterima', kabupaten: 'Kota Lubuklinggau', tanggal_pengajuan: '2025-08-05' },
+            { nama_material: 'Tabung LPG 3 Kg', kode_material: 'TBG3-003', nama_bpt: 'BPT Makmur', stok_akhir: 120, status: 'Pending', kabupaten: 'Kab. Musi Rawas', tanggal_pengajuan: '2025-08-05' }
         ];
 
         const uppTableBody = document.querySelector('#table-upp-material tbody');
@@ -527,6 +540,19 @@
         let currentFilteredDataUpp = uppMaterialData;
         let currentPageUpp = 0;
 
+        function getStatusBadge(status) {
+            switch (status.toLowerCase()) {
+                case 'pending':
+                    return `<span class="badge bg-warning text-white text-xs">${status}</span>`;
+                case 'diterima':
+                    return `<span class="badge bg-success text-white text-xs">${status}</span>`;
+                case 'clear':
+                    return `<span class="badge bg-info text-white text-xs">${status}</span>`;
+                default:
+                    return `<span class="badge bg-secondary text-white text-xs">${status}</span>`;
+            }
+        }
+
         function renderUppTable(data, page) {
             uppTableBody.innerHTML = '';
             const start = page * itemsPerPage;
@@ -534,10 +560,12 @@
             const paginatedItems = data.slice(start, end);
 
             if (paginatedItems.length === 0) {
-                uppTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Tidak ada data UPP material.</td></tr>';
+                uppTableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Tidak ada data UPP material.</td></tr>';
             } else {
                 paginatedItems.forEach((item, index) => {
                     const rowIndex = start + index + 1;
+                    const statusBadge = getStatusBadge(item.status);
+                    const formattedDate = formatTanggal(item.tanggal_pengajuan);
                     const row = `
                         <tr>
                             <td class="text-center">
@@ -555,6 +583,15 @@
                             <td class="text-center">
                                 <span class="text-xs font-weight-bold">${item.stok_akhir}</span>
                             </td>
+                            <td class="text-center">
+                                ${statusBadge}
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs font-weight-bold">${item.kabupaten}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs font-weight-bold">${formattedDate}</span>
+                            </td>
                         </tr>
                     `;
                     uppTableBody.insertAdjacentHTML('beforeend', row);
@@ -571,7 +608,10 @@
             currentFilteredDataUpp = uppMaterialData.filter(item =>
                 item.nama_material.toLowerCase().includes(searchTerm) ||
                 item.nama_bpt.toLowerCase().includes(searchTerm) ||
-                item.kode_material.toLowerCase().includes(searchTerm)
+                item.kode_material.toLowerCase().includes(searchTerm) ||
+                item.kabupaten.toLowerCase().includes(searchTerm) ||
+                item.status.toLowerCase().includes(searchTerm) ||
+                formatTanggal(item.tanggal_pengajuan).toLowerCase().includes(searchTerm)
             );
             currentPageUpp = 0;
             renderUppTable(currentFilteredDataUpp, currentPageUpp);

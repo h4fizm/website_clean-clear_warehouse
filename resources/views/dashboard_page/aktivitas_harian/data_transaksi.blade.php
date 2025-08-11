@@ -62,7 +62,9 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Material & Kode</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Asal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tujuan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Jumlah Transaksi</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aktivitas</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">User PJ</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi</th>
@@ -94,22 +96,22 @@
 <script>
     // --- Data Dummy Aktivitas Transaksi ---
     const dataDummyTransaksi = [
-        { id: 1, tanggal: '2025-08-10', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Sukamaju', material_nama: 'Gas LPG 3 Kg', material_kode: 'LPG-01', jumlah: 150, aktivitas: 'Penyaluran' },
-        { id: 2, tanggal: '2025-08-10', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Pelumas Fastron', material_kode: 'PLS-02', jumlah: 50, aktivitas: 'Penerimaan' },
-        { id: 3, tanggal: '2025-08-09', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Bright Gas 12 Kg', material_kode: 'BRG-03', jumlah: 90, aktivitas: 'Penyaluran' },
-        { id: 4, tanggal: '2025-08-09', user_pj: 'Rina Wijaya', asal: 'SPBE Jaya', tujuan: 'P.Layang', material_nama: 'Aspal Curah', material_kode: 'ASP-04', jumlah: 110, aktivitas: 'Penerimaan' },
-        { id: 5, tanggal: '2025-08-08', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Pertalite', material_kode: 'PRT-05', jumlah: 95, aktivitas: 'Penyaluran' },
-        { id: 6, tanggal: '2025-08-08', user_pj: 'Adi Gunawan', asal: 'SPBE Sukamaju', tujuan: 'P.Layang', material_nama: 'Pertamina Dex', material_kode: 'PDX-06', jumlah: 170, aktivitas: 'Penerimaan' },
-        { id: 7, tanggal: '2025-08-07', user_pj: 'Rina Wijaya', asal: 'P.Layang', tujuan: 'SPBE Sentosa', material_nama: 'Minyak Tanah', material_kode: 'MT-07', jumlah: 140, aktivitas: 'Penyaluran' },
-        { id: 8, tanggal: '2025-08-07', user_pj: 'Budi Santoso', asal: 'SPBE Makmur', tujuan: 'P.Layang', material_nama: 'Asphalt Pen 60/70', material_kode: 'AP-08', jumlah: 160, aktivitas: 'Penerimaan' },
-        { id: 9, tanggal: '2025-08-06', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Jaya', material_nama: 'Bitumen', material_kode: 'BIT-09', jumlah: 130, aktivitas: 'Penyaluran' },
-        { id: 10, tanggal: '2025-08-06', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Gas LPG 3 Kg (Extra)', material_kode: 'LPG-10', jumlah: 200, aktivitas: 'Penerimaan' },
-        { id: 11, tanggal: '2025-08-05', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Elpiji Industri', material_kode: 'ELP-11', jumlah: 80, aktivitas: 'Penyaluran' },
-        { id: 12, tanggal: '2025-08-05', user_pj: 'Adi Gunawan', asal: 'SPBE Sukamaju', tujuan: 'P.Layang', material_nama: 'Pelumas Meditran', material_kode: 'PLM-12', jumlah: 190, aktivitas: 'Penerimaan' },
-        { id: 13, tanggal: '2025-08-04', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Sukamaju', material_nama: 'Dexlite', material_kode: 'DEX-13', jumlah: 70, aktivitas: 'Penyaluran' },
-        { id: 14, tanggal: '2025-08-04', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Solar Industri', material_kode: 'SOL-14', jumlah: 100, aktivitas: 'Penerimaan' },
-        { id: 15, tanggal: '2025-08-03', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Gas LPG 3 Kg', material_kode: 'LPG-01', jumlah: 50, aktivitas: 'Penyaluran' },
-        { id: 16, tanggal: '2025-08-03', user_pj: 'Rina Wijaya', asal: 'SPBE Jaya', tujuan: 'P.Layang', material_nama: 'Bright Gas 12 Kg', material_kode: 'BRG-03', jumlah: 40, aktivitas: 'Penerimaan' },
+        { id: 1, tanggal: '2025-08-10', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Sukamaju', material_nama: 'Gas LPG 3 Kg', material_kode: 'LPG-01', jumlah: 150, aktivitas: 'Penyaluran', stok_awal: 1050 },
+        { id: 2, tanggal: '2025-08-10', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Pelumas Fastron', material_kode: 'PLS-02', jumlah: 50, aktivitas: 'Penerimaan', stok_awal: 100 },
+        { id: 3, tanggal: '2025-08-09', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Bright Gas 12 Kg', material_kode: 'BRG-03', jumlah: 90, aktivitas: 'Penyaluran', stok_awal: 800 },
+        { id: 4, tanggal: '2025-08-09', user_pj: 'Rina Wijaya', asal: 'SPBE Jaya', tujuan: 'P.Layang', material_nama: 'Aspal Curah', material_kode: 'ASP-04', jumlah: 110, aktivitas: 'Penerimaan', stok_awal: 250 },
+        { id: 5, tanggal: '2025-08-08', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Pertalite', material_kode: 'PRT-05', jumlah: 95, aktivitas: 'Penyaluran', stok_awal: 500 },
+        { id: 6, tanggal: '2025-08-08', user_pj: 'Adi Gunawan', asal: 'SPBE Sukamaju', tujuan: 'P.Layang', material_nama: 'Pertamina Dex', material_kode: 'PDX-06', jumlah: 170, aktivitas: 'Penerimaan', stok_awal: 120 },
+        { id: 7, tanggal: '2025-08-07', user_pj: 'Rina Wijaya', asal: 'P.Layang', tujuan: 'SPBE Sentosa', material_nama: 'Minyak Tanah', material_kode: 'MT-07', jumlah: 140, aktivitas: 'Penyaluran', stok_awal: 600 },
+        { id: 8, tanggal: '2025-08-07', user_pj: 'Budi Santoso', asal: 'SPBE Makmur', tujuan: 'P.Layang', material_nama: 'Asphalt Pen 60/70', material_kode: 'AP-08', jumlah: 160, aktivitas: 'Penerimaan', stok_awal: 300 },
+        { id: 9, tanggal: '2025-08-06', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Jaya', material_nama: 'Bitumen', material_kode: 'BIT-09', jumlah: 130, aktivitas: 'Penyaluran', stok_awal: 200 },
+        { id: 10, tanggal: '2025-08-06', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Gas LPG 3 Kg (Extra)', material_kode: 'LPG-10', jumlah: 200, aktivitas: 'Penerimaan', stok_awal: 800 },
+        { id: 11, tanggal: '2025-08-05', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Elpiji Industri', material_kode: 'ELP-11', jumlah: 80, aktivitas: 'Penyaluran', stok_awal: 400 },
+        { id: 12, tanggal: '2025-08-05', user_pj: 'Adi Gunawan', asal: 'SPBE Sukamaju', tujuan: 'P.Layang', material_nama: 'Pelumas Meditran', material_kode: 'PLM-12', jumlah: 190, aktivitas: 'Penerimaan', stok_awal: 200 },
+        { id: 13, tanggal: '2025-08-04', user_pj: 'Budi Santoso', asal: 'P.Layang', tujuan: 'SPBE Sukamaju', material_nama: 'Dexlite', material_kode: 'DEX-13', jumlah: 70, aktivitas: 'Penyaluran', stok_awal: 350 },
+        { id: 14, tanggal: '2025-08-04', user_pj: 'Rina Wijaya', asal: 'SPBE Sentosa', tujuan: 'P.Layang', material_nama: 'Solar Industri', material_kode: 'SOL-14', jumlah: 100, aktivitas: 'Penerimaan', stok_awal: 50 },
+        { id: 15, tanggal: '2025-08-03', user_pj: 'Adi Gunawan', asal: 'P.Layang', tujuan: 'SPBE Makmur', material_nama: 'Gas LPG 3 Kg', material_kode: 'LPG-01', jumlah: 50, aktivitas: 'Penyaluran', stok_awal: 1200 },
+        { id: 16, tanggal: '2025-08-03', user_pj: 'Rina Wijaya', asal: 'SPBE Jaya', tujuan: 'P.Layang', material_nama: 'Bright Gas 12 Kg', material_kode: 'BRG-03', jumlah: 40, aktivitas: 'Penerimaan', stok_awal: 760 },
     ];
     // --- END Data Dummy ---
 
@@ -120,14 +122,16 @@
     const itemsPerPage = 10;
     const maxPagesToShow = 5;
 
+    // Menambahkan fungsi format tanggal yang telah disesuaikan
+    const hariIndonesia = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
     function formatTanggal(isoDate) {
         if (!isoDate) return '-';
-        const date = new Date(isoDate);
-        const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        const dayName = days[date.getDay()];
-        const day = String(date.getDate()).padStart(2, '0');
-        const monthName = months[date.getMonth()];
+        const date = new Date(isoDate + 'T00:00:00');
+        const dayName = hariIndonesia[date.getDay()];
+        const day = date.getDate();
+        const monthName = bulanIndonesia[date.getMonth()];
         const year = date.getFullYear();
         return `${dayName}, ${day} ${monthName} ${year}`;
     }
@@ -142,12 +146,12 @@
     function filterData() {
         return dataDummyTransaksi.filter(item => {
             const matchSearch = searchQuery ?
-                                (item.material_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.material_kode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.user_pj.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.asal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                item.tujuan.toLowerCase().includes(searchQuery.toLowerCase()))
-                                : true;
+                (item.material_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.material_kode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.user_pj.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.asal.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.tujuan.toLowerCase().includes(searchQuery.toLowerCase()))
+                : true;
             
             const itemDate = parseDateString(item.tanggal);
             const matchDate = (!startDate || (itemDate && itemDate >= startDate)) && (!endDate || (itemDate && itemDate <= endDate));
@@ -170,8 +174,13 @@
             noData.style.display = 'none';
             paginated.forEach((item, index) => {
                 const rowIndex = start + index + 1;
-                const activityColor = item.aktivitas === 'Penerimaan' ? 'bg-gradient-success' : 'bg-gradient-primary';
+                const isPenerimaan = item.aktivitas === 'Penerimaan';
+                const activityColor = isPenerimaan ? 'bg-gradient-success' : 'bg-gradient-primary';
                 
+                const stokAkhir = isPenerimaan ? item.stok_awal + item.jumlah : item.stok_awal - item.jumlah;
+                const stokAwalBadge = `<span class="badge bg-secondary text-white text-xs">${item.stok_awal} pcs</span>`;
+                const stokAkhirBadge = `<span class="badge bg-info text-white text-xs">${stokAkhir} pcs</span>`;
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="text-center">
@@ -190,7 +199,13 @@
                             <p class="text-xs font-weight-bold mb-0">${item.tujuan}</p>
                         </td>
                         <td class="text-center">
+                            ${stokAwalBadge}
+                        </td>
+                        <td class="text-center">
                             <span class="badge ${activityColor} text-white text-xs">${item.jumlah} pcs</span>
+                        </td>
+                        <td class="text-center">
+                            ${stokAkhirBadge}
                         </td>
                         <td class="text-center">
                             <span class="badge ${activityColor} text-white text-xs">${item.aktivitas}</span>
