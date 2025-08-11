@@ -128,17 +128,13 @@
             <div class="card-header p-3 pb-0">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">STOCK MATERIAL REGION SUMBAGSEL</h6>
-                    <div class="dropdown">
-                        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMaterial" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 13px;">
-                            Pilih Material
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMaterial">
-                            <li><a class="dropdown-item" href="#" data-value="Material 1">Material 1</a></li>
-                            <li><a class="dropdown-item" href="#" data-value="Material 2">Material 2</a></li>
-                            <li><a class="dropdown-item" href="#" data-value="Material 3">Material 3</a></li>
-                        </ul>
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <input type="text" id="search-stock-material" class="form-control" placeholder="Cari Nama Material..." aria-label="Search Material">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
                     </div>
                 </div>
+                {{-- Container untuk daftar saran --}}
+                <div id="material-suggestions" class="list-group position-absolute w-100 mt-1" style="z-index: 1000; display: none;"></div>
                 <p class="text-center text-dark mb-3 fw-bold fs-5" id="stock-title">Stok Juli 2025</p>
             </div>
             <div class="card-body p-2" style="padding-top: 0 !important;">
@@ -381,43 +377,71 @@
         renderTableCabang(currentFilteredDataCabang, currentPageCabang);
 
         // --- Data Dummy dan Logika untuk Tabel Stok Material --
-        const materialStockData = {
-            'Material 1': [
-                { material_name: 'Tabung LPG 3 Kg', gudang: 'Gudang Region Sumbagsel', baru: 840, baik: 0, rusak: 0, afkir: 28416, layak_luar: 840 },
-                { material_name: 'Tabung LPG 3 Kg', gudang: 'SPBE/BPT Region Sumbagsel', baru: 33157, baik: 5533, rusak: 36515, afkir: 70813, layak_luar: 38690 }
+        const allMaterialStockData = {
+            'Tabung LPG 3 Kg': [
+                { material_name: 'Tabung LPG 3 Kg', gudang: 'Gudang Region Sumbagsel', baru: 840, baik: 0, rusak: 0, afkir: 28416, layak_edar: 840 },
+                { material_name: 'Tabung LPG 3 Kg', gudang: 'SPBE/BPT Region Sumbagsel', baru: 33157, baik: 5533, rusak: 36515, afkir: 70813, layak_edar: 38690 }
             ],
-            'Material 2': [
-                { material_name: 'Material 2', gudang: 'Gudang Region Sumbagsel', baru: 500, baik: 100, rusak: 50, afkir: 1500, layak_luar: 600 },
-                { material_name: 'Material 2', gudang: 'SPBE/BPT Region Sumbagsel', baru: 15000, baik: 2000, rusak: 1000, afkir: 30000, layak_luar: 17000 }
+            'Tabung LPG 12 Kg': [
+                { material_name: 'Tabung LPG 12 Kg', gudang: 'Gudang Region Sumbagsel', baru: 120, baik: 50, rusak: 10, afkir: 1500, layak_edar: 170 },
+                { material_name: 'Tabung LPG 12 Kg', gudang: 'SPBE/BPT Region Sumbagsel', baru: 1500, baik: 200, rusak: 50, afkir: 2500, layak_edar: 1700 }
             ],
-            'Material 3': [
-                { material_name: 'Material 3', gudang: 'Gudang Region Sumbagsel', baru: 200, baik: 50, rusak: 20, afkir: 1000, layak_luar: 250 },
-                { material_name: 'Material 3', gudang: 'SPBE/BPT Region Sumbagsel', baru: 25000, baik: 3500, rusak: 2500, afkir: 45000, layak_luar: 28500 }
+            'Regulator Gas': [
+                { material_name: 'Regulator Gas', gudang: 'Gudang Region Sumbagsel', baru: 500, baik: 300, rusak: 25, afkir: 500, layak_edar: 800 },
+                { material_name: 'Regulator Gas', gudang: 'SPBE/BPT Region Sumbagsel', baru: 10000, baik: 5000, rusak: 750, afkir: 15000, layak_edar: 15000 }
+            ],
+            'Selang Gas': [
+                { material_name: 'Selang Gas', gudang: 'Gudang Region Sumbagsel', baru: 250, baik: 150, rusak: 10, afkir: 200, layak_edar: 400 },
+                { material_name: 'Selang Gas', gudang: 'SPBE/BPT Region Sumbagsel', baru: 5000, baik: 3000, rusak: 100, afkir: 10000, layak_edar: 8000 }
+            ],
+            'Seal Karet Tabung': [
+                { material_name: 'Seal Karet Tabung', gudang: 'Gudang Region Sumbagsel', baru: 2000, baik: 1500, rusak: 100, afkir: 5000, layak_edar: 3500 },
+                { material_name: 'Seal Karet Tabung', gudang: 'SPBE/BPT Region Sumbagsel', baru: 25000, baik: 10000, rusak: 500, afkir: 15000, layak_edar: 35000 }
+            ],
+            'Valve Tabung': [
+                { material_name: 'Valve Tabung', gudang: 'Gudang Region Sumbagsel', baru: 75, baik: 25, rusak: 5, afkir: 100, layak_edar: 100 },
+                { material_name: 'Valve Tabung', gudang: 'SPBE/BPT Region Sumbagsel', baru: 1200, baik: 300, rusak: 20, afkir: 800, layak_edar: 1500 }
             ]
         };
 
         const materialCapacityData = {
-            'Material 1': 50000,
-            'Material 2': 40000,
-            'Material 3': 60000
+            'Tabung LPG 3 Kg': 50000,
+            'Tabung LPG 12 Kg': 10000,
+            'Regulator Gas': 20000,
+            'Selang Gas': 15000,
+            'Seal Karet Tabung': 60000,
+            'Valve Tabung': 5000
         };
 
         const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
-        const dropdownButton = document.getElementById('dropdownMaterial');
+        const stockSearchInput = document.getElementById('search-stock-material');
         const stockTitle = document.getElementById('stock-title');
-        let currentMaterialName = 'Material 1';
+        const materialSuggestionsContainer = document.getElementById('material-suggestions');
 
-        function renderStockTable(data, materialName) {
+        // Sembunyikan daftar saran jika klik di luar search bar
+        document.addEventListener('click', function(e) {
+            if (!stockSearchInput.contains(e.target) && !materialSuggestionsContainer.contains(e.target)) {
+                materialSuggestionsContainer.style.display = 'none';
+            }
+        });
+
+        function renderStockTable(materialName) {
+            const data = allMaterialStockData[materialName];
             stockTableBody.innerHTML = '';
-            stockTitle.innerText = `Stok ${materialName} Juli 2025`;
-            currentMaterialName = materialName;
+            
+            if (materialName) {
+                stockTitle.innerText = `Stok ${materialName} Juli 2025`;
+                stockSearchInput.value = materialName; // Mengisi search bar dengan nama material yang dipilih
+            } else {
+                stockTitle.innerText = `Stok Juli 2025`;
+            }
 
             if (data && data.length > 0) {
                 data.forEach((item, index) => {
-                    const row1 = `
+                    const row = `
                         <tr>
                             ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${data.length}" style="width: 25%;">
-                                <h6 class="text-sm font-weight-bold mb-0">${materialName}</h6>
+                                <h6 class="text-sm font-weight-bold mb-0">${item.material_name}</h6>
                             </td>` : ''}
                             <td class="text-secondary text-center text-xs">
                                 <span class="text-xs font-weight-bold">${item.gudang}</span>
@@ -435,85 +459,109 @@
                                 <span class="text-xs font-weight-bold">${item.afkir.toLocaleString('id-ID')}</span>
                             </td>
                             <td class="text-secondary text-center text-xs">
-                                <h6 class="text-sm font-weight-bolder mb-0">${item.layak_luar.toLocaleString('id-ID')}</h6>
+                                <h6 class="text-sm font-weight-bolder mb-0">${item.layak_edar.toLocaleString('id-ID')}</h6>
                             </td>
                         </tr>
                     `;
-                    stockTableBody.insertAdjacentHTML('beforeend', row1);
+                    stockTableBody.insertAdjacentHTML('beforeend', row);
                 });
             } else {
-                stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4">Pilih material untuk menampilkan data.</td></tr>`;
+                 stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
             }
 
-            // Tambahkan baris Kapasitas Daya Tampung di bagian bawah tabel
-            const capacityValue = materialCapacityData[currentMaterialName] ? materialCapacityData[currentMaterialName].toLocaleString('id-ID') : 'N/A';
-            const capacityRowHtml = `
-                <tr class="bg-gray-200">
-                    <td colspan="2" class="p-2 align-middle">
-                        <p class="text-sm font-weight-bold mb-0">Kapasitas Daya Tampung ${materialName} :</p>
-                    </td>
-                    <td colspan="5" class="p-2 text-end">
-                        <form id="capacity-form" class="d-flex align-items-center justify-content-end" onsubmit="return false;">
-                            <input type="number" id="capacity-input" class="form-control form-control-sm me-2 text-end" value="${materialCapacityData[currentMaterialName]}" style="width: 150px;" disabled>
-                            <button type="button" id="edit-capacity-btn" class="btn btn-sm btn-info me-2 text-white">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button type="submit" id="submit-capacity-btn" class="btn btn-sm btn-primary" disabled>
-                                <i class="fas fa-save"></i> Submit
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            `;
-            stockTableBody.insertAdjacentHTML('beforeend', capacityRowHtml);
-            
-            // Re-attach event listeners after re-rendering the row
-            const capacityInput = document.getElementById('capacity-input');
-            const editCapacityBtn = document.getElementById('edit-capacity-btn');
-            const submitCapacityBtn = document.getElementById('submit-capacity-btn');
+            // Tambahkan baris Kapasitas Daya Tampung di bagian bawah tabel jika ada material yang dipilih
+            if (materialName && materialCapacityData[materialName]) {
+                const capacityValue = materialCapacityData[materialName] ? materialCapacityData[materialName].toLocaleString('id-ID') : 'N/A';
+                const capacityRowHtml = `
+                    <tr class="bg-gray-200">
+                        <td colspan="2" class="p-2 align-middle">
+                            <p class="text-sm font-weight-bold mb-0">Kapasitas Daya Tampung ${materialName} :</p>
+                        </td>
+                        <td colspan="5" class="p-2 text-end">
+                            <form id="capacity-form" class="d-flex align-items-center justify-content-end" onsubmit="return false;">
+                                <input type="number" id="capacity-input" class="form-control form-control-sm me-2 text-end" value="${materialCapacityData[materialName]}" style="width: 150px;" disabled>
+                                <button type="button" id="edit-capacity-btn" class="btn btn-sm btn-info me-2 text-white">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button type="submit" id="submit-capacity-btn" class="btn btn-sm btn-primary" disabled>
+                                    <i class="fas fa-save"></i> Submit
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                `;
+                stockTableBody.insertAdjacentHTML('beforeend', capacityRowHtml);
+                
+                // Re-attach event listeners after re-rendering the row
+                const capacityInput = document.getElementById('capacity-input');
+                const editCapacityBtn = document.getElementById('edit-capacity-btn');
+                const submitCapacityBtn = document.getElementById('submit-capacity-btn');
 
-            if (editCapacityBtn) {
-                editCapacityBtn.addEventListener('click', function() {
-                    capacityInput.disabled = false;
-                    editCapacityBtn.disabled = true;
-                    submitCapacityBtn.disabled = false;
-                });
-            }
+                if (editCapacityBtn) {
+                    editCapacityBtn.addEventListener('click', function() {
+                        capacityInput.disabled = false;
+                        editCapacityBtn.disabled = true;
+                        submitCapacityBtn.disabled = false;
+                    });
+                }
 
-            if (submitCapacityBtn) {
-                submitCapacityBtn.addEventListener('click', function() {
-                    const newCapacity = parseInt(capacityInput.value);
-                    if (isNaN(newCapacity) || newCapacity < 0) {
-                        Swal.fire('Error!', 'Kapasitas harus berupa angka positif.', 'error');
-                        return;
-                    }
+                if (submitCapacityBtn) {
+                    submitCapacityBtn.addEventListener('click', function() {
+                        const newCapacity = parseInt(capacityInput.value);
+                        if (isNaN(newCapacity) || newCapacity < 0) {
+                            Swal.fire('Error!', 'Kapasitas harus berupa angka positif.', 'error');
+                            return;
+                        }
 
-                    materialCapacityData[currentMaterialName] = newCapacity;
-                    
-                    // Re-render the table to show the updated value
-                    renderStockTable(materialStockData[currentMaterialName], currentMaterialName);
-                    
-                    Swal.fire('Berhasil!', 'Kapasitas daya tampung berhasil diperbarui.', 'success');
-                });
+                        materialCapacityData[materialName] = newCapacity;
+                        
+                        // Re-render the table to show the updated value
+                        renderStockTable(materialName);
+                        
+                        Swal.fire('Berhasil!', 'Kapasitas daya tampung berhasil diperbarui.', 'success');
+                    });
+                }
             }
         }
 
-        // Event listener untuk dropdown
-        document.querySelectorAll('#dropdownMaterial + .dropdown-menu .dropdown-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const selectedMaterial = this.dataset.value;
-                const selectedMaterialText = this.innerText;
-                dropdownButton.innerText = selectedMaterialText;
-                const dataToShow = materialStockData[selectedMaterial];
-                renderStockTable(dataToShow, selectedMaterialText);
-            });
+        // Fungsi untuk menampilkan daftar saran
+        function showSuggestions(searchTerm) {
+            const allMaterialNames = Object.keys(allMaterialStockData);
+            const filteredNames = allMaterialNames.filter(name =>
+                name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            materialSuggestionsContainer.innerHTML = '';
+
+            if (searchTerm !== '' && filteredNames.length > 0) {
+                materialSuggestionsContainer.style.display = 'block';
+                filteredNames.forEach(name => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.classList.add('list-group-item', 'list-group-item-action');
+                    item.textContent = name;
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        renderStockTable(name);
+                        materialSuggestionsContainer.style.display = 'none';
+                    });
+                    materialSuggestionsContainer.appendChild(item);
+                });
+            } else {
+                materialSuggestionsContainer.style.display = 'none';
+            }
+        }
+        
+        stockSearchInput.addEventListener('keyup', function() {
+            showSuggestions(this.value);
+            if (this.value === '') {
+                 // Tampilkan pesan default jika search bar kosong
+                renderStockTable(null);
+            }
         });
-
-        // Inisialisasi: Tampilkan tabel "Material 1" sebagai default
-        renderStockTable(materialStockData['Material 1'], 'Material 1');
-        dropdownButton.innerText = 'Material 1';
-
+        
+        // Inisialisasi: Tampilkan tabel kosong saat pertama kali dimuat
+        renderStockTable(null);
 
         // --- Data Dummy dan Logika untuk Tabel UPP Material --
         const uppMaterialData = [

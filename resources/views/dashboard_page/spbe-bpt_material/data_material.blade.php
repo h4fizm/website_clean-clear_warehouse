@@ -183,12 +183,10 @@
             <div class="modal-body">
                 {{-- Card Informasi SPBE/BPT --}}
                 <div class="card shadow p-3 mb-3">
-                    <h6 class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 mb-2">Informasi SPBE/BPT</h6>
+                    <h6 class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 mb-2">Informasi Material</h6>
                     <div class="d-flex flex-column">
-                        <p class="text-sm font-weight-bold mb-1">Nama SPBE / BPT : <span id="kirimNamaSpbeBpt" class="text-secondary font-weight-normal"></span></p>
-                        <p class="text-sm font-weight-bold mb-1">Kode Plant : <span id="kirimKodePlant" class="text-secondary font-weight-normal"></span></p>
-                        <p class="text-sm font-weight-bold mb-1">Region/SA : <span id="kirimRegionSa" class="text-secondary font-weight-normal"></span></p>
-                        <p class="text-sm font-weight-bold mb-1">Kabupaten : <span id="kirimKabupaten" class="text-secondary font-weight-normal"></span></p>
+                        <p class="text-sm font-weight-bold mb-1">Nama Material : <span id="kirimNamaMaterial" class="text-secondary font-weight-normal"></span></p>
+                        <p class="text-sm font-weight-bold mb-1">Kode Material : <span id="kirimKodeMaterial" class="text-secondary font-weight-normal"></span></p>
                         <p class="text-sm font-weight-bold mb-1">Stok Saat Ini : <span id="kirimStok" class="text-success font-weight-bold"></span></p>
                     </div>
                 </div>
@@ -208,6 +206,18 @@
                         <ul id="tujuanTransaksiList" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none; position: absolute; z-index: 1000; width: 93%;">
                             {{-- List items will be populated by JavaScript --}}
                         </ul>
+                    </div>
+
+                    {{-- Form field baru: No. Surat Persetujuan --}}
+                    <div class="mb-3">
+                        <label for="noSuratPersetujuan" class="form-label">No. Surat Persetujuan (Opsional)</label>
+                        <input type="text" class="form-control" id="noSuratPersetujuan">
+                    </div>
+
+                    {{-- Form field baru: No. BA Serah Terima --}}
+                    <div class="mb-3">
+                        <label for="noBaSerahTerima" class="form-label">No. BA Serah Terima (Opsional)</label>
+                        <input type="text" class="form-control" id="noBaSerahTerima">
                     </div>
 
                     <div class="mb-3">
@@ -310,6 +320,8 @@
     // Objek untuk menyimpan nilai terakhir
     const lastTransactionQuantities = {};
     const lastTransactionDestination = {};
+    const lastTransactionDokumen = {};
+
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -468,22 +480,19 @@
                 
                 if (material && spbeBptInfo) {
                     document.getElementById('kirimMaterialId').value = material.id;
-                    document.getElementById('kirimMaterialModalLabel').textContent = `Kirim Material "${material.nama}"`;
-                    
-                    document.getElementById('kirimNamaSpbeBpt').textContent = spbeBptInfo.nama;
-                    document.getElementById('kirimKodePlant').textContent = spbeBptInfo.kode_plant;
-                    document.getElementById('kirimRegionSa').textContent = spbeBptInfo.region_sa;
-                    document.getElementById('kirimKabupaten').textContent = spbeBptInfo.kabupaten;
+                    document.getElementById('kirimNamaMaterial').textContent = material.nama;
+                    document.getElementById('kirimKodeMaterial').textContent = material.kode;
                     document.getElementById('kirimStok').textContent = `${material.total_stok} unit`;
                     
                     document.getElementById('asalTransaksiText').value = spbeBptName;
                     document.getElementById('asalTransaksi').value = spbeBptName;
 
-                    const lastDestination = lastTransactionDestination[material.id];
-                    const lastQuantity = lastTransactionQuantities[material.id];
-                    
-                    document.getElementById('tujuanTransaksiSearch').value = lastDestination || '';
-                    document.getElementById('jumlahStok').value = lastQuantity || '';
+                    const lastValues = lastTransactionDokumen[material.id] || { noSurat: '', noBa: '' };
+                    document.getElementById('tujuanTransaksiSearch').value = lastTransactionDestination[material.id] || '';
+                    document.getElementById('jumlahStok').value = lastTransactionQuantities[material.id] || '';
+                    document.getElementById('noSuratPersetujuan').value = lastValues.noSurat;
+                    document.getElementById('noBaSerahTerima').value = lastValues.noBa;
+
                     document.getElementById('tujuanTransaksiList').style.display = 'none';
 
                     document.getElementById('jenisPenerimaan').checked = true;
@@ -607,6 +616,8 @@
         const tujuan = document.getElementById('tujuanTransaksiSearch').value;
         const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
         const jumlah = parseInt(document.getElementById('jumlahStok').value);
+        const noSurat = document.getElementById('noSuratPersetujuan').value;
+        const noBa = document.getElementById('noBaSerahTerima').value;
 
         if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
             Swal.fire('Gagal!', 'Harap isi form dengan benar.', 'error');
@@ -640,6 +651,7 @@
         
         lastTransactionQuantities[id] = jumlah;
         lastTransactionDestination[id] = tujuan;
+        lastTransactionDokumen[id] = { noSurat: noSurat, noBa: noBa };
         
         material.total_stok = stokAkhir;
         material.tanggal = new Date().toISOString().split('T')[0];
@@ -723,9 +735,10 @@
         kirimModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const asalTransaksiValue = button.getAttribute('data-spbe-bpt');
+            const materialId = parseInt(button.getAttribute('data-id'));
 
             // Reset dan atur ulang pencarian tujuan setiap kali modal dibuka
-            tujuanTransaksiSearch.value = '';
+            tujuanTransaksiSearch.value = lastTransactionDestination[materialId] || '';
             tujuanTransaksiList.innerHTML = '';
             tujuanTransaksiList.style.display = 'none';
 

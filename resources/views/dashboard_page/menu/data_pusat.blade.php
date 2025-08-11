@@ -131,6 +131,18 @@
                             {{-- List items will be populated by JavaScript --}}
                         </ul>
                     </div>
+                    
+                    {{-- NEW: No. Surat Persetujuan --}}
+                    <div class="mb-3">
+                        <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan (Opsional)</label>
+                        <input type="text" class="form-control" id="no-surat-persetujuan">
+                    </div>
+                    
+                    {{-- NEW: No. BA Serah Terima --}}
+                    <div class="mb-3">
+                        <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima (Opsional)</label>
+                        <input type="text" class="form-control" id="no-ba-serah-terima">
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
@@ -223,6 +235,8 @@
     const lastTransactionQuantities = {};
     // Object to store the last entered destination for each material ID
     const lastTransactionDestination = {};
+    // Object to store the new optional fields
+    const lastTransactionDokumen = {};
 
     function formatTanggal(tgl) {
         const d = new Date(tgl);
@@ -320,13 +334,12 @@
                     document.getElementById('modal-kode-material-display').textContent = material.kode_material;
                     document.getElementById('modal-total-stok-display').textContent = `${material.total_stok} pcs`;
                     
-                    // Populate jumlah-stok with the last saved value
-                    const lastValue = lastTransactionQuantities[id];
-                    document.getElementById('jumlah-stok').value = lastValue || '';
-                    
-                    // Populate tujuan-transaksi-search with the last saved value
-                    const lastDestination = lastTransactionDestination[id];
-                    document.getElementById('tujuan-transaksi-search').value = lastDestination || '';
+                    // Populate with the last saved values, or empty strings
+                    const lastValues = lastTransactionDokumen[id] || { no_surat: '', no_ba: '' };
+                    document.getElementById('jumlah-stok').value = lastTransactionQuantities[id] || '';
+                    document.getElementById('tujuan-transaksi-search').value = lastTransactionDestination[id] || '';
+                    document.getElementById('no-surat-persetujuan').value = lastValues.no_surat;
+                    document.getElementById('no-ba-serah-terima').value = lastValues.no_ba;
 
                     document.getElementById('tujuan-transaksi-list').style.display = 'none';
                     // Reset radio button to default (Penerimaan)
@@ -420,6 +433,8 @@
         const tujuan = document.getElementById('tujuan-transaksi-search').value;
         const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
         const jumlah = parseInt(document.getElementById('jumlah-stok').value);
+        const noSurat = document.getElementById('no-surat-persetujuan').value; // Get new field value
+        const noBa = document.getElementById('no-ba-serah-terima').value; // Get new field value
 
         // Validation
         if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
@@ -447,9 +462,10 @@
             material.penyaluran += jumlah; // Update penyaluran count
         }
 
-        // Save the last transaction quantity and destination
+        // Save the last transaction quantity, destination, and the new optional fields
         lastTransactionQuantities[id] = jumlah;
         lastTransactionDestination[id] = tujuan;
+        lastTransactionDokumen[id] = { no_surat: noSurat, no_ba: noBa };
 
         // Update the data in our mock array and re-render the table
         material.total_stok = stokAkhir;
@@ -532,14 +548,12 @@
         }
     });
 
-
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('searchInput').addEventListener('input', filterData);
         filterData();
     });
 </script>
 @endpush
-
 
 {{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
 <style>

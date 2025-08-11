@@ -59,6 +59,33 @@
     </div>
 </div>
 
+<div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Detail Keterangan UPP Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-keterangan-form">
+                    <input type="hidden" id="modal-material-id">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Nama Material:</label>
+                        <p id="modal-material-name" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-keterangan" class="form-label font-weight-bold">Keterangan:</label>
+                        <textarea class="form-control" id="modal-keterangan" rows="5"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="save-keterangan-btn">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+</div>
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -97,23 +124,23 @@
         return new Date(parts[2], months[parts[1]], parts[0]);
     }
 
-    // --- REVISED dataDummy with 'tanggal_pengajuan' and 'status' fields ---
+    // --- REVISED dataDummy with 'keterangan' field ---
     const dataDummy = [
-        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-23', status: 'pending' },
-        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-28', status: 'diterima' },
-        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-25', status: 'clear' },
-        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-20', status: 'pending' },
-        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-05', status: 'diterima' },
-        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-01', status: 'belum terdaftar' },
-        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-04', status: 'clear' },
-        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-09', status: 'pending' },
-        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-10', status: 'diterima' },
-        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-12', status: 'belum terdaftar' },
-        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-15', status: 'diterima' },
-        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-18', status: 'pending' },
-        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-23', status: 'clear' },
-        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-29', status: 'diterima' },
-        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-08-01', status: 'pending' },
+        { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', jenis: 'LPG', stok: 150, nama_bpt: 'BPT Jakarta Timur A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-23', status: 'pending', keterangan: 'Keterangan default untuk Gas LPG 3 Kg.' },
+        { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', jenis: 'Bright Gas', stok: 90, nama_bpt: 'BPT Jakarta Timur B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-28', status: 'diterima', keterangan: 'Keterangan default untuk Bright Gas 12 Kg.' },
+        { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', jenis: 'Pelumas', stok: 0, nama_bpt: 'BPT Bekasi A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-25', status: 'clear', keterangan: 'Keterangan default untuk Pelumas Fastron.' },
+        { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', jenis: 'Aspal', stok: 110, nama_bpt: 'BPT Bekasi B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-06-20', status: 'pending', keterangan: 'Keterangan default untuk Aspal Curah.' },
+        { id: 5, nama: 'Avtur', kode: 'AVTR05', jenis: 'Bahan Bakar', stok: 0, nama_bpt: 'BPT Bandung A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-05', status: 'diterima', keterangan: 'Keterangan default untuk Avtur.' },
+        { id: 6, nama: 'Pertalite', kode: 'PRTL06', jenis: 'Bahan Bakar', stok: 95, nama_bpt: 'BPT Bandung B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-01', status: 'belum terdaftar', keterangan: '' },
+        { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', jenis: 'Bahan Bakar', stok: 170, nama_bpt: 'BPT Surabaya A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-04', status: 'clear', keterangan: 'Keterangan default untuk Pertamina Dex.' },
+        { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', jenis: 'Bahan Bakar', stok: 140, nama_bpt: 'BPT Surabaya B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-09', status: 'pending', keterangan: 'Keterangan default untuk Minyak Tanah.' },
+        { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', jenis: 'Aspal', stok: 160, nama_bpt: 'BPT Malang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-10', status: 'diterima', keterangan: 'Keterangan default untuk Asphalt Pen 60/70.' },
+        { id: 10, nama: 'Bitumen', kode: 'BITU10', jenis: 'Aspal', stok: 130, nama_bpt: 'BPT Malang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-12', status: 'belum terdaftar', keterangan: '' },
+        { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', jenis: 'LPG', stok: 200, nama_bpt: 'BPT Tangerang A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-15', status: 'diterima', keterangan: 'Keterangan default untuk Gas LPG 3 Kg (Extra).' },
+        { id: 12, nama: 'Elpiji Industri', kode: 'IND012', jenis: 'Industri', stok: 80, nama_bpt: 'BPT Tangerang B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-18', status: 'pending', keterangan: 'Keterangan default untuk Elpiji Industri.' },
+        { id: 13, nama: 'Pelumas Meditran', kode: 'PMED13', jenis: 'Pelumas', stok: 190, nama_bpt: 'BPT Bogor A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-23', status: 'clear', keterangan: 'Keterangan default untuk Pelumas Meditran.' },
+        { id: 14, nama: 'Dexlite', kode: 'DEXL14', jenis: 'Bahan Bakar', stok: 70, nama_bpt: 'BPT Bogor B', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-07-29', status: 'diterima', keterangan: 'Keterangan default untuk Dexlite.' },
+        { id: 15, nama: 'Solar Industri', kode: 'SLRI15', jenis: 'Bahan Bakar', stok: 100, nama_bpt: 'BPT Cirebon A', cabang: saRegions[Math.floor(Math.random() * saRegions.length)], tanggal_pengajuan: '2025-08-01', status: 'pending', keterangan: 'Keterangan default untuk Solar Industri.' },
     ];
     // --- END REVISED dataDummy ---
 
@@ -155,8 +182,8 @@
                 const iconHtml = `<span class="badge bg-gradient-warning rounded-circle me-2" style="width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center;"><i class="fas fa-cube text-white" style="font-size: 0.75rem;"></i></span>`;
 
                 const stockDisplay = item.stok === 0 ?
-                                     '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
-                                     `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
+                    '<span class="text-danger text-xs font-weight-bold">Stok material kosong</span>' :
+                    `<span class="text-center text-xs text-secondary font-weight-bold mb-0">${item.stok} pcs</span>`;
                 
                 // Logic for status badge and color
                 let statusColor;
@@ -214,7 +241,10 @@
                         <td class="text-center">
                             ${statusBadge}
                         </td>
-                        <td class="align-middle text-center">
+                        <td class="align-middle text-center d-flex gap-2 justify-content-center">
+                            <span class="badge bg-gradient-info text-white text-xs preview-keterangan-btn" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#previewModal" data-id="${item.id}">
+                                <i class="fas fa-eye me-1"></i> Preview
+                            </span>
                             <span class="badge bg-gradient-danger text-white text-xs confirm-pemusnahan-btn" style="cursor:pointer;" 
                                 data-id="${item.id}" 
                                 data-material-nama="${item.nama}" 
@@ -290,7 +320,7 @@
                 });
             });
 
-            // Existing event listener for Pemusnahan button
+            // Event listener for Pemusnahan button
             document.querySelectorAll('.confirm-pemusnahan-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -313,6 +343,20 @@
                             window.location.href = `/keterangan-pemusnahan?material_id=${id}&material_nama=${encodeURIComponent(materialNama)}&nama_bpt=${encodeURIComponent(namaBPT)}&nama_cabang=${encodeURIComponent(namaCabang)}&stok_material=${stokMaterial}`;
                         }
                     });
+                });
+            });
+
+            // New Event listener for Preview button
+            document.querySelectorAll('.preview-keterangan-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const item = dataDummy.find(item => item.id === id);
+
+                    if (item) {
+                        document.getElementById('modal-material-id').value = item.id;
+                        document.getElementById('modal-material-name').innerText = item.nama;
+                        document.getElementById('modal-keterangan').value = item.keterangan;
+                    }
                 });
             });
         }
@@ -405,6 +449,33 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // No dropdown filters, so no need for their text initialization
+        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+
+        // Event listener for Save button in the modal
+        document.getElementById('save-keterangan-btn').addEventListener('click', function() {
+            const materialId = parseInt(document.getElementById('modal-material-id').value);
+            const newKeterangan = document.getElementById('modal-keterangan').value;
+
+            // Find the item and update the data
+            const itemToUpdate = dataDummy.find(item => item.id === materialId);
+            if (itemToUpdate) {
+                itemToUpdate.keterangan = newKeterangan;
+            }
+
+            // Close the modal
+            const myModalEl = document.getElementById('previewModal');
+            const modal = bootstrap.Modal.getInstance(myModalEl);
+            modal.hide();
+
+            // Show success notification
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Keterangan berhasil diperbarui.',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        });
     });
 
     // Event listeners for search and date filters
