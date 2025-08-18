@@ -2,31 +2,26 @@
 @section('title', 'Daftar Pengguna')
 @section('content')
 
-{{-- Welcome Section --}}
-<div class="col-12 mb-3">
-    <div class="card p-4 position-relative welcome-card">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
-            <div class="w-100 order-md-1 text-center text-md-start">
-                <h4 class="mb-1 fw-bold" id="summary-title">
-                    Daftar Pengguna
-                </h4>
-                <p class="mb-2 opacity-8" id="summary-text">
-                    Kelola data pengguna, hak akses, dan informasi akun.
-                </p>
-            </div>
-            <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
-                <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                    alt="Pertamina Patra Niaga Logo"
-                    class="welcome-card-icon"
-                    style="height: 60px;">
-            </div>
-        </div>
-        <div class="welcome-card-background"></div>
-    </div>
-</div>
-
-{{-- Tabel Data Pengguna --}}
+{{-- PEMBUNGKUS UTAMA UNTUK TATA LETAK YANG BENAR --}}
 <div class="row">
+
+    {{-- Welcome Section --}}
+    <div class="col-12 mb-3">
+        <div class="card p-4 position-relative welcome-card">
+            <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
+                <div class="w-100 order-md-1 text-center text-md-start">
+                    <h4 class="mb-1 fw-bold" id="summary-title">Daftar Pengguna</h4>
+                    <p class="mb-2 opacity-8" id="summary-text">Kelola data pengguna, hak akses, dan informasi akun.</p>
+                </div>
+                <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
+                    <img src="{{ asset('dashboard_template/assets/img/icon.png') }}" alt="Pertamina Patra Niaga Logo" class="welcome-card-icon" style="height: 60px;">
+                </div>
+            </div>
+            <div class="welcome-card-background"></div>
+        </div>
+    </div>
+
+    {{-- Kolom untuk Tabel Pengguna --}}
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
@@ -34,20 +29,38 @@
                     <h4>Tabel Data Pengguna</h4>
                     <h6>Daftar seluruh pengguna yang terdaftar dalam sistem.</h6>
                 </div>
-                {{-- Button Tambah Pengguna - Ditempatkan di pojok kanan atas, sejajar dengan title --}}
-                <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center ms-auto" data-bs-toggle="modal" data-bs-target="#tambahUserModal" style="height: 38px;">
+                @can('manage user')
+                {{-- PERBAIKAN: Menyederhanakan kelas untuk menghilangkan bug --}}
+                <button type="button" class="btn btn-primary ms-auto" style="height: 38px;" data-bs-toggle="modal" data-bs-target="#tambahUserModal">
                     <i class="fas fa-plus me-2"></i> Tambah Pengguna
                 </button>
+                @endcan
             </div>
             
             <div class="card-body px-0 pt-0 pb-5">
-                <div class="d-flex flex-wrap gap-2 mb-3 px-3 align-items-center justify-content-end">
-                    {{-- Search - Ditempatkan di bawah tombol --}}
-                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari Nama, Email, Role..." style="width: 300px; height: 35px;">
+                <div class="px-4 pt-3">
+                    @if(session('success'))
+                        <div class="alert alert-success text-white" role="alert">{{ session('success') }}</div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger text-white" role="alert">{{ session('error') }}</div>
+                    @endif
+
+                    {{-- Menampilkan daftar error validasi yang spesifik --}}
+                    @if ($errors->any())
+                    <div class="alert alert-danger text-white" role="alert">
+                        <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
+                        <ul class="mb-0 ps-3">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
                 </div>
 
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0" id="table-users">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -58,301 +71,255 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- Data will be rendered here by JavaScript --}}
+                            @forelse ($users as $user)
+                                <tr>
+                                    <td class="text-center">
+                                        <p class="text-xs font-weight-bold mb-0">{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ $user->name }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs text-secondary mb-0">{{ $user->email }}</p>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-gradient-info text-white text-xs">{{ $user->getRoleNames()->first() ?? 'N/A' }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @can('manage user')
+                                        <button type="button" class="btn btn-sm btn-warning text-white" title="Edit" data-bs-toggle="modal" data-bs-target="#editUserModal-{{ $user->id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form action="{{ route('pengguna.destroy', $user->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger text-white delete-btn" title="Hapus">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Data Kosong</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
-                    <div id="no-data" class="text-center text-muted py-4" style="display: none;">
-                        Data Kosong
-                    </div>
                 </div>
 
-                {{-- Pagination --}}
+                {{-- BLOK PAGINATION FINAL --}}
+                @if ($users->hasPages())
                 <div class="mt-3 px-3 d-flex justify-content-center">
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination pagination-sm mb-0" id="pagination-users">
-                            {{-- Pagination links will be rendered here by JavaScript --}}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            @php
+                                $total = $users->lastPage();
+                                $current = $users->currentPage();
+                                $window = 1; 
+                            @endphp
+                            <li class="page-item {{ $users->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $users->url(1) }}">&laquo;</a>
+                            </li>
+                            <li class="page-item {{ $users->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $users->previousPageUrl() }}">&lsaquo;</a>
+                            </li>
+                            @php $wasGap = false; @endphp
+                            @for ($i = 1; $i <= $total; $i++)
+                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
+                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ $users->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                    @php $wasGap = false; @endphp
+                                @else
+                                    @if (!$wasGap)
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        @php $wasGap = true; @endphp
+                                    @endif
+                                @endif
+                            @endfor
+                            <li class="page-item {{ $users->hasMorePages() ? '' : 'disabled' }}">
+                                <a class="page-link" href="{{ $users->nextPageUrl() }}">&rsaquo;</a>
+                            </li>
+                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $users->url($total) }}">&raquo;</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
-{{-- Modal for Editing User Data --}}
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editUserModalLabel">Edit Data Pengguna</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editUserForm">
-                    <input type="hidden" id="edit-user-id">
-                    <div class="mb-3">
-                        <label for="edit-nama" class="form-label">Nama Pengguna</label>
-                        <input type="text" class="form-control" id="edit-nama" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-email" class="form-label">Email Pengguna</label>
-                        <input type="email" class="form-control" id="edit-email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="edit-password" placeholder="Kosongkan jika tidak ingin diubah">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-confirm-password" class="form-label">Konfirmasi Password</label>
-                        <input type="password" class="form-control" id="edit-confirm-password" placeholder="Kosongkan jika tidak ingin diubah">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-role" class="form-label">Role</label>
-                        <select class="form-select" id="edit-role" required>
-                            <option value="">Pilih Role</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Admin P.Layang">Admin P.Layang</option>
-                            <option value="User P.Layang">User P.Layang</option>
-                            <option value="User SA Jambi">User SA Jambi</option>
-                            <option value="User SA Bengkulu">User SA Bengkulu</option>
-                            <option value="User SA Lampung">User SA Lampung</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveUserChanges">Simpan Perubahan</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Modal for Adding User Data --}}
+{{-- MODAL UNTUK TAMBAH PENGGUNA --}}
 <div class="modal fade" id="tambahUserModal" tabindex="-1" aria-labelledby="tambahUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="tambahUserModalLabel">Tambah Pengguna Baru</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="tambahUserForm">
-                    <div class="mb-3">
-                        <label for="tambah-nama" class="form-label">Nama Pengguna</label>
-                        <input type="text" class="form-control" id="tambah-nama" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tambah-email" class="form-label">Email Pengguna</label>
-                        <input type="email" class="form-control" id="tambah-email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tambah-password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="tambah-password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tambah-confirm-password" class="form-label">Konfirmasi Password</label>
-                        <input type="password" class="form-control" id="tambah-confirm-password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tambah-role" class="form-label">Role</label>
-                        <select class="form-select" id="tambah-role" required>
-                            <option value="">Pilih Role</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Admin P.Layang">Admin P.Layang</option>
-                            <option value="User P.Layang">User P.Layang</option>
-                            <option value="User SA Jambi">User SA Jambi</option>
-                            <option value="User SA Bengkulu">User SA Bengkulu</option>
-                            <option value="User SA Lampung">User SA Lampung</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveNewUser">Simpan</button>
-            </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tambahUserModalLabel">Tambah Pengguna Baru</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('pengguna.store') }}" method="POST">
+        @csrf
+        <div class="modal-body">
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                   id="name" name="name" placeholder=" " value="{{ old('name') }}">
+            <label for="name">Nama Pengguna</label>
+            @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                   id="email" name="email" placeholder=" " value="{{ old('email') }}">
+            <label for="email">Email</label>
+            @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                   id="password" name="password" placeholder=" ">
+            <label for="password">Password</label>
+            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="password" class="form-control" id="password_confirmation" 
+                   name="password_confirmation" placeholder=" ">
+            <label for="password_confirmation">Konfirmasi Password</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
+              <option value="">Pilih Role</option>
+              @foreach ($roles as $role)
+                <option value="{{ $role->name }}" {{ old('role') == $role->name ? 'selected' : '' }}>
+                  {{ $role->name }}
+                </option>
+              @endforeach
+            </select>
+            <label for="role">Role</label>
+            @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+          </div>
+
         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
+{{-- MODAL UNTUK EDIT PENGGUNA --}}
+@foreach ($users as $user)
+<div class="modal fade" id="editUserModal-{{ $user->id }}" tabindex="-1" 
+     aria-labelledby="editUserModalLabel-{{ $user->id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel-{{ $user->id }}">Edit Data Pengguna</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('pengguna.update', $user->id) }}" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="modal-body">
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @if($errors->has('name') && session('error_user_id') == $user->id) is-invalid @endif" 
+                   id="name-{{ $user->id }}" name="name" placeholder=" " 
+                   value="{{ old('name', $user->name) }}">
+            <label for="name-{{ $user->id }}">Nama Pengguna</label>
+            @if($errors->has('name') && session('error_user_id') == $user->id) 
+              <div class="invalid-feedback">{{ $errors->first('name') }}</div> 
+            @endif
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="email" class="form-control @if($errors->has('email') && session('error_user_id') == $user->id) is-invalid @endif" 
+                   id="email-{{ $user->id }}" name="email" placeholder=" " 
+                   value="{{ old('email', $user->email) }}">
+            <label for="email-{{ $user->id }}">Email</label>
+            @if($errors->has('email') && session('error_user_id') == $user->id) 
+              <div class="invalid-feedback">{{ $errors->first('email') }}</div> 
+            @endif
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="password" class="form-control @if($errors->has('password') && session('error_user_id') == $user->id) is-invalid @endif" 
+                   id="password-{{ $user->id }}" name="password" placeholder=" ">
+            <label for="password-{{ $user->id }}">Password Baru (opsional)</label>
+            @if($errors->has('password') && session('error_user_id') == $user->id) 
+              <div class="invalid-feedback">{{ $errors->first('password') }}</div> 
+            @endif
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="password" class="form-control" id="password_confirmation-{{ $user->id }}" 
+                   name="password_confirmation" placeholder=" ">
+            <label for="password_confirmation-{{ $user->id }}">Konfirmasi Password</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <select class="form-select @if($errors->has('role') && session('error_user_id') == $user->id) is-invalid @endif" 
+                    id="role-{{ $user->id }}" name="role" required>
+              @foreach ($roles as $role)
+                <option value="{{ $role->name }}" 
+                        {{ old('role', $user->getRoleNames()->first()) == $role->name ? 'selected' : '' }}>
+                  {{ $role->name }}
+                </option>
+              @endforeach
+            </select>
+            <label for="role-{{ $user->id }}">Role</label>
+            @if($errors->has('role') && session('error_user_id') == $user->id) 
+              <div class="invalid-feedback">{{ $errors->first('role') }}</div> 
+            @endif
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endforeach
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{{-- Script untuk membuka kembali modal jika ada error validasi --}}
+@if ($errors->any())
 <script>
-    // --- Data Dummy Pengguna ---
-    const dataDummyUsers = [
-        { id: 1, nama: 'Muhammad Amir', email: 'amir.m@gmail.com', role: 'Manager' },
-        { id: 2, nama: 'Siti Rahayu', email: 'siti.r@pertamina.com', role: 'Admin P.Layang' },
-        { id: 3, nama: 'Joko Prabowo', email: 'joko.p@perusahaan.com', role: 'User P.Layang' },
-        { id: 4, nama: 'Ahmad Faisal', email: 'ahmad.f@perusahaan.com', role: 'User P.Layang' },
-        { id: 5, nama: 'Budi Hartanto', email: 'budi.h@spbe-jambi.com', role: 'User SA Jambi' },
-        { id: 6, nama: 'Dewi Lestari', email: 'dewi.l@spbe-bengkulu.com', role: 'User SA Bengkulu' },
-        { id: 7, nama: 'Eko Sudrajat', email: 'eko.s@spbe-lampung.com', role: 'User SA Lampung' },
-        { id: 8, nama: 'Fatimah Az-Zahra', email: 'fatimah.a@perusahaan.com', role: 'User P.Layang' },
-        { id: 9, nama: 'Gani Nurcahyo', email: 'gani.n@spbe-jambi.com', role: 'User SA Jambi' },
-        { id: 10, nama: 'Hasan Basri', email: 'hasan.b@perusahaan.com', role: 'User P.Layang' },
-        { id: 11, nama: 'Indah Permata', email: 'indah.p@spbe-bengkulu.com', role: 'User SA Bengkulu' },
-        { id: 12, nama: 'Joni Setiawan', email: 'joni.s@spbe-lampung.com', role: 'User SA Lampung' },
-    ];
-    // --- END Data Dummy ---
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (session('error_user_id'))
+            var editModal = new bootstrap.Modal(document.getElementById('editUserModal-{{ session('error_user_id') }}'));
+            editModal.show();
+        @elseif (!old('_method'))
+            var tambahModal = new bootstrap.Modal(document.getElementById('tambahUserModal'));
+            tambahModal.show();
+        @endif
+    });
+</script>
+@endif
 
-    let searchQuery = '';
-    let currentPage = 1;
-    const itemsPerPage = 10;
-    const maxPagesToShow = 5;
-
-    function filterData() {
-        return dataDummyUsers.filter(item => {
-            const matchSearch = searchQuery ?
-                (item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.role.toLowerCase().includes(searchQuery.toLowerCase()))
-                : true;
-            return matchSearch;
-        });
-    }
-
-    function renderTable() {
-        const tbody = document.querySelector('#table-users tbody');
-        const noData = document.getElementById('no-data');
-        const data = filterData();
-        const start = (currentPage - 1) * itemsPerPage;
-        const paginated = data.slice(start, start + itemsPerPage);
-
-        tbody.innerHTML = '';
-        if (paginated.length === 0) {
-            noData.style.display = 'block';
-        } else {
-            noData.style.display = 'none';
-            paginated.forEach((item, index) => {
-                const rowIndex = start + index + 1;
+{{-- Script untuk konfirmasi hapus dengan SweetAlert --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault(); 
+                const form = this.closest('form');
                 
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="text-center">
-                            <p class="text-xs font-weight-bold mb-0">${rowIndex}</p>
-                        </td>
-                        <td>
-                            <p class="text-xs font-weight-bold mb-0">${item.nama}</p>
-                        </td>
-                        <td>
-                            <p class="text-xs text-secondary mb-0">${item.email}</p>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-gradient-info text-white text-xs">${item.role}</span>
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-warning text-white edit-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editUserModal" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger text-white delete-btn" data-id="${item.id}" title="Hapus">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            attachActionListeners();
-        }
-
-        renderPagination(data.length);
-    }
-
-    function attachActionListeners() {
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const user = dataDummyUsers.find(u => u.id == id);
-                if (user) {
-                    document.getElementById('edit-user-id').value = user.id;
-                    document.getElementById('edit-nama').value = user.nama;
-                    document.getElementById('edit-email').value = user.email;
-                    document.getElementById('edit-role').value = user.role;
-
-                    // Clear password fields
-                    document.getElementById('edit-password').value = '';
-                    document.getElementById('edit-confirm-password').value = '';
-                }
-            });
-        });
-
-        document.getElementById('saveUserChanges').addEventListener('click', function() {
-            const id = document.getElementById('edit-user-id').value;
-            const nama = document.getElementById('edit-nama').value;
-            const email = document.getElementById('edit-email').value;
-            const password = document.getElementById('edit-password').value;
-            const confirmPassword = document.getElementById('edit-confirm-password').value;
-            const role = document.getElementById('edit-role').value;
-
-            // Simple validation
-            if (!nama || !email || !role) {
-                Swal.fire('Gagal!', 'Nama, Email, dan Role tidak boleh kosong.', 'error');
-                return;
-            }
-
-            if (password && password !== confirmPassword) {
-                Swal.fire('Gagal!', 'Password dan Konfirmasi Password tidak cocok.', 'error');
-                return;
-            }
-
-            const userIndex = dataDummyUsers.findIndex(u => u.id == id);
-            if (userIndex > -1) {
-                dataDummyUsers[userIndex].nama = nama;
-                dataDummyUsers[userIndex].email = email;
-                dataDummyUsers[userIndex].role = role;
-                // No password update in dummy data, but in a real app, you would handle this
-            }
-
-            const myModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-            myModal.hide();
-
-            Swal.fire('Berhasil!', 'Data pengguna berhasil disimpan.', 'success');
-            renderTable();
-        });
-        
-        document.getElementById('saveNewUser').addEventListener('click', function() {
-            const form = document.getElementById('tambahUserForm');
-            const nama = form.querySelector('#tambah-nama').value;
-            const email = form.querySelector('#tambah-email').value;
-            const password = form.querySelector('#tambah-password').value;
-            const confirmPassword = form.querySelector('#tambah-confirm-password').value;
-            const role = form.querySelector('#tambah-role').value;
-
-            // Simple validation
-            if (!nama || !email || !password || !confirmPassword || !role) {
-                Swal.fire('Gagal!', 'Semua field harus diisi.', 'error');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                Swal.fire('Gagal!', 'Password dan Konfirmasi Password tidak cocok.', 'error');
-                return;
-            }
-
-            // Create a new user object (in a real app, this would be an API call)
-            const newId = dataDummyUsers.length > 0 ? Math.max(...dataDummyUsers.map(u => u.id)) + 1 : 1;
-            const newUser = {
-                id: newId,
-                nama: nama,
-                email: email,
-                role: role
-            };
-            dataDummyUsers.push(newUser);
-
-            const myModal = bootstrap.Modal.getInstance(document.getElementById('tambahUserModal'));
-            myModal.hide();
-
-            Swal.fire('Berhasil!', 'Pengguna baru berhasil ditambahkan.', 'success');
-            form.reset(); // Reset form fields
-            currentPage = Math.ceil(dataDummyUsers.length / itemsPerPage); // Go to the last page
-            renderTable();
-        });
-
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
                     text: "Data pengguna ini akan dihapus secara permanen!",
@@ -364,69 +331,13 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire(
-                            'Berhasil Dihapus!',
-                            'Data pengguna telah berhasil dihapus.',
-                            'success'
-                        );
-                        // Implement deletion logic here, e.g., filter the array
-                        const userIndex = dataDummyUsers.findIndex(u => u.id == id);
-                        if(userIndex > -1) {
-                            dataDummyUsers.splice(userIndex, 1);
-                            renderTable();
-                        }
+                        form.submit(); 
                     }
                 });
             });
         });
-    }
-
-    function renderPagination(totalItems) {
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        const ul = document.getElementById('pagination-users');
-        ul.innerHTML = '';
-
-        const createButton = (label, page, disabled = false, active = false) => {
-            const li = document.createElement('li');
-            li.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#">${label}</a>`;
-            if (!disabled) {
-                li.querySelector('a').addEventListener('click', e => {
-                    e.preventDefault();
-                    currentPage = page;
-                    renderTable();
-                });
-            }
-            return li;
-        };
-
-        if (totalPages > 1) {
-            ul.appendChild(createButton('«', 1, currentPage === 1));
-            ul.appendChild(createButton('‹', currentPage - 1, currentPage === 1));
-
-            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-            if (endPage - startPage + 1 < maxPagesToShow && totalPages >= maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                ul.appendChild(createButton(i, i, false, i === currentPage));
-            }
-
-            ul.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
-            ul.appendChild(createButton('»', totalPages, currentPage === totalPages));
-        }
-    }
-
-    document.getElementById('search-input').addEventListener('input', function () {
-        searchQuery = this.value;
-        currentPage = 1;
-        renderTable();
     });
-
-    document.addEventListener('DOMContentLoaded', renderTable);
 </script>
 @endpush
+
 @endsection

@@ -70,7 +70,7 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
-      <a class="btn-getstarted" href="#about">Sign In</a>
+      <a class="btn-getstarted" href="/login">Login</a>
 
     </div>
   </header>

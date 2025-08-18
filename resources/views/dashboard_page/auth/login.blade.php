@@ -2,21 +2,17 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf--8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="apple-touch-icon" sizes="76x76" href="{{ asset('dashboard_template/assets/img/apple-icon.png') }}">
   <link rel="icon" type="image/png" href="{{ asset('dashboard_template/assets/img/favicon.png') }}">
   <title>
     Laman Login
   </title>
-  <!--     Fonts and icons     -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
-  <!-- Nucleo Icons -->
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
-  <!-- Font Awesome Icons -->
   <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
-  <!-- CSS Files -->
   <link id="pagestyle" href="{{ asset('dashboard_template/assets/css/argon-dashboard.css?v=2.1.0') }}" rel="stylesheet" />
 </head>
 
@@ -28,7 +24,7 @@
         <div class="row justify-content-center">
           <div class="col-lg-5 text-center mx-auto">
             <h1 class="text-white mb-2 mt-5">Laman Login</h1>
-            <p class="text-lead text-white">Use these awesome forms to login or create new account in your project for free.</p>
+            <p class="text-lead text-white">Silahkan masukkan email dan password Anda untuk masuk ke sistem.</p>
           </div>
         </div>
       </div>
@@ -41,29 +37,47 @@
               <h5>Silahkan Login Akun</h5>
             </div>
             <div class="card-body">
-              <form role="form">
+
+              {{-- BAGIAN NOTIFIKASI ERROR --}}
+              @error('email')
+                <div class="alert alert-danger text-white" role="alert">
+                    <span class="text-sm">{{ $message }}</span>
+                </div>
+              @enderror
+              
+              {{-- UBAH BAGIAN FORM --}}
+              <form role="form" method="POST" action="{{ route('login.authenticate') }}">
+                @csrf
                 <div class="mb-3">
-                  <input type="email" class="form-control" placeholder="Email" aria-label="Email">
+                  <input type="email" class="form-control" placeholder="Email" aria-label="Email" name="email" value="{{ old('email') }}" required>
                 </div>
                 <div class="mb-3">
-                  <input type="password" class="form-control" placeholder="Password" aria-label="Password">
+                  <input type="password" class="form-control" placeholder="Password" aria-label="Password" name="password" required>
                 </div>
                 <div class="text-center">
-                  <a href="/dashboard" class="btn btn-primary w-100 my-4 mb-2">Login</a>
+                  <button type="submit" class="btn btn-primary w-100 my-4 mb-2">Login</button>
                 </div>
                 <p class="text-sm mt-3 mb-0 text-center">
-                  Belum Punya Akun ? Silahkan Registrasi 
+                  Belum Punya Akun ? Silahkan Registrasi
                   <a href="/register" class="text-dark font-weight-bolder">Disini</a>
                 </p>
               </form>
+
             </div>
           </div>
+          
+          {{-- GANTI DENGAN KODE INI UNTUK OPSI 2 --}}
+          <div class="text-center mt-4">
+              <a href="/" class="btn bg-gradient-secondary">
+                  <i class="fas fa-home me-1"></i>
+                  Kembali ke Beranda
+              </a>
+          </div>
+
         </div>
       </div>
     </div>
   </main>
-  <!-- -------- START FOOTER 3 w/ COMPANY DESCRIPTION WITH LINKS & SOCIAL ICONS & COPYRIGHT ------- -->
-  <!-- Footer -->
   <footer class="footer py-5 mt-n5">
     <div class="container">
       <div class="row">
@@ -77,9 +91,6 @@
       </div>
     </div>
   </footer>
-
-  <!-- -------- END FOOTER 3 w/ COMPANY DESCRIPTION WITH LINKS & SOCIAL ICONS & COPYRIGHT ------- -->
-  <!--   Core JS Files   -->
   <script src="{{ asset('dashboard_template/assets/js/core/popper.min.js') }}"></script>
   <script src="{{ asset('dashboard_template/assets/js/core/bootstrap.min.js') }}"></script>
   <script src="{{ asset('dashboard_template/assets/js/plugins/perfect-scrollbar.min.js') }}"></script>
@@ -93,9 +104,7 @@
       Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
     }
   </script>
-  <!-- Github buttons -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
-  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
   <script src="{{ asset('dashboard_template/assets/js/argon-dashboard.min.js?v=2.1.0') }}"></script>
 </body>
 
