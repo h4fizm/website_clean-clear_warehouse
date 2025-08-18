@@ -74,10 +74,8 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard_page.menu.aktivitas_harian');
     });
 
-    // --- Manajemen Pengguna (Hanya untuk Manager) ---
-    Route::get('/pengguna', [UserController::class, 'index'])
-        ->name('users.index')
-        ->middleware('can:manage user');
+    // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
+    Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
 
     // --- Route Spesifik Lainnya ---
     Route::get('/material', function () {
