@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,9 +40,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // --- Profil Pengguna ---
-    Route::get('/profil', function () {
-        return view('dashboard_page.auth.profil');
-    });
+    // Mengarah ke method showProfile untuk menampilkan data
+    Route::get('/profil', [AuthController::class, 'showProfile'])->name('profile.show');
+
+    // Route untuk memproses update data profil
+    Route::patch('/profil/update', [AuthController::class, 'updateProfile'])->name('profile.update');
 
     // --- Halaman Utama Setelah Login ---
     Route::get('/dashboard', function () {
@@ -70,9 +73,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/aktivitas', function () {
         return view('dashboard_page.menu.aktivitas_harian');
     });
-    Route::get('/pengguna', function () {
-        return view('dashboard_page.menu.data_pengguna');
-    });
+
+    // --- Manajemen Pengguna (Hanya untuk Manager) ---
+    Route::get('/pengguna', [UserController::class, 'index'])
+        ->name('users.index')
+        ->middleware('can:manage user');
 
     // --- Route Spesifik Lainnya ---
     Route::get('/material', function () {
