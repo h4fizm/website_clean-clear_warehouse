@@ -109,7 +109,7 @@
 </style>
 
 <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-    <div class="container-fluid py-1 px-3"> {{-- Keep original classes, override with custom CSS --}}
+    <div class="container-fluid py-1 px-3">
 
         <div>
             <nav aria-label="breadcrumb">
@@ -135,32 +135,43 @@
                 </a>
             </li>
 
+            {{-- Cek apakah pengguna sudah login --}}
+            @auth
             <ul class="navbar-nav d-flex align-items-center">
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link text-white d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user-circle me-2" style="font-size: 1.4rem;"></i>
-                        <span class="d-none d-sm-inline">Nama User</span>
+                        {{-- Tampilkan nama user yang sedang login --}}
+                        <span class="d-none d-sm-inline">{{ Auth::user()->name }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end mt-2 invisible" aria-labelledby="userDropdown" id="userDropdownMenu">
                         <li>
                             <a class="dropdown-item" href="/profil"><i class="fas fa-user me-2"></i> Profile</a>
                         </li>
                         <li>
-                            <a class="dropdown-item text-danger" href="#" onclick="logout()">
+                            {{-- Link Logout yang memicu submit form --}}
+                            <a class="dropdown-item text-danger" href="{{ route('logout') }}" 
+                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a>
+                            {{-- Form logout tersembunyi --}}
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
                         </li>
                     </ul>
                 </li>
             </ul>
+            @endauth
+            
         </div>
-
     </div>
 </nav>
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Tunggu hingga Bootstrap aktif, baru hapus invisible
+        // Skrip untuk mengatasi flicker pada dropdown, sudah benar
         const dropdown = document.querySelector('.dropdown');
         const dropdownMenu = document.getElementById('userDropdownMenu');
 
@@ -170,12 +181,7 @@
             });
         }
     });
-    function logout() {
-        // Hapus semua local storage / sessionStorage jika ada (jika pakai frontend SPA)
-        // window.localStorage.clear();
 
-        // Redirect paksa ke /login
-        window.location.href = '/login';
-    }
+    // Fungsi logout() yang lama sudah tidak diperlukan lagi
 </script>
 @endpush
