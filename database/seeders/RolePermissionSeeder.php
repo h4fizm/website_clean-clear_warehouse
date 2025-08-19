@@ -10,8 +10,12 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Hapus cache permission
+        // Reset cache
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // 🔥 Hapus semua role dan permission lama sebelum buat baru
+        Role::query()->delete();
+        Permission::query()->delete();
 
         // Buat permissions
         $permissions = [
@@ -23,10 +27,10 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::create(['name' => $permission]);
         }
 
-        // Buat roles
+        // Buat roles (hanya 7 saja)
         $roles = [
             'Manager',
             'Admin P.Layang',
@@ -38,36 +42,24 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName) {
-            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role = Role::create(['name' => $roleName]);
 
-            switch ($roleName) {
-                case 'Manager':
-                    $role->givePermissionTo([
-                        'manage data playang',
-                        'manage transaksi',
-                        'manage item',
-                        'manage aktivitas harian',
-                        'manage user',
-                    ]);
-                    break;
-
-                case 'Admin P.Layang':
-                    $role->givePermissionTo([
-                        'manage data playang',
-                        'manage transaksi',
-                        'manage item',
-                        'manage aktivitas harian',
-                    ]);
-                    break;
-
-                default: // untuk semua SA
-                    $role->givePermissionTo([
-                        'manage data playang',
-                        'manage transaksi',
-                        'manage item',
-                        'manage aktivitas harian',
-                    ]);
-                    break;
+            if ($roleName === 'Manager') {
+                $role->syncPermissions($permissions);
+            } elseif ($roleName === 'Admin P.Layang') {
+                $role->syncPermissions([
+                    'manage data playang',
+                    'manage transaksi',
+                    'manage item',
+                    'manage aktivitas harian',
+                ]);
+            } else {
+                $role->syncPermissions([
+                    'manage data playang',
+                    'manage transaksi',
+                    'manage item',
+                    'manage aktivitas harian',
+                ]);
             }
         }
     }
