@@ -39,7 +39,6 @@
                     </div>
                     
                     <div class="col-md-auto">
-                        {{-- PERUBAHAN DESAIN SEARCH BAR --}}
                         <form action="{{ route('transaksi.index') }}" method="GET" id="search-form" style="width: 320px;">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -69,7 +68,41 @@
                 </div>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
-                {{-- ... Sisa kode (tabel, pagination, modal, js, css) tidak ada perubahan ... --}}
+                
+                {{-- LOKASI BARU UNTUK ALERTS --}}
+                <div class="px-4 pt-3">
+                    @if(session('success'))
+                        <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
+                             <span class="alert-icon"><i class="ni ni-like-2"></i></span>
+                             <span class="alert-text"><strong>Sukses!</strong> {{ session('success') }}</span>
+                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                                 <span aria-hidden="true">&times;</span>
+                             </button>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                         <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                             <span class="alert-icon"><i class="ni ni-support-16"></i></span>
+                             <span class="alert-text"><strong>Gagal!</strong> {{ session('error') }}</span>
+                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                                 <span aria-hidden="true">&times;</span>
+                             </button>
+                         </div>
+                    @endif
+
+                    {{-- ALERT UNTUK MENAMPILKAN ERROR VALIDASI --}}
+                    @if ($errors->any())
+                    <div class="alert alert-danger text-white" role="alert">
+                        <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
+                        <ul class="mb-0 ps-3">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+                </div>
+
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-material-1">
                         <thead>
@@ -99,12 +132,20 @@
                                     <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->province }}</p></td>
                                     <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->regency }}</p></td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-bs-toggle="modal" data-bs-target="#editSpbeBptModal">
+                                        {{-- Tombol Edit menargetkan Modal dengan ID unik --}}
+                                        <button type="button" class="btn btn-sm btn-info text-white me-1" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editSpbeBptModal-{{ $facility->id }}">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-danger text-white delete-btn">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        
+                                        <form action="{{ route('transaksi.destroy', $facility->id) }}" method="POST" class="d-inline delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger text-white">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @empty
@@ -120,7 +161,8 @@
                 @if ($facilities->hasPages())
                     @php $facilities->appends(request()->query()); @endphp
                     <div class="mt-4 px-3 d-flex justify-content-center">
-                        <nav aria-label="Page navigation">
+                       {{-- Konten Pagination tidak berubah --}}
+                       <nav aria-label="Page navigation">
                             <ul class="pagination pagination-sm mb-0">
                                 @php
                                     $total = $facilities->lastPage();
@@ -161,37 +203,94 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="editSpbeBptModal" tabindex="-1" aria-labelledby="editSpbeBptModalLabel" aria-hidden="true">
+
+@foreach ($facilities as $facility)
+<div class="modal fade" id="editSpbeBptModal-{{ $facility->id }}" tabindex="-1" aria-labelledby="editSpbeBptModalLabel-{{ $facility->id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editSpbeBptModalLabel">Edit Data SPBE/BPT</h5>
+                <h5 class="modal-title" id="editSpbeBptModalLabel-{{ $facility->id }}">Edit Data SPBE/BPT</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body"><p>Fitur edit akan diimplementasikan.</p></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary">Simpan Perubahan</button>
-            </div>
+            <form action="{{ route('transaksi.update', $facility->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    @php $error_id = session('error_facility_id'); @endphp
+                    <div class="mb-3">
+                        <label for="edit-name-{{$facility->id}}" class="form-label">Nama SPBE/BPT</label>
+                        <input type="text" class="form-control @if($errors->has('name') && $error_id == $facility->id) is-invalid @endif" id="edit-name-{{$facility->id}}" name="name" value="{{ old('name', $facility->name) }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-kode_plant-{{$facility->id}}" class="form-label">Kode Plant</label>
+                        <input type="text" class="form-control @if($errors->has('kode_plant') && $error_id == $facility->id) is-invalid @endif" id="edit-kode_plant-{{$facility->id}}" name="kode_plant" value="{{ old('kode_plant', $facility->kode_plant) }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-province-{{$facility->id}}" class="form-label">Nama Provinsi</label>
+                        <input type="text" class="form-control @if($errors->has('province') && $error_id == $facility->id) is-invalid @endif" id="edit-province-{{$facility->id}}" name="province" value="{{ old('province', $facility->province) }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-regency-{{$facility->id}}" class="form-label">Nama Kabupaten</label>
+                        <input type="text" class="form-control @if($errors->has('regency') && $error_id == $facility->id) is-invalid @endif" id="edit-regency-{{$facility->id}}" name="regency" value="{{ old('regency', $facility->regency) }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+@endforeach
+
 
 @push('scripts')
-{{-- Pencarian dilakukan dengan menekan Enter, tidak perlu JS tambahan --}}
+{{-- SweetAlert2 CDN --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{{-- Script untuk membuka kembali modal jika ada error validasi --}}
+@if ($errors->any() && session('error_facility_id'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                alert('Fungsi hapus belum diimplementasikan.');
+        var errorModalId = 'editSpbeBptModal-{{ session('error_facility_id') }}';
+        var errorModal = new bootstrap.Modal(document.getElementById(errorModalId));
+        errorModal.show();
+    });
+</script>
+@endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // == SCRIPT UNTUK TOMBOL DELETE DENGAN SWEETALERT ==
+        const deleteForms = document.querySelectorAll('.delete-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
     });
 </script>
 @endpush
 
+
 @push('styles')
-{{-- CSS khusus untuk search bar sudah tidak diperlukan lagi --}}
+{{-- Style tidak berubah --}}
 <style>
     .welcome-card { background-color: white; color: #344767; border-radius: 1rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); overflow: hidden; position: relative; padding: 1.5rem !important; }
     .welcome-card-icon { height: 60px; width: auto; opacity: 0.9; }
@@ -210,5 +309,4 @@
     }
 </style>
 @endpush
-
 @endsection

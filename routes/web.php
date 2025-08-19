@@ -52,9 +52,29 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard_page.menu.dashboard');
     })->name('dashboard'); // Beri nama untuk redirect setelah login
 
-    // --- Transaksi Material ---
+    // --- Laman Transaksi SPBE/BPT ---
     Route::get('/transaksi', [TransactionController::class, 'index'])
         ->name('transaksi.index')
+        ->middleware('can:manage transaksi');
+
+    // Gunakan route ini untuk menampilkan halaman form tambah
+    Route::get('/transaksi/tambah', [TransactionController::class, 'create'])
+        ->name('transaksi.create')
+        ->middleware('can:manage transaksi');
+
+    // Route ini untuk memproses form saat disubmit
+    Route::post('/transaksi', [TransactionController::class, 'store'])
+        ->name('transaksi.store')
+        ->middleware('can:manage transaksi');
+
+    // Route untuk Update Facility (SPBE/BPT)
+    Route::patch('/transaksi/{facility}', [TransactionController::class, 'update'])
+        ->name('transaksi.update')
+        ->middleware('can:manage transaksi');
+
+    // Route untuk Delete Facility (SPBE/BPT)
+    Route::delete('/transaksi/{facility}', [TransactionController::class, 'destroy'])
+        ->name('transaksi.destroy')
         ->middleware('can:manage transaksi');
 
     // Route untuk tambah material bisa diarahkan ke method 'create' jika diperlukan nanti
