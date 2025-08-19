@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,18 +52,23 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard_page.menu.dashboard');
     })->name('dashboard'); // Beri nama untuk redirect setelah login
 
+    // --- Transaksi Material ---
+    Route::get('/transaksi', [TransactionController::class, 'index'])
+        ->name('transaksi.index')
+        ->middleware('can:manage transaksi');
+
+    // Route untuk tambah material bisa diarahkan ke method 'create' jika diperlukan nanti
+    Route::get('/tambah-material', function () {
+        return view('dashboard_page.menu.tambah_material');
+    })->middleware('can:manage transaksi'); // <-- Beri permission juga
+
     // --- Menu Sidebar & Fitur Utama ---
+    // ini dibiarkan dulu
     Route::get('/pusat', function () {
         return view('dashboard_page.menu.data_pusat');
     });
-    Route::get('/transaksi', function () {
-        return view('dashboard_page.menu.data_transaksi');
-    });
     Route::get('/tambah-spbe/bpt', function () {
         return view('dashboard_page.menu.tambah_spbe-bpt');
-    });
-    Route::get('/tambah-material', function () {
-        return view('dashboard_page.menu.tambah_material');
     });
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
