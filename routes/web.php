@@ -55,8 +55,33 @@ Route::middleware(['auth'])->group(function () {
 
     // Laman Data P.Layang (Pusat)
     Route::get('/pusat', [PusatController::class, 'index'])
-        ->name('pusat.index') // Beri nama route untuk kemudahan
+        ->name('pusat.index')
         ->middleware(['can:manage data playang']);
+
+    // Laman untuk menampilkan form tambah material pusat
+    Route::get('/pusat/create', [PusatController::class, 'create'])
+        ->name('pusat.create')
+        ->middleware(['can:manage data playang']);
+
+    // Route untuk menyimpan data material baru dari pusat
+    Route::post('/pusat', [PusatController::class, 'store'])
+        ->name('pusat.store')
+        ->middleware(['can:manage data playang']);
+
+    // Route untuk mengambil data item spesifik (untuk modal edit)
+    Route::get('/pusat/{item}/edit', [PusatController::class, 'edit'])
+        ->name('pusat.edit')
+        ->middleware(['auth', 'can:manage data playang']);
+
+    // Route untuk memproses update data material
+    Route::put('/pusat/{item}', [PusatController::class, 'update'])
+        ->name('pusat.update')
+        ->middleware(['auth', 'can:manage data playang']);
+
+    // Route untuk menghapus data material
+    Route::delete('/pusat/{item}', [PusatController::class, 'destroy'])
+        ->name('pusat.destroy')
+        ->middleware(['auth', 'can:manage data playang']);
 
     // --- Laman Transaksi SPBE/BPT ---
     Route::get('/transaksi', [TransactionController::class, 'index'])
@@ -86,9 +111,6 @@ Route::middleware(['auth'])->group(function () {
 
     // --- Menu Sidebar & Fitur Utama ---
     // ini dibiarkan dulu
-    Route::get('/tambah-spbe/bpt', function () {
-        return view('dashboard_page.menu.tambah_spbe-bpt');
-    });
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
     });
