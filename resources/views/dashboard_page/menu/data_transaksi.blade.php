@@ -33,13 +33,13 @@
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0">
 
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md mb-2 mb-md-0">
+                {{-- BARIS 1: Judul dan Search Bar (Sudah Responsif) --}}
+                <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-3">
+                    <div class="mb-3 mb-md-0">
                         <h4 class="mb-0">Tabel Stok SPBE/BPT - {{ $selectedSalesArea }}</h4>
                     </div>
-                    
-                    <div class="col-md-auto">
-                        <form action="{{ route('transaksi.index') }}" method="GET" id="search-form" style="width: 320px;">
+                    <div>
+                        <form action="{{ route('transaksi.index') }}" method="GET" id="search-form" class="w-100 w-md-auto" style="max-width: 320px;">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input type="hidden" name="sales_area" value="{{ $selectedSalesArea }}">
@@ -48,13 +48,16 @@
                         </form>
                     </div>
                 </div>
-                
+            
+                {{-- BARIS 2: Tombol Pilihan Region --}}
                 <div class="row">
-                    <div class="col-12 d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center">
-                        <div class="col-12 col-md-auto mb-2 mb-md-0 d-flex flex-column order-1">
-                            <p class="text-sm text-secondary mb-1 branch-selection-text-desktop">
-                                *Pilih salah satu tombol di bawah ini untuk melihat data SPBE/BPT berdasarkan Sales Region : *
-                            </p>
+                    <div class="col-12">
+                        <p class="text-sm text-secondary mb-2">
+                            *Pilih salah satu tombol di bawah ini untuk melihat data SPBE/BPT berdasarkan Sales Region : *
+                        </p>
+
+                        {{-- TAMPILAN DESKTOP: Tombol seperti semula, muncul di layar medium ke atas --}}
+                        <div class="d-none d-md-block">
                             <div class="btn-group d-flex flex-wrap branch-buttons" role="group" aria-label="Branch selection">
                                 @foreach ($regions as $region)
                                     <a href="{{ route('transaksi.index', ['sales_area' => $region->name_region]) }}"
@@ -64,33 +67,51 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        {{-- TAMPILAN MOBILE: Dropdown, muncul di layar kecil (di bawah medium) --}}
+                        <div class="d-block d-md-none mb-3">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle w-100" type="button" id="regionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Pilih Region: {{ $selectedSalesArea }}
+                                </button>
+                                <ul class="dropdown-menu w-100" aria-labelledby="regionDropdown">
+                                    @foreach ($regions as $region)
+                                    <li>
+                                        <a class="dropdown-item {{ $selectedSalesArea == $region->name_region ? 'active' : '' }}" href="{{ route('transaksi.index', ['sales_area' => $region->name_region]) }}">
+                                            {{ $region->name_region }}
+                                        </a>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div class="card-body px-0 pt-0 pb-5">
                 
-                {{-- LOKASI BARU UNTUK ALERTS --}}
+                {{-- LOKASI ALERTS --}}
                 <div class="px-4 pt-3">
                     @if(session('success'))
                         <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
-                             <span class="alert-icon"><i class="ni ni-like-2"></i></span>
-                             <span class="alert-text"><strong>Sukses!</strong> {{ session('success') }}</span>
-                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                                 <span aria-hidden="true">&times;</span>
-                             </button>
+                            <span class="alert-icon"><i class="ni ni-like-2"></i></span>
+                            <span class="alert-text"><strong>Sukses!</strong> {{ session('success') }}</span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
                     @endif
                     @if(session('error'))
-                         <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
-                             <span class="alert-icon"><i class="ni ni-support-16"></i></span>
-                             <span class="alert-text"><strong>Gagal!</strong> {{ session('error') }}</span>
-                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                                 <span aria-hidden="true">&times;</span>
-                             </button>
-                         </div>
+                        <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                            <span class="alert-icon"><i class="ni ni-support-16"></i></span>
+                            <span class="alert-text"><strong>Gagal!</strong> {{ session('error') }}</span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                     @endif
 
-                    {{-- ALERT UNTUK MENAMPILKAN ERROR VALIDASI --}}
                     @if ($errors->any())
                     <div class="alert alert-danger text-white" role="alert">
                         <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
@@ -103,6 +124,7 @@
                     @endif
                 </div>
 
+                {{-- ISI TABEL --}}
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-material-1">
                         <thead>
@@ -132,13 +154,11 @@
                                     <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->province }}</p></td>
                                     <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->regency }}</p></td>
                                     <td class="text-center">
-                                        {{-- Tombol Edit menargetkan Modal dengan ID unik --}}
                                         <button type="button" class="btn btn-sm btn-info text-white me-1" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#editSpbeBptModal-{{ $facility->id }}">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        
                                         <form action="{{ route('transaksi.destroy', $facility->id) }}" method="POST" class="d-inline delete-form">
                                             @csrf
                                             @method('DELETE')
@@ -158,10 +178,11 @@
                         </tbody>
                     </table>
                 </div>
+                
+                {{-- PAGINATION --}}
                 @if ($facilities->hasPages())
                     @php $facilities->appends(request()->query()); @endphp
                     <div class="mt-4 px-3 d-flex justify-content-center">
-                       {{-- Konten Pagination tidak berubah --}}
                        <nav aria-label="Page navigation">
                             <ul class="pagination pagination-sm mb-0">
                                 @php
@@ -204,6 +225,7 @@
     </div>
 </div>
 
+{{-- MODALS --}}
 @foreach ($facilities as $facility)
 <div class="modal fade" id="editSpbeBptModal-{{ $facility->id }}" tabindex="-1" aria-labelledby="editSpbeBptModalLabel-{{ $facility->id }}" aria-hidden="true">
     <div class="modal-dialog">
@@ -267,7 +289,6 @@
         deleteForms.forEach(form => {
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
-
                 Swal.fire({
                     title: 'Anda yakin?',
                     text: "Data yang dihapus tidak dapat dikembalikan!",
@@ -290,10 +311,11 @@
 
 
 @push('styles')
-{{-- Style tidak berubah --}}
+{{-- Style ini mengembalikan seperti style awal Anda, tanpa horizontal scroll --}}
 <style>
     .welcome-card { background-color: white; color: #344767; border-radius: 1rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); overflow: hidden; position: relative; padding: 1.5rem !important; }
     .welcome-card-icon { height: 60px; width: auto; opacity: 0.9; }
+    
     @media (min-width: 768px) {
         .branch-selection-text-desktop { margin-bottom: 0.5rem; white-space: nowrap; }
         .btn-branch-custom { padding: 0.4rem 0.6rem; font-size: 0.78rem; }

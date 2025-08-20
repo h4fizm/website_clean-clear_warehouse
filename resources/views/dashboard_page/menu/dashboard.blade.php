@@ -2,7 +2,7 @@
 @section('title', 'Laman Dashboard Utama')
 @section('content')
 
-{{-- Welcome Section - Opsi 1: Icon di Atas (Mobile) / Icon di Samping (Desktop) --}}
+{{-- Welcome Section --}}
 <div class="col-12 mb-3">
     <div class="card p-4 position-relative" style="
         background-color: white;
@@ -15,8 +15,8 @@
             {{-- Logo for mobile (order-md-2 to push it after text on desktop) --}}
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                    alt="Branch Icon"
-                    style="height: 60px; width: auto; opacity: 0.9;">
+                     alt="Branch Icon"
+                     style="height: 60px; width: auto; opacity: 0.9;">
             </div>
 
             {{-- Text Content (order-md-1 to put it first on desktop) --}}
@@ -28,7 +28,7 @@
                     Lihat dan kelola data stok material serta riwayat transaksi untuk tiap Region/SA.
                 </p>
                 <span class="badge bg-primary text-white text-uppercase px-3 py-2 rounded-xl shadow-sm"
-                        style="font-size: 0.8rem;">Nama Role</span>
+                      style="font-size: 0.8rem;">Nama Role</span>
             </div>
         </div>
 
@@ -47,7 +47,8 @@
 </div>
 
 {{-- Statistik Cards --}}
-<div class="row gx-2"> @php
+<div class="row g-3"> {{-- g-3 memberikan jarak yang lebih baik antar kartu --}}
+    @php
         $cards = [
             ['title' => 'Total SPBE', 'value' => '1,234', 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => '24', 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
@@ -57,18 +58,19 @@
         ];
     @endphp
     @foreach ($cards as $card)
-        <div class="col-lg-2 col-md-4 col-sm-6 col-12 mb-1" style="flex-basis: 20%; max-width: 20%;"> <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
+        <div class="col-12 col-sm-6 col-md-4 col-lg">
+            <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
                 <div class="card-body p-3">
                     <div class="row">
-                        <div class="col-12">
+                        <div class="col-8">
                             <div class="numbers">
-                                <p class="text-xs text-uppercase font-weight-bold mb-1 text-wrap" style="min-height: 38px;">
-                                    {{ \Illuminate\Support\Str::limit($card['title'], 40) }}
+                                <p class="text-xs text-uppercase font-weight-bold mb-1 text-wrap" style="min-height: 28px;">
+                                    {{ $card['title'] }}
                                 </p>
                                 <h5 class="font-weight-bolder mb-0">{{ $card['value'] }}</h5>
                             </div>
                         </div>
-                        <div class="col-12 text-end d-flex align-items-center justify-content-end">
+                        <div class="col-4 text-end d-flex align-items-center justify-content-end">
                             <div class="icon icon-shape bg-gradient-{{ $card['bg'] }} shadow-{{ $card['bg'] }} text-center rounded-circle">
                                 <i class="{{ $card['icon'] }} text-lg opacity-10"></i>
                             </div>
@@ -79,6 +81,7 @@
         </div>
     @endforeach
 </div>
+
 
 {{-- Tabel Data Material (Row 1) --}}
 <div class="row mt-4">
