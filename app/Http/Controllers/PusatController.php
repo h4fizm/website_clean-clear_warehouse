@@ -15,77 +15,40 @@ class PusatController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        // Ambil semua input filter dari request
+        $filters = [
+            'search' => $request->query('search'),
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+        ];
 
-        // Menggunakan with('transactions') untuk Eager Loading standar
-        $query = Item::whereNull('facility_id')->with('transactions');
+        // [PERBAIKAN] Mulai query menggunakan Model 'Item'
+        $query = Item::query();
 
-        // Filter pencarian
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_material', 'like', "%{$search}%")
-                    ->orWhere('kode_material', 'like', "%{$search}%");
-            });
-        }
+        // [PENTING] Filter ini untuk memastikan hanya data P.Layang (Pusat) yang diambil.
+        // Berdasarkan model Anda, item P.Layang memiliki region_id dan tidak memiliki facility_id.
+        $query->whereNotNull('region_id')->whereNull('facility_id');
 
-        // ===================================================================
-        // PERBAIKAN: Filter tanggal pada item berdasarkan transaksi yang dimilikinya.
-        // Menggunakan 'created_at' sebagai tanggal transaksi yang sebenarnya.
-        // ===================================================================
-        if ($startDate) {
-            $query->whereHas('transactions', function ($q) use ($startDate) {
-                // Gunakan whereDate untuk membandingkan tanggal saja, tanpa jam
-                $q->whereDate('created_at', '>=', $startDate);
-            });
-        }
-        if ($endDate) {
-            $query->whereHas('transactions', function ($q) use ($endDate) {
-                $q->whereDate('created_at', '<=', $endDate);
-            });
-        }
-        // ===================================================================
-
-        $items = $query->latest('updated_at')->paginate(10)->withQueryString();
-
-        // Setelah item difilter, kita hitung kalkulasinya
-        $items->getCollection()->transform(function ($item) {
-            // Jika tanggal difilter, kita juga harus filter transaksi di sini untuk kalkulasi yang akurat
-            $transactionsInDateRange = $item->transactions;
-
-            // Ambil filter tanggal dari URL untuk kalkulasi
-            $startDate = request('start_date');
-            $endDate = request('end_date');
-
-            if ($startDate) {
-                $transactionsInDateRange = $transactionsInDateRange->where('created_at', '>=', Carbon::parse($startDate)->startOfDay());
-            }
-            if ($endDate) {
-                $transactionsInDateRange = $transactionsInDateRange->where('created_at', '<=', Carbon::parse($endDate)->endOfDay());
-            }
-
-            // PERBAIKAN: Kalkulasi sekarang menggunakan transaksi yang sudah terfilter
-            $penerimaan = $transactionsInDateRange->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
-            $penyaluran = $transactionsInDateRange->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
-
-            $item->penerimaan_total = $penerimaan;
-            $item->penyaluran_total = $penyaluran;
-
-            // Stok akhir tetap dihitung dari semua transaksi, bukan hanya yang difilter
-            $totalPenerimaan = $item->transactions->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
-            $totalPenyaluran = $item->transactions->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
-            $item->stok_akhir = $item->stok_awal + $totalPenerimaan - $totalPenyaluran;
-
-            // PERBAIKAN: Gunakan 'created_at' untuk tanggal transaksi terakhir
-            $item->tanggal_transaksi_terakhir = $item->transactions->max('created_at');
-            return $item;
+        // Terapkan filter PENCARIAN jika ada
+        $query->when($filters['search'], function ($q, $search) {
+            return $q->where('nama_material', 'like', '%' . $search . '%');
         });
 
-        return view('dashboard_page.menu.data_pusat', [
-            'items' => $items,
-            'filters' => $request->only(['search', 'start_date', 'end_date'])
-        ]);
+        // Terapkan filter TANGGAL AWAL jika ada
+        $query->when($filters['start_date'], function ($q, $startDate) {
+            return $q->whereDate('updated_at', '>=', $startDate);
+        });
+
+        // Terapkan filter TANGGAL AKHIR jika ada
+        $query->when($filters['end_date'], function ($q, $endDate) {
+            return $q->whereDate('updated_at', '<=', $endDate);
+        });
+
+        // Ambil data setelah difilter dengan pagination dan urutkan
+        $items = $query->latest('updated_at')->paginate(10);
+
+        // Kirim data dan nilai filter ke view
+        return view('dashboard_page.menu.data_pusat', compact('items', 'filters'));
     }
 
     // Method lainnya tidak perlu diubah

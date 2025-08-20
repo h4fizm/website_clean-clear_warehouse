@@ -68,21 +68,45 @@
                         @endif
                     </div>
                     
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                   <div class="row mb-3 align-items-start">
+                        {{-- Input Search --}}
+                        <div class="col-12 col-md-4 mb-3 mb-md-0">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" name="search" id="searchInput" class="form-control" placeholder="Cari material..." value="{{ $filters['search'] ?? '' }}">
+                                <input type="text" name="search" id="searchInput" 
+                                    class="form-control" 
+                                    placeholder="Cari material..." 
+                                    value="{{ $filters['search'] ?? '' }}">
                             </div>
                         </div>
-                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-start justify-content-md-end date-range-picker">
-                            <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
-                            <input type="date" name="start_date" id="startDate" class="form-control me-2 date-input" value="{{ $filters['start_date'] ?? '' }}">
-                            <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
-                            <input type="date" name="end_date" id="endDate" class="form-control me-md-2 date-input" value="{{ $filters['end_date'] ?? '' }}">
-                            <button type="submit" class="btn btn-primary btn-sm px-3 mt-2 mt-md-0">Filter</button>
+
+                        {{-- Date Range + Filter Button --}}
+                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
+                            {{-- Start Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                                <input type="date" name="start_date" id="startDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ $filters['start_date'] ?? '' }}">
+                            </div>
+
+                            {{-- End Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                                <input type="date" name="end_date" id="endDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ $filters['end_date'] ?? '' }}">
+                            </div>
+
+                            {{-- Button Filter (diturunkan sedikit) --}}
+                            <div class="align-self-end">
+                                <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
+                            </div>
                         </div>
                     </div>
+
                 </form>
             </div>
             <div class="card-body px-0 pt-0 pb-5">
