@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
 
 /*
@@ -52,6 +53,11 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard_page.menu.dashboard');
     })->name('dashboard'); // Beri nama untuk redirect setelah login
 
+    // Laman Data P.Layang (Pusat)
+    Route::get('/pusat', [PusatController::class, 'index'])
+        ->name('pusat.index') // Beri nama route untuk kemudahan
+        ->middleware(['can:manage data playang']);
+
     // --- Laman Transaksi SPBE/BPT ---
     Route::get('/transaksi', [TransactionController::class, 'index'])
         ->name('transaksi.index')
@@ -77,16 +83,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('transaksi.destroy')
         ->middleware('can:manage transaksi');
 
-    // Route untuk tambah material bisa diarahkan ke method 'create' jika diperlukan nanti
-    Route::get('/tambah-material', function () {
-        return view('dashboard_page.menu.tambah_material');
-    })->middleware('can:manage transaksi'); // <-- Beri permission juga
 
     // --- Menu Sidebar & Fitur Utama ---
     // ini dibiarkan dulu
-    Route::get('/pusat', function () {
-        return view('dashboard_page.menu.data_pusat');
-    });
     Route::get('/tambah-spbe/bpt', function () {
         return view('dashboard_page.menu.tambah_spbe-bpt');
     });
