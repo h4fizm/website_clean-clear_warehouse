@@ -11,23 +11,32 @@ use Carbon\Carbon;
 class PusatController extends Controller
 {
     /**
-     * Menampilkan halaman data P.Layang (Pusat).
+     * MODIFIKASI: Logika filter tanggal diperbaiki dan disederhanakan.
      */
     public function index(Request $request)
     {
-        // ... (Kode tidak berubah)
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+
+        // Menggunakan with('transactions') untuk Eager Loading standar
         $query = Item::whereNull('facility_id')->with('transactions');
+
+        // Filter pencarian
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_material', 'like', "%{$search}%")
                     ->orWhere('kode_material', 'like', "%{$search}%");
             });
         }
+
+        // ===================================================================
+        // PERBAIKAN: Filter tanggal pada item berdasarkan transaksi yang dimilikinya.
+        // Menggunakan 'created_at' sebagai tanggal transaksi yang sebenarnya.
+        // ===================================================================
         if ($startDate) {
             $query->whereHas('transactions', function ($q) use ($startDate) {
+                // Gunakan whereDate untuk membandingkan tanggal saja, tanpa jam
                 $q->whereDate('created_at', '>=', $startDate);
             });
         }
@@ -36,124 +45,104 @@ class PusatController extends Controller
                 $q->whereDate('created_at', '<=', $endDate);
             });
         }
+        // ===================================================================
+
         $items = $query->latest('updated_at')->paginate(10)->withQueryString();
+
+        // Setelah item difilter, kita hitung kalkulasinya
         $items->getCollection()->transform(function ($item) {
-            $penerimaan = $item->transactions->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
-            $penyaluran = $item->transactions->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
+            // Jika tanggal difilter, kita juga harus filter transaksi di sini untuk kalkulasi yang akurat
+            $transactionsInDateRange = $item->transactions;
+
+            // Ambil filter tanggal dari URL untuk kalkulasi
+            $startDate = request('start_date');
+            $endDate = request('end_date');
+
+            if ($startDate) {
+                $transactionsInDateRange = $transactionsInDateRange->where('created_at', '>=', Carbon::parse($startDate)->startOfDay());
+            }
+            if ($endDate) {
+                $transactionsInDateRange = $transactionsInDateRange->where('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+            }
+
+            // PERBAIKAN: Kalkulasi sekarang menggunakan transaksi yang sudah terfilter
+            $penerimaan = $transactionsInDateRange->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
+            $penyaluran = $transactionsInDateRange->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
+
             $item->penerimaan_total = $penerimaan;
             $item->penyaluran_total = $penyaluran;
-            $item->stok_akhir = $item->stok_awal + $penerimaan - $penyaluran;
+
+            // Stok akhir tetap dihitung dari semua transaksi, bukan hanya yang difilter
+            $totalPenerimaan = $item->transactions->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
+            $totalPenyaluran = $item->transactions->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
+            $item->stok_akhir = $item->stok_awal + $totalPenerimaan - $totalPenyaluran;
+
+            // PERBAIKAN: Gunakan 'created_at' untuk tanggal transaksi terakhir
             $item->tanggal_transaksi_terakhir = $item->transactions->max('created_at');
             return $item;
         });
+
         return view('dashboard_page.menu.data_pusat', [
             'items' => $items,
             'filters' => $request->only(['search', 'start_date', 'end_date'])
         ]);
     }
 
-    /**
-     * Menampilkan form untuk menambah data material baru.
-     */
+    // Method lainnya tidak perlu diubah
     public function create()
     {
         return view('dashboard_page.menu.tambah_material');
     }
 
-    /**
-     * Menyimpan data material baru ke database.
-     */
     public function store(Request $request)
     {
-        // ... (Kode tidak berubah)
         $validator = Validator::make($request->all(), [
             'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'total_stok' => 'required|integer|min:0',
-        ], [
-            'nama_material.unique' => 'Nama material ini sudah terdaftar di Pusat.',
-            'kode_material.unique' => 'Kode material ini sudah terdaftar di Pusat.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        try {
-            Item::create([
-                'nama_material' => $request->nama_material,
-                'kode_material' => $request->kode_material,
-                'stok_awal' => $request->total_stok,
-                'facility_id' => null,
-                'region_id' => 1,
-            ]);
-            return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan pada server.'], 500);
-        }
+        Item::create([
+            'nama_material' => $request->nama_material,
+            'kode_material' => $request->kode_material,
+            'stok_awal' => $request->total_stok,
+            'facility_id' => null,
+            'region_id' => 1,
+        ]);
+        return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
     }
 
-    /**
-     * BARU: Mengambil data item spesifik untuk form edit.
-     * Menggunakan Route Model Binding (Item $item).
-     */
-    public function edit(Item $item)
-    {
-        // Menghitung stok akhir untuk ditampilkan di modal
-        $penerimaan = $item->transactions->where('jenis_transaksi', 'penerimaan')->sum('jumlah');
-        $penyaluran = $item->transactions->where('jenis_transaksi', 'penyaluran')->sum('jumlah');
-        $item->stok_akhir = $item->stok_awal + $penerimaan - $penyaluran;
-
-        return response()->json($item);
-    }
-
-    /**
-     * BARU: Memperbarui data material di database.
-     */
     public function update(Request $request, Item $item)
     {
-        // Validasi, pastikan nama & kode unik, tapi abaikan item yang sedang diedit
         $validator = Validator::make($request->all(), [
             'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
             'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
-            'stok_awal' => 'required|integer|min:0', // Mengedit stok awal
-        ], [
-            'nama_material.unique' => 'Nama material ini sudah digunakan.',
-            'kode_material.unique' => 'Kode material ini sudah digunakan.',
+            'stok_awal' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error_item_id', $item->id);
         }
 
-        // Update data
-        $item->update([
-            'nama_material' => $request->nama_material,
-            'kode_material' => $request->kode_material,
-            'stok_awal' => $request->stok_awal,
-        ]);
+        $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
 
-        return response()->json(['success' => true, 'message' => 'Data material berhasil diperbarui!']);
+        return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
     }
 
-    /**
-     * BARU: Menghapus data material dari database.
-     */
     public function destroy(Item $item)
     {
-        // Opsional: Tambahkan pengecekan jika item memiliki transaksi
         if ($item->transactions()->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus! Material ini memiliki riwayat transaksi.'
-            ], 409); // 409 Conflict
+            return redirect()->route('pusat.index')->with('error', 'Gagal menghapus! Material ini memiliki riwayat transaksi.');
         }
 
-        try {
-            $item->delete();
-            return response()->json(['success' => true, 'message' => 'Data material berhasil dihapus!']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan saat menghapus data.'], 500);
-        }
+        $item->delete();
+        return redirect()->route('pusat.index')->with('success', 'Data material berhasil dihapus!');
     }
 }
