@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\MaterialController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +84,16 @@ Route::middleware(['auth'])->group(function () {
         ->name('pusat.destroy')
         ->middleware(['auth', 'can:manage data playang']);
 
+    // Route untuk mencari facility (API untuk form search)
+    Route::get('/facilities/search', [PusatController::class, 'searchFacilities'])
+        ->name('facilities.search')
+        ->middleware(['auth', 'can:manage data playang']);
+
+    // Route untuk memproses transfer stok dari pusat ke facility
+    Route::post('/pusat/transfer', [PusatController::class, 'transfer'])
+        ->name('pusat.transfer')
+        ->middleware(['auth', 'can:manage data playang']);
+
     // --- Laman Transaksi SPBE/BPT ---
     Route::get('/transaksi', [TransactionController::class, 'index'])
         ->name('transaksi.index')
@@ -108,14 +119,16 @@ Route::middleware(['auth'])->group(function () {
         ->name('transaksi.destroy')
         ->middleware('can:manage transaksi');
 
+    // Route Melihat List Material SPBE/BPT
+    Route::get('/facilities/{facility}/materials', [MaterialController::class, 'index'])
+        ->name('materials.index')
+        ->middleware('can:manage transaksi');
+
 
     // --- Menu Sidebar & Fitur Utama ---
     // ini dibiarkan dulu
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
-    });
-    Route::get('/laporan-grafik', function () {
-        return view('dashboard_page.menu.data_laporan_grafik');
     });
     Route::get('/aktivitas', function () {
         return view('dashboard_page.menu.aktivitas_harian');

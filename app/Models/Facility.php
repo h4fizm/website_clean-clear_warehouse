@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany; // 1. TAMBAHKAN use statement ini
 
 class Facility extends Model
 {
@@ -32,5 +33,14 @@ class Facility extends Model
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    // 2. TAMBAHKAN METHOD DI BAWAH INI
+    /**
+     * Mendapatkan semua item yang dimiliki oleh facility ini.
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(Item::class);
     }
 }

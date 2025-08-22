@@ -145,7 +145,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex px-2 py-1 align-items-center">
-                                            <a href="#" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary" style="cursor: pointer;">
+                                            <a href="{{ route('materials.index', $facility) }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary">
                                                 {{ $facility->name }}
                                             </a>
                                         </div>

@@ -151,9 +151,14 @@
                                 <td class="text-center">
                                     <span class="badge bg-gradient-success text-white text-xs">{{ $item->stok_akhir }} pcs</span>
                                 </td>
+                                {{-- DENGAN KODE BARU INI --}}
                                 <td class="text-center">
-                                     <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        {{ \Carbon\Carbon::parse($item->updated_at)->locale('id')->translatedFormat('l, d F Y') }}
+                                    <p class="text-xs text-secondary font-weight-bold mb-0">
+                                        {{-- Gunakan tanggal transaksi terakhir, jika tidak ada, gunakan tanggal update item --}}
+                                        @php
+                                            $tanggal = $item->latest_transaction_date ?? $item->updated_at;
+                                        @endphp
+                                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
                                     </p>
                                 </td>
                                 <td class="text-center">
@@ -230,59 +235,83 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="kirimMaterialModalLabel">Kirim Material <span id="modal-nama-material"></span></h5>
+                <h5 class="modal-title" id="kirimMaterialModalLabel">Proses Transaksi Material</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="card p-3 mb-3 bg-light">
+                {{-- Info Material --}}
+                <div class="card p-3 mb-3 bg-light border">
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">NAMA MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material-display"></p>
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">KODE MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-kode-material-display"></p>
-                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK AKHIR</p>
-                    <p class="mb-0 text-sm font-weight-bold" id="modal-total-stok-display"></p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK SAAT INI DI P.LAYANG</p>
+                    <p class="mb-0 text-sm font-weight-bold" id="modal-stok-akhir-display"></p>
                 </div>
-                <form id="kirimMaterialForm">
-                    <input type="hidden" id="kirim-material-id">
-                    <div class="mb-3">
-                        <label for="asal-transaksi" class="form-label">Asal Transaksi</label>
-                        <input type="text" class="form-control" id="asal-transaksi" value="P.Layang" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="tujuan-transaksi-search" class="form-label">Tujuan Transaksi</label>
-                        <input type="text" class="form-control" id="tujuan-transaksi-search" placeholder="Cari tujuan..." required>
-                        <ul id="tujuan-transaksi-list" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none;"></ul>
-                    </div>
-                    <div class="mb-3">
-                        <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan (Opsional)</label>
-                        <input type="text" class="form-control" id="no-surat-persetujuan">
-                    </div>
-                    <div class="mb-3">
-                        <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima (Opsional)</label>
-                        <input type="text" class="form-control" id="no-ba-serah-terima">
-                    </div>
+
+                {{-- Form Transaksi --}}
+                <form id="kirimMaterialForm" onsubmit="return false;">
+                    @csrf
+                    <input type="hidden" id="item-id-pusat">
+                    <input type="hidden" id="kode-material-selected">
+
+                    {{-- Pilihan Jenis Transaksi --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan" checked>
-                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran (Kirim dari P.Layang)</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran">
-                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran</label>
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan">
+                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan (Ambil dari SPBE/BPT)</label>
                             </div>
                         </div>
                     </div>
+
+                    {{-- Form Dinamis --}}
                     <div class="mb-3">
-                        <label for="jumlah-stok" class="form-label">Jumlah Stok</label>
-                        <input type="number" class="form-control" id="jumlah-stok" required>
+                        <label id="asal-label" class="form-label">Asal Transaksi</label>
+                        <div id="asal-container">
+                            {{-- Akan diisi oleh JavaScript --}}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label id="tujuan-label" class="form-label">Tujuan Transaksi</label>
+                        <div id="tujuan-container">
+                             {{-- Akan diisi oleh JavaScript --}}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tanggal-transaksi" class="form-label">Tanggal Transaksi</label>
+                        <input type="date" class="form-control" id="tanggal-transaksi" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
+                            <input type="text" class="form-control" id="no-surat-persetujuan" placeholder="(Opsional)">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <input type="text" class="form-control" id="no-ba-serah-terima" placeholder="(Opsional)">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="jumlah-stok" class="form-label">Jumlah (pcs)</label>
+                        <input type="number" class="form-control" id="jumlah-stok" min="1" required>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="submitKirim">Kirim</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="submitKirim">
+                    <i class="fas fa-check me-2"></i> Konfirmasi Transaksi
+                </button>
             </div>
         </div>
     </div>
@@ -375,6 +404,120 @@
                     if (result.isConfirmed) {
                         form.submit(); 
                     }
+                });
+            });
+        });
+    });
+</script>
+
+{{-- Script transaksi --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Ambil data facilities yang sudah dikirim dari Controller
+        const facilities = @json($facilities);
+
+        // 2. Siapkan elemen HTML untuk dropdown
+        let optionsHTML = '<option value="" selected disabled>-- Pilih Facility --</option>';
+        facilities.forEach(facility => {
+            // [INI PERBAIKANNYA] Menggunakan 'facility.name' sesuai dengan nama kolom di database Anda
+            optionsHTML += `<option value="${facility.id}">${facility.name}</option>`;
+        });
+        const selectDropdownHTML = `<select class="form-select" id="facility-select" required>${optionsHTML}</select>`;
+        const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
+
+        // Fungsi untuk mengubah UI form berdasarkan jenis transaksi
+        function updateFormUI(type) {
+            const asalContainer = document.getElementById('asal-container');
+            const tujuanContainer = document.getElementById('tujuan-container');
+
+            if (type === 'penyaluran') { // Jika kirim dari P.Layang
+                asalContainer.innerHTML = readonlyInputHTML;
+                tujuanContainer.innerHTML = selectDropdownHTML;
+            } else { // Jika P.Layang menerima dari facility
+                asalContainer.innerHTML = selectDropdownHTML;
+                tujuanContainer.innerHTML = readonlyInputHTML;
+            }
+        }
+
+        // Event listener untuk radio button
+        document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                updateFormUI(event.target.value);
+            });
+        });
+
+        // Saat tombol 'kirim' di tabel di-klik, isi modal dengan data
+        document.querySelectorAll('.kirim-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
+                document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
+                document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
+                document.getElementById('modal-stok-akhir-display').textContent = row.cells[6].innerText;
+                document.getElementById('kode-material-selected').value = row.cells[2].innerText;
+                document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+                
+                // Atur form ke kondisi default (penyaluran)
+                document.getElementById('jenis-penyaluran').checked = true;
+                updateFormUI('penyaluran');
+            });
+        });
+
+        // Logika saat tombol 'Konfirmasi Transaksi' di-klik
+        document.getElementById('submitKirim').addEventListener('click', function() {
+            const selectedFacilityId = document.getElementById('facility-select')?.value;
+            
+            if (!selectedFacilityId) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
+                return;
+            }
+
+            const formData = {
+                _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
+                item_id_pusat: document.getElementById('item-id-pusat').value,
+                kode_material: document.getElementById('kode-material-selected').value,
+                facility_id_selected: selectedFacilityId,
+                jenis_transaksi: document.querySelector('input[name="jenisTransaksi"]:checked').value,
+                jumlah: document.getElementById('jumlah-stok').value,
+                tanggal_transaksi: document.getElementById('tanggal-transaksi').value,
+                no_surat_persetujuan: document.getElementById('no-surat-persetujuan').value,
+                no_ba_serah_terima: document.getElementById('no-ba-serah-terima').value,
+            };
+            
+            // Kirim data ke controller (kode fetch tidak berubah)
+            fetch('{{ route('pusat.transfer') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': formData._token
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start">${errorMessages}</ul>`
+                    });
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: error.message
                 });
             });
         });

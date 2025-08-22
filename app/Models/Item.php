@@ -47,7 +47,7 @@ class Item extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Hitung stok akhir langsung dari relasi transaksi
+    // Hitung stok akhir berdasarkan transaksi
     public function getStokAkhirAttribute()
     {
         $penerimaan = $this->transactions()
