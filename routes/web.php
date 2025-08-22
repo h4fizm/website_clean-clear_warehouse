@@ -84,11 +84,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('pusat.destroy')
         ->middleware(['auth', 'can:manage data playang']);
 
-    // Route untuk mencari facility (API untuk form search)
-    Route::get('/facilities/search', [PusatController::class, 'searchFacilities'])
-        ->name('facilities.search')
-        ->middleware(['auth', 'can:manage data playang']);
-
     // Route untuk memproses transfer stok dari pusat ke facility
     Route::post('/pusat/transfer', [PusatController::class, 'transfer'])
         ->name('pusat.transfer')
@@ -122,6 +117,15 @@ Route::middleware(['auth'])->group(function () {
     // Route Melihat List Material SPBE/BPT
     Route::get('/facilities/{facility}/materials', [MaterialController::class, 'index'])
         ->name('materials.index')
+        ->middleware('can:manage transaksi');
+    // Route untuk memproses update data material
+    Route::patch('/materials/{item}', [MaterialController::class, 'update'])
+        ->name('materials.update')
+        ->middleware('can:manage transaksi');
+
+    // Route untuk menghapus data material
+    Route::delete('/materials/{item}', [MaterialController::class, 'destroy'])
+        ->name('materials.destroy')
         ->middleware('can:manage transaksi');
 
 

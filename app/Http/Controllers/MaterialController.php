@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Facility;
 use App\Models\Item; // Pastikan model Item di-import
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class MaterialController extends Controller
 {
@@ -67,5 +70,67 @@ class MaterialController extends Controller
             'items' => $items,
             'filters' => $filters,
         ]);
+    }
+    // [TAMBAHKAN METHOD UPDATE DI SINI]
+    /**
+     * Memperbarui data material.
+     */
+    public function update(Request $request, Item $item)
+    {
+        $validator = Validator::make($request->all(), [
+            'nama_material' => [
+                'required',
+                'string',
+                'max:255',
+                // Pastikan unik hanya untuk facility ini, abaikan item saat ini
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+            ],
+            'kode_material' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+            ],
+            'stok_awal' => 'required|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                // Kirim ID item yang error agar modal yang benar terbuka kembali
+                ->with('error_item_id', $item->id);
+        }
+
+        $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
+
+        return redirect()->route('materials.index', $item->facility_id)->with('success', 'Data material berhasil diperbarui!');
+    }
+
+    // [TAMBAHKAN METHOD DESTROY DI SINI]
+    /**
+     * Menghapus data material.
+     */
+    public function destroy(Item $item)
+    {
+        // Simpan facility_id untuk redirect sebelum item dihapus/diubah
+        $facilityId = $item->facility_id;
+
+        try {
+            // Gunakan DB Transaction untuk memastikan semua proses berhasil
+            DB::transaction(function () use ($item) {
+                // 1. Hapus semua transaksi yang terkait dengan item ini
+                $item->transactions()->delete();
+
+                // 2. Atur stok awal item ini menjadi 0
+                $item->update(['stok_awal' => 0]);
+            });
+
+            return redirect()->route('materials.index', $facilityId)->with('success', 'Stok material berhasil di-reset menjadi 0.');
+
+        } catch (\Exception $e) {
+            // Jika terjadi error, kembalikan dengan pesan kesalahan
+            return redirect()->route('materials.index', $facilityId)->with('error', 'Terjadi kesalahan saat mereset stok material.');
+        }
     }
 }
