@@ -128,20 +128,6 @@ class PusatController extends Controller
         $item->delete();
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil dihapus!');
     }
-    /**
-     * Mencari data facility berdasarkan query untuk fitur search.
-     */
-    public function searchFacilities(Request $request)
-    {
-        $query = $request->input('q', '');
-
-        $facilities = Facility::where('nama_facility', 'LIKE', "%{$query}%")
-            ->orWhere('kode_facility', 'LIKE', "%{$query}%")
-            ->limit(10)
-            ->get(['id', 'nama_facility', 'kode_facility']);
-
-        return response()->json($facilities);
-    }
 
     /**
      * Memproses transaksi transfer dari P.Layang ke Facility.

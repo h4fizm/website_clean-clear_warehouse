@@ -118,6 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/facilities/{facility}/materials', [MaterialController::class, 'index'])
         ->name('materials.index')
         ->middleware('can:manage transaksi');
+
     // Route untuk memproses update data material
     Route::patch('/materials/{item}', [MaterialController::class, 'update'])
         ->name('materials.update')
@@ -126,6 +127,11 @@ Route::middleware(['auth'])->group(function () {
     // Route untuk menghapus data material
     Route::delete('/materials/{item}', [MaterialController::class, 'destroy'])
         ->name('materials.destroy')
+        ->middleware('can:manage transaksi');
+
+    // Route untuk memproses transaksi material dari facility
+    Route::post('/materials/transaction', [MaterialController::class, 'processTransaction'])
+        ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
 

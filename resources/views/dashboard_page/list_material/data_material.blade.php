@@ -96,7 +96,18 @@
                                         </p>
                                     </td>
                                     <td class="align-middle text-center">
-                                        <button class="btn btn-sm btn-success text-white me-1" title="Kirim Material" disabled><i class="fas fa-paper-plane"></i></button>
+                                        {{-- INI PERUBAHANNYA --}}
+                                        <button type="button" class="btn btn-sm btn-success text-white me-1 transaksi-btn" 
+                                            title="Transaksi Material"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#transaksiMaterialModal"
+                                            data-item-id="{{ $item->id }}"
+                                            data-nama-material="{{ $item->nama_material }}"
+                                            data-kode-material="{{ $item->kode_material }}"
+                                            data-stok-akhir="{{ $item->stok_akhir }}">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </button>
+                                        {{-- AKHIR PERUBAHAN --}}
                                         <button type="button" class="btn btn-sm btn-info text-white me-1" title="Edit Data" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}"><i class="fas fa-edit"></i></button>
                                         <form action="{{ route('materials.destroy', $item) }}" method="POST" class="d-inline delete-form">
                                             @csrf
@@ -117,7 +128,8 @@
                    @if ($items->hasPages())
                         @php $items->appends(request()->query()); @endphp
                         {{-- ... kode pagination kustom Anda ... --}}
-                    @endif
+                        {{ $items->links('vendor.pagination.bootstrap-5-simple') }}
+                   @endif
                 </div>
             </div>
         </div>
@@ -162,6 +174,83 @@
   </div>
 </div>
 @endforeach 
+
+{{-- Modal Transaksi --}}
+<div class="modal fade" id="transaksiMaterialModal" tabindex="-1" aria-labelledby="transaksiMaterialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transaksiMaterialModalLabel">Proses Transaksi Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card p-3 mb-3 bg-light border">
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">NAMA MATERIAL</p>
+                    <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material"></p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK SAAT INI DI LOKASI INI</p>
+                    <p class="mb-0 text-sm font-weight-bold" id="modal-stok-akhir"></p>
+                </div>
+
+                <form id="transaksiMaterialForm" onsubmit="return false;">
+                    @csrf
+                    <input type="hidden" id="modal-item-id" name="item_id">
+
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Transaksi</label>
+                        <div class="d-flex">
+                            <div class="form-check me-4">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran (Kirim dari Sini)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
+                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan (Terima di Sini)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="asal-select" class="form-label">Asal Transaksi</label>
+                        <select class="form-select" id="asal-select" name="asal_id" required></select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tujuan-select" class="form-label">Tujuan Transaksi</label>
+                        <select class="form-select" id="tujuan-select" name="tujuan_id" required></select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tanggal-transaksi" class="form-label">Tanggal Transaksi</label>
+                        <input type="date" class="form-control" id="tanggal-transaksi" name="tanggal_transaksi" required>
+                    </div>
+                    
+                    {{-- Input No Surat & BA (tidak berubah) --}}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
+                            <input type="text" class="form-control" id="no-surat-persetujuan" name="no_surat_persetujuan" placeholder="(Opsional)">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <input type="text" class="form-control" id="no-ba-serah-terima" name="no_ba_serah_terima" placeholder="(Opsional)">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="jumlah-stok" class="form-label">Jumlah (pcs)</label>
+                        <input type="number" class="form-control" id="jumlah-stok" name="jumlah" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="submitTransaksi">
+                    <i class="fas fa-check me-2"></i> Konfirmasi Transaksi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -186,12 +275,13 @@
                 
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    text: "Data material ini akan dihapus secara permanen!",
+                    // Teks disesuaikan dengan aksi di controller
+                    text: "Seluruh data transaksi material ini akan dihapus dan stok awal akan di-reset menjadi 0.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, hapus!',
+                    confirmButtonText: 'Ya, reset!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -202,5 +292,114 @@
         });
     });
 </script>
-@endpush
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const locations = @json($locations);
+        const currentFacility = @json($facility);
+        const transaksiModal = document.getElementById('transaksiMaterialModal');
+        
+        const asalSelect = document.getElementById('asal-select');
+        const tujuanSelect = document.getElementById('tujuan-select');
+        const radioButtons = document.querySelectorAll('input[name="jenis_transaksi"]');
+
+        // [LOGIKA BARU] Fungsi utama untuk mengatur ulang form berdasarkan pilihan radio
+        function updateFormUI() {
+            const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
+            
+            // Buat daftar lokasi lain (semua lokasi kecuali lokasi saat ini)
+            const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
+
+            if (selectedType === 'penyaluran') {
+                // ASAL: Terkunci ke lokasi saat ini
+                asalSelect.innerHTML = `<option value="${currentFacility.id}" selected>${currentFacility.name}</option>`;
+                asalSelect.disabled = true;
+
+                // TUJUAN: Bisa memilih dari lokasi lain
+                tujuanSelect.innerHTML = '<option value="" selected disabled>-- Pilih Lokasi Tujuan --</option>';
+                otherLocations.forEach(loc => {
+                    tujuanSelect.add(new Option(loc.name, loc.id));
+                });
+                tujuanSelect.disabled = false;
+
+            } else { // Jika 'penerimaan'
+                // ASAL: Bisa memilih dari lokasi lain
+                asalSelect.innerHTML = '<option value="" selected disabled>-- Pilih Lokasi Asal --</option>';
+                otherLocations.forEach(loc => {
+                    asalSelect.add(new Option(loc.name, loc.id));
+                });
+                asalSelect.disabled = false;
+
+                // TUJUAN: Terkunci ke lokasi saat ini
+                tujuanSelect.innerHTML = `<option value="${currentFacility.id}" selected>${currentFacility.name}</option>`;
+                tujuanSelect.disabled = true;
+            }
+        }
+
+        // Saat modal pertama kali dibuka
+        transaksiModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            document.getElementById('transaksiMaterialForm').reset();
+            
+            // Set default radio ke 'penyaluran'
+            document.getElementById('jenis-penyaluran').checked = true;
+            
+            // Panggil fungsi utama untuk mengatur form ke kondisi awal
+            updateFormUI();
+
+            // Isi info material dan tanggal
+            document.getElementById('modal-item-id').value = button.getAttribute('data-item-id');
+            document.getElementById('modal-nama-material').textContent = button.getAttribute('data-nama-material');
+            document.getElementById('modal-stok-akhir').textContent = `${parseInt(button.getAttribute('data-stok-akhir')).toLocaleString('id-ID')} pcs`;
+            document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+        });
+
+        // Tambahkan event listener ke setiap radio button
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', updateFormUI);
+        });
+
+        // Logika Fetch untuk submit (tidak berubah)
+        document.getElementById('submitTransaksi').addEventListener('click', function() {
+            // Aktifkan kembali field yang disabled agar nilainya terkirim
+            asalSelect.disabled = false;
+            tujuanSelect.disabled = false;
+
+            const form = document.getElementById('transaksiMaterialForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Setelah mengambil data, kembalikan ke state disabled jika perlu (agar UI konsisten)
+            updateFormUI(); 
+
+            fetch('{{ route("materials.transaction") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': data._token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: result.message, timer: 2500, showConfirmButton: false })
+                    .then(() => {
+                        bootstrap.Modal.getInstance(transaksiModal).hide();
+                        window.location.reload();
+                    });
+                } else if (result.errors) {
+                    let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
+                    Swal.fire({ icon: 'error', title: 'Gagal Validasi', html: `<ul class="text-start mb-0 ps-3">${errorMessages}</ul>` });
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                Swal.fire({ icon: 'error', title: 'Oops... Terjadi Kesalahan', text: error.message });
+            });
+        });
+    });
+</script>
+@endpush
