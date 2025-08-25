@@ -411,161 +411,161 @@
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Ambil data facilities dari Controller
-    const facilities = @json($facilities);
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Ambil data facilities dari Controller
+        const facilities = @json($facilities);
 
-    // 🔹 Template Searchbar
-    function createSearchInputHTML() {
-        return `
-            <div class="position-relative w-100">
-                <input type="text" class="form-control" id="facility-search" placeholder="Cari Facility...">
-                <input type="hidden" id="facility-id-hidden">
-                <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
-            </div>
-        `;
-    }
-
-    const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
-
-    // 🔹 Fungsi untuk update form sesuai jenis transaksi
-    function updateFormUI(type) {
-        const asalContainer = document.getElementById('asal-container');
-        const tujuanContainer = document.getElementById('tujuan-container');
-
-        if (type === 'penyaluran') { 
-            asalContainer.innerHTML = readonlyInputHTML;
-            tujuanContainer.innerHTML = createSearchInputHTML();
-            initSearchbar(); // aktifkan searchbar
-        } else { 
-            asalContainer.innerHTML = createSearchInputHTML();
-            tujuanContainer.innerHTML = readonlyInputHTML;
-            initSearchbar(); // aktifkan searchbar
+        // 🔹 Template Searchbar
+        function createSearchInputHTML() {
+            return `
+                <div class="position-relative w-100">
+                    <input type="text" class="form-control" id="facility-search" placeholder="Cari Facility...">
+                    <input type="hidden" id="facility-id-hidden">
+                    <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                </div>
+            `;
         }
-    }
 
-    // 🔹 Fungsi Searchbar Autocomplete
-    function initSearchbar() {
-        const searchInput = document.getElementById("facility-search");
-        const hiddenInput = document.getElementById("facility-id-hidden");
-        const suggestionsBox = document.getElementById("facility-suggestions");
+        const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
 
-        if (!searchInput) return;
+        // 🔹 Fungsi untuk update form sesuai jenis transaksi
+        function updateFormUI(type) {
+            const asalContainer = document.getElementById('asal-container');
+            const tujuanContainer = document.getElementById('tujuan-container');
 
-        searchInput.addEventListener("input", function() {
-            const query = this.value.toLowerCase();
-            suggestionsBox.innerHTML = "";
+            if (type === 'penyaluran') { 
+                asalContainer.innerHTML = readonlyInputHTML;
+                tujuanContainer.innerHTML = createSearchInputHTML();
+                initSearchbar(); // aktifkan searchbar
+            } else { 
+                asalContainer.innerHTML = createSearchInputHTML();
+                tujuanContainer.innerHTML = readonlyInputHTML;
+                initSearchbar(); // aktifkan searchbar
+            }
+        }
 
-            if (!query) {
-                suggestionsBox.style.display = "none";
+        // 🔹 Fungsi Searchbar Autocomplete
+        function initSearchbar() {
+            const searchInput = document.getElementById("facility-search");
+            const hiddenInput = document.getElementById("facility-id-hidden");
+            const suggestionsBox = document.getElementById("facility-suggestions");
+
+            if (!searchInput) return;
+
+            searchInput.addEventListener("input", function() {
+                const query = this.value.toLowerCase();
+                suggestionsBox.innerHTML = "";
+
+                if (!query) {
+                    suggestionsBox.style.display = "none";
+                    return;
+                }
+
+                const results = facilities.filter(facility => facility.name.toLowerCase().includes(query));
+
+                if (results.length > 0) {
+                    results.forEach(facility => {
+                        const item = document.createElement("button");
+                        item.type = "button";
+                        item.className = "list-group-item list-group-item-action";
+                        item.textContent = facility.name;
+                        item.dataset.id = facility.id;
+
+                        item.addEventListener("click", function() {
+                            searchInput.value = facility.name;
+                            hiddenInput.value = facility.id;
+                            suggestionsBox.style.display = "none";
+                        });
+
+                        suggestionsBox.appendChild(item);
+                    });
+                    suggestionsBox.style.display = "block";
+                } else {
+                    suggestionsBox.style.display = "none";
+                }
+            });
+        }
+
+        // 🔹 Radio button listener
+        document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                updateFormUI(event.target.value);
+            });
+        });
+
+        // 🔹 Saat klik tombol kirim
+        document.querySelectorAll('.kirim-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
+                document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
+                document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
+                document.getElementById('modal-stok-akhir-display').textContent = row.cells[6].innerText;
+                document.getElementById('kode-material-selected').value = row.cells[2].innerText;
+                document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+
+                document.getElementById('jenis-penyaluran').checked = true;
+                updateFormUI('penyaluran');
+            });
+        });
+
+        // 🔹 Submit button
+        document.getElementById('submitKirim').addEventListener('click', function() {
+            const selectedFacilityId = document.getElementById('facility-id-hidden')?.value;
+
+            if (!selectedFacilityId) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
                 return;
             }
 
-            const results = facilities.filter(facility => facility.name.toLowerCase().includes(query));
+            const formData = {
+                _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
+                item_id_pusat: document.getElementById('item-id-pusat').value,
+                kode_material: document.getElementById('kode-material-selected').value,
+                facility_id_selected: selectedFacilityId,
+                jenis_transaksi: document.querySelector('input[name="jenisTransaksi"]:checked').value,
+                jumlah: document.getElementById('jumlah-stok').value,
+                tanggal_transaksi: document.getElementById('tanggal-transaksi').value,
+                no_surat_persetujuan: document.getElementById('no-surat-persetujuan').value,
+                no_ba_serah_terima: document.getElementById('no-ba-serah-terima').value,
+            };
 
-            if (results.length > 0) {
-                results.forEach(facility => {
-                    const item = document.createElement("button");
-                    item.type = "button";
-                    item.className = "list-group-item list-group-item-action";
-                    item.textContent = facility.name;
-                    item.dataset.id = facility.id;
-
-                    item.addEventListener("click", function() {
-                        searchInput.value = facility.name;
-                        hiddenInput.value = facility.id;
-                        suggestionsBox.style.display = "none";
+            fetch('{{ route('pusat.transfer') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': formData._token
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start">${errorMessages}</ul>`
                     });
-
-                    suggestionsBox.appendChild(item);
-                });
-                suggestionsBox.style.display = "block";
-            } else {
-                suggestionsBox.style.display = "none";
-            }
-        });
-    }
-
-    // 🔹 Radio button listener
-    document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
-        radio.addEventListener('change', (event) => {
-            updateFormUI(event.target.value);
-        });
-    });
-
-    // 🔹 Saat klik tombol kirim
-    document.querySelectorAll('.kirim-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('tr');
-            document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
-            document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
-            document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
-            document.getElementById('modal-stok-akhir-display').textContent = row.cells[6].innerText;
-            document.getElementById('kode-material-selected').value = row.cells[2].innerText;
-            document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
-
-            document.getElementById('jenis-penyaluran').checked = true;
-            updateFormUI('penyaluran');
-        });
-    });
-
-    // 🔹 Submit button
-    document.getElementById('submitKirim').addEventListener('click', function() {
-        const selectedFacilityId = document.getElementById('facility-id-hidden')?.value;
-
-        if (!selectedFacilityId) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
-            return;
-        }
-
-        const formData = {
-            _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
-            item_id_pusat: document.getElementById('item-id-pusat').value,
-            kode_material: document.getElementById('kode-material-selected').value,
-            facility_id_selected: selectedFacilityId,
-            jenis_transaksi: document.querySelector('input[name="jenisTransaksi"]:checked').value,
-            jumlah: document.getElementById('jumlah-stok').value,
-            tanggal_transaksi: document.getElementById('tanggal-transaksi').value,
-            no_surat_persetujuan: document.getElementById('no-surat-persetujuan').value,
-            no_ba_serah_terima: document.getElementById('no-ba-serah-terima').value,
-        };
-
-        fetch('{{ route('pusat.transfer') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': formData._token
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message
-                }).then(() => window.location.reload());
-            } else if (data.errors) {
-                let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Gagal Validasi',
-                    html: `<ul class="text-start">${errorMessages}</ul>`
+                    title: 'Oops...',
+                    text: error.message
                 });
-            } else {
-                throw new Error(data.message || 'Terjadi kesalahan.');
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: error.message
             });
         });
     });
-});
 </script>
 
 @endpush

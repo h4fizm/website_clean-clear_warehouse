@@ -11,6 +11,7 @@ class ItemTransaction extends Model
 
     protected $fillable = [
         'item_id',
+        'user_id', // <-- Tambahkan ini
         'facility_from',
         'facility_to',
         'region_from',
@@ -31,6 +32,12 @@ class ItemTransaction extends Model
     public function item()
     {
         return $this->belongsTo(Item::class);
+    }
+
+    // Relasi ke User (Penanggung Jawab)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     // Asal facility

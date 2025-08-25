@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Item;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use App\Models\Item;
 use App\Models\Facility;
 use App\Models\ItemTransaction;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class PusatController extends Controller
@@ -102,8 +103,18 @@ class PusatController extends Controller
     public function update(Request $request, Item $item)
     {
         $validator = Validator::make($request->all(), [
-            'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
-            'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
+            'nama_material' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('items')->whereNull('facility_id')->ignore($item->id),
+            ],
+            'kode_material' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('items')->whereNull('facility_id')->ignore($item->id),
+            ],
             'stok_awal' => 'required|integer|min:0',
         ]);
 
@@ -114,10 +125,23 @@ class PusatController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
+        // simpan kode lama dulu
+        $oldKode = $item->kode_material;
+
+        // update pusat
         $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
+
+        // sinkronkan ke semua cabang (hanya nama & kode)
+        Item::whereNotNull('facility_id')
+            ->where('kode_material', $oldKode)
+            ->update([
+                'nama_material' => $item->nama_material,
+                'kode_material' => $item->kode_material,
+            ]);
 
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
     }
+
 
     public function destroy(Item $item)
     {
@@ -129,9 +153,6 @@ class PusatController extends Controller
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil dihapus!');
     }
 
-    /**
-     * Memproses transaksi transfer dari P.Layang ke Facility.
-     */
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -141,6 +162,8 @@ class PusatController extends Controller
             'jenis_transaksi' => 'required|in:penyaluran,penerimaan',
             'jumlah' => 'required|integer|min:1',
             'tanggal_transaksi' => 'required|date',
+            'no_surat_persetujuan' => 'nullable|string',
+            'no_ba_serah_terima' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -152,50 +175,42 @@ class PusatController extends Controller
                 $jenis_transaksi = $request->jenis_transaksi;
                 $jumlah = $request->jumlah;
 
-                $transactionData = [
-                    'jumlah' => $jumlah,
-                    'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                    'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                    'created_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
-                    'updated_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
-                ];
-
+                // --- LOGIKA PENYALURAN (DARI PUSAT KE SPBE/BPT) ---
                 if ($jenis_transaksi == 'penyaluran') {
-                    $itemFrom = Item::findOrFail($request->item_id_pusat);
+                    $itemFrom = Item::findOrFail($request->item_id_pusat); // Item dari Pusat
                     $facilityToId = $request->facility_id_selected;
 
                     if ($itemFrom->stok_akhir < $jumlah) {
                         throw \Illuminate\Validation\ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi!']);
                     }
 
-                    $itemTo = Item::firstOrCreate(
+                    // Ciptakan item di tujuan jika belum ada
+                    Item::firstOrCreate(
                         ['facility_id' => $facilityToId, 'kode_material' => $itemFrom->kode_material],
                         ['nama_material' => $itemFrom->nama_material, 'stok_awal' => 0]
                     );
 
-                    ItemTransaction::create(array_merge($transactionData, [
+                    // HANYA BUAT SATU TRANSAKSI
+                    ItemTransaction::create([
                         'item_id' => $itemFrom->id,
-                        'jenis_transaksi' => 'penyaluran',
-                        'region_from' => $itemFrom->region_id,
-                        'facility_to' => $facilityToId
-                    ]));
-                    ItemTransaction::create(array_merge($transactionData, [
-                        'item_id' => $itemTo->id,
-                        'jenis_transaksi' => 'penerimaan',
-                        'region_from' => $itemFrom->region_id,
-                        'facility_to' => $facilityToId
-                    ]));
+                        'user_id' => Auth::id(),
+                        'jenis_transaksi' => 'transfer', // Gunakan jenis 'transfer' agar lebih jelas
+                        'jumlah' => $jumlah,
+                        'region_from' => $itemFrom->region_id, // ASAL: PUSAT
+                        'facility_to' => $facilityToId,        // TUJUAN: SPBE/BPT
+                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
+                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
+                        'created_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
+                        'updated_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
+                    ]);
 
-                    // Perbarui timestamp
-                    $itemFrom->touch();
-                    $itemTo->touch();
-
-                    return ['success' => true, 'message' => 'Penyaluran material berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
                 }
 
+                // --- LOGIKA PENERIMAAN (DARI SPBE/BPT KE PUSAT) ---
                 if ($jenis_transaksi == 'penerimaan') {
                     $facilityFromId = $request->facility_id_selected;
-                    $itemTo = Item::findOrFail($request->item_id_pusat);
+                    $itemTo = Item::findOrFail($request->item_id_pusat); // Item Tujuan (Pusat)
 
                     $itemFrom = Item::where('facility_id', $facilityFromId)
                         ->where('kode_material', $request->kode_material)
@@ -205,24 +220,21 @@ class PusatController extends Controller
                         throw \Illuminate\Validation\ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
                     }
 
-                    ItemTransaction::create(array_merge($transactionData, [
+                    // HANYA BUAT SATU TRANSAKSI
+                    ItemTransaction::create([
                         'item_id' => $itemFrom->id,
-                        'jenis_transaksi' => 'penyaluran',
-                        'facility_from' => $facilityFromId,
-                        'region_to' => $itemTo->region_id
-                    ]));
-                    ItemTransaction::create(array_merge($transactionData, [
-                        'item_id' => $itemTo->id,
-                        'jenis_transaksi' => 'penerimaan',
-                        'facility_from' => $facilityFromId,
-                        'region_to' => $itemTo->region_id
-                    ]));
+                        'user_id' => Auth::id(),
+                        'jenis_transaksi' => 'transfer',
+                        'jumlah' => $jumlah,
+                        'facility_from' => $facilityFromId, // ASAL: SPBE/BPT
+                        'region_to' => $itemTo->region_id,    // TUJUAN: PUSAT
+                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
+                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
+                        'created_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
+                        'updated_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
+                    ]);
 
-                    // Perbarui timestamp
-                    $itemFrom->touch();
-                    $itemTo->touch();
-
-                    return ['success' => true, 'message' => 'Penerimaan material berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
                 }
             });
 

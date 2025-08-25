@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\AktivitasHarianController;
 
 /*
 |--------------------------------------------------------------------------
@@ -134,15 +135,23 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
+    // Route untuk halaman menu utama aktivitas
+    Route::get('/aktivitas', [AktivitasHarianController::class, 'index'])
+        ->name('aktivitas.index') // Menambahkan nama route
+        ->middleware('can:manage aktivitas harian'); // Middleware di sini
+
+    // Route untuk halaman log transaksi
+    Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'logTransaksi'])
+        ->name('aktivitas.transaksi') // Menambahkan nama route
+        ->middleware('can:manage aktivitas harian'); // Middleware di sini
+
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
+
 
     // ini dibiarkan dulu
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
-    });
-    Route::get('/aktivitas', function () {
-        return view('dashboard_page.menu.aktivitas_harian');
     });
 
     // --- Route Spesifik Lainnya ---
@@ -153,10 +162,7 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard_page.upp_material.keterangan_pemusnahan');
     });
 
-    // --- Aktivitas Harian ---
-    Route::get('/aktivitas-transaksi', function () {
-        return view('dashboard_page.aktivitas_harian.data_transaksi');
-    });
+    // --- Aktivitas UPP ---
     Route::get('/aktivitas-upp', function () {
         return view('dashboard_page.aktivitas_harian.data_upp');
     });

@@ -13,6 +13,10 @@ return new class extends Migration {
         Schema::create('item_transactions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('item_id');
+
+            // --- TAMBAHKAN KOLOM USER_ID DI SINI ---
+            $table->unsignedBigInteger('user_id')->nullable();
+
             $table->unsignedBigInteger('facility_from')->nullable();
             $table->unsignedBigInteger('facility_to')->nullable();
             $table->unsignedBigInteger('region_from')->nullable();
@@ -23,7 +27,12 @@ return new class extends Migration {
             $table->string('no_ba_serah_terima', 100)->nullable();
             $table->timestamps();
 
+            // Definisikan semua foreign key
             $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
+
+            // --- TAMBAHKAN FOREIGN KEY UNTUK USER_ID DI SINI ---
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+
             $table->foreign('facility_from')->references('id')->on('facilities')->onDelete('set null');
             $table->foreign('facility_to')->references('id')->on('facilities')->onDelete('set null');
             $table->foreign('region_from')->references('id')->on('regions')->onDelete('set null');

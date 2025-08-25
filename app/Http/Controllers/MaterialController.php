@@ -103,14 +103,17 @@ class MaterialController extends Controller
                 'required',
                 'string',
                 'max:255',
-                // Pastikan unik hanya untuk facility ini, abaikan item saat ini
-                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+                Rule::unique('items')
+                    ->where('facility_id', $item->facility_id)
+                    ->ignore($item->id),
             ],
             'kode_material' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+                Rule::unique('items')
+                    ->where('facility_id', $item->facility_id)
+                    ->ignore($item->id),
             ],
             'stok_awal' => 'required|integer|min:0',
         ]);
@@ -119,14 +122,28 @@ class MaterialController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
-                // Kirim ID item yang error agar modal yang benar terbuka kembali
                 ->with('error_item_id', $item->id);
         }
 
+        // simpan kode lama dulu sebelum update
+        $oldKode = $item->kode_material;
+
+        // update item cabang
         $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
 
-        return redirect()->route('materials.index', $item->facility_id)->with('success', 'Data material berhasil diperbarui!');
+        // sinkronkan perubahan ke pusat
+        Item::whereNull('facility_id')
+            ->where('kode_material', $oldKode)
+            ->update([
+                'nama_material' => $item->nama_material,
+                'kode_material' => $item->kode_material,
+            ]);
+
+        return redirect()
+            ->route('materials.index', $item->facility_id)
+            ->with('success', 'Data material berhasil diperbarui!');
     }
+
 
     // [TAMBAHKAN METHOD DESTROY DI SINI]
     /**
@@ -191,7 +208,9 @@ class MaterialController extends Controller
                 $tujuanName = '';
 
                 if ($request->asal_id == 'pusat') {
-                    $itemAsal = Item::whereNotNull('region_id')->where('kode_material', $kodeMaterial)->first();
+                    $itemAsal = Item::whereNull('facility_id')
+                        ->where('kode_material', $kodeMaterial)
+                        ->first();
                     $asalName = 'P.Layang (Pusat)';
                 } else {
                     $itemAsal = Item::where('facility_id', $request->asal_id)->where('kode_material', $kodeMaterial)->first();
@@ -204,7 +223,9 @@ class MaterialController extends Controller
                     return ['success' => false, 'message' => "Stok di {$asalName} tidak mencukupi. Stok saat ini: " . $itemAsal->stok_akhir . " pcs."];
 
                 if ($request->tujuan_id == 'pusat') {
-                    $itemTujuan = Item::whereNotNull('region_id')->where('kode_material', $kodeMaterial)->first();
+                    $itemTujuan = Item::whereNull('facility_id')
+                        ->where('kode_material', $kodeMaterial)
+                        ->first();
                     $tujuanName = 'P.Layang (Pusat)';
                     if (!$itemTujuan)
                         return ['success' => false, 'message' => 'Material ini belum terdaftar di P.Layang (Pusat).'];
