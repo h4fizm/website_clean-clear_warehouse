@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
+use App\Models\ItemTransaction;
 use App\Models\Facility;
-use App\Models\Item; // Pastikan model Item di-import
+use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class MaterialController extends Controller
 {
@@ -180,8 +183,7 @@ class MaterialController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'item_id' => 'required|exists:items,id',
-            // Tambahkan kembali validasi untuk jenis_transaksi
-            'jenis_transaksi' => 'required|in:penerimaan,penyaluran',
+            'jenis_transaksi' => 'required|in:penerimaan,penyaluran', // Ini akan kita abaikan dan ganti dengan 'transfer'
             'asal_id' => 'required|string',
             'tujuan_id' => 'required|string|different:asal_id',
             'jumlah' => 'required|integer|min:1',
@@ -196,66 +198,77 @@ class MaterialController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // --- Sisa dari method ini TIDAK ADA PERUBAHAN ---
-        // Logika selanjutnya sudah benar dan tidak perlu diubah.
         try {
             $result = DB::transaction(function () use ($request) {
                 $kodeMaterial = Item::findOrFail($request->item_id)->kode_material;
                 $jumlah = (int) $request->jumlah;
-                $itemAsal = null;
-                $itemTujuan = null;
-                $asalName = '';
-                $tujuanName = '';
 
+                // 1. Tentukan Item & Nama Lokasi Asal
+                $itemAsal = null;
+                $asalName = '';
                 if ($request->asal_id == 'pusat') {
-                    $itemAsal = Item::whereNull('facility_id')
-                        ->where('kode_material', $kodeMaterial)
-                        ->first();
-                    $asalName = 'P.Layang (Pusat)';
+                    $itemAsal = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->first();
+                    $pusatRegion = Region::where('name_region', 'like', '%P.Layang%')->first();
+                    $asalName = $pusatRegion->name_region ?? 'P.Layang (Pusat)';
                 } else {
                     $itemAsal = Item::where('facility_id', $request->asal_id)->where('kode_material', $kodeMaterial)->first();
                     $asalName = Facility::find($request->asal_id)->name;
                 }
 
-                if (!$itemAsal)
+                // Validasi Stok Asal
+                if (!$itemAsal) {
                     return ['success' => false, 'message' => "Material tidak ditemukan di lokasi asal ({$asalName})."];
-                if ($itemAsal->stok_akhir < $jumlah)
+                }
+                if ($itemAsal->stok_akhir < $jumlah) {
                     return ['success' => false, 'message' => "Stok di {$asalName} tidak mencukupi. Stok saat ini: " . $itemAsal->stok_akhir . " pcs."];
+                }
 
+                // 2. Tentukan Item & Nama Lokasi Tujuan (Buat jika belum ada)
+                $itemTujuan = null;
+                $tujuanName = '';
                 if ($request->tujuan_id == 'pusat') {
-                    $itemTujuan = Item::whereNull('facility_id')
-                        ->where('kode_material', $kodeMaterial)
-                        ->first();
-                    $tujuanName = 'P.Layang (Pusat)';
-                    if (!$itemTujuan)
+                    $itemTujuan = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->first();
+                    $pusatRegion = Region::where('name_region', 'like', '%P.Layang%')->first();
+                    $tujuanName = $pusatRegion->name_region ?? 'P.Layang (Pusat)';
+                    if (!$itemTujuan) {
                         return ['success' => false, 'message' => 'Material ini belum terdaftar di P.Layang (Pusat).'];
+                    }
                 } else {
                     $tujuanFacility = Facility::find($request->tujuan_id);
                     $tujuanName = $tujuanFacility->name;
-                    $itemTujuan = Item::where('facility_id', $request->tujuan_id)->where('kode_material', $kodeMaterial)->first();
-                    if (!$itemTujuan) {
-                        $itemTujuan = Item::create([
-                            'facility_id' => $request->tujuan_id,
+                    $itemTujuan = Item::firstOrCreate(
+                        ['facility_id' => $request->tujuan_id, 'kode_material' => $kodeMaterial],
+                        [
                             'nama_material' => $itemAsal->nama_material,
-                            'kode_material' => $kodeMaterial,
                             'stok_awal' => 0,
-                        ]);
-                    }
+                        ]
+                    );
                 }
 
-                $dataTransaksi = [
+                // 3. Siapkan data `from` dan `to` yang akan disimpan
+                $dataFromTo = [
+                    'facility_from' => ($request->asal_id != 'pusat') ? $request->asal_id : null,
+                    'region_from' => ($request->asal_id == 'pusat') ? $itemAsal->region_id : null,
+                    'facility_to' => ($request->tujuan_id != 'pusat') ? $request->tujuan_id : null,
+                    'region_to' => ($request->tujuan_id == 'pusat') ? $itemTujuan->region_id : null,
+                ];
+
+                // 4. Buat SATU catatan transaksi yang jelas
+                ItemTransaction::create(array_merge($dataFromTo, [
+                    'item_id' => $itemAsal->id,
+                    'user_id' => Auth::id(), // <-- Menyimpan User PJ
+                    'jenis_transaksi' => 'transfer',
                     'jumlah' => $jumlah,
                     'no_surat_persetujuan' => $request->no_surat_persetujuan,
                     'no_ba_serah_terima' => $request->no_ba_serah_terima,
                     'created_at' => $request->tanggal_transaksi . ' ' . now()->toTimeString(),
                     'updated_at' => $request->tanggal_transaksi . ' ' . now()->toTimeString(),
-                ];
+                ]));
 
-                $itemAsal->transactions()->create(array_merge($dataTransaksi, ['jenis_transaksi' => 'penyaluran']));
-                $itemTujuan->transactions()->create(array_merge($dataTransaksi, ['jenis_transaksi' => 'penerimaan']));
                 $formattedDate = \Carbon\Carbon::parse($request->tanggal_transaksi)->locale('id')->translatedFormat('l, d F Y');
-                return ['success' => true, 'message' => "Transaksi {$jumlah} pcs dari {$asalName} ke {$tujuanName} pada {$formattedDate} berhasil."];
+                return ['success' => true, 'message' => "Transfer {$jumlah} pcs dari {$asalName} ke {$tujuanName} pada {$formattedDate} berhasil."];
             });
+
             return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server: ' . $e->getMessage()], 500);
