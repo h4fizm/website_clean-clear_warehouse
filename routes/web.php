@@ -134,8 +134,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
+    // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
+    Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
 
-    // --- Menu Sidebar & Fitur Utama ---
     // ini dibiarkan dulu
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
@@ -143,9 +144,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/aktivitas', function () {
         return view('dashboard_page.menu.aktivitas_harian');
     });
-
-    // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
-    Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
 
     // --- Route Spesifik Lainnya ---
     Route::get('/material', function () {

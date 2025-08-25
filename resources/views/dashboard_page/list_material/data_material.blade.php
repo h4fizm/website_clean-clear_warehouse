@@ -210,13 +210,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="asal-select" class="form-label">Asal Transaksi</label>
-                        <select class="form-select" id="asal-select" name="asal_id" required></select>
+                        <label for="asal-container" class="form-label">Asal Transaksi</label>
+                        <div id="asal-container"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="tujuan-select" class="form-label">Tujuan Transaksi</label>
-                        <select class="form-select" id="tujuan-select" name="tujuan_id" required></select>
+                        <label for="tujuan-container" class="form-label">Tujuan Transaksi</label>
+                        <div id="tujuan-container"></div>
                     </div>
                     
                     <div class="mb-3">
@@ -293,84 +293,118 @@
     });
 </script>
 
+{{-- Script Transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const locations = @json($locations);
         const currentFacility = @json($facility);
         const transaksiModal = document.getElementById('transaksiMaterialModal');
-        
-        const asalSelect = document.getElementById('asal-select');
-        const tujuanSelect = document.getElementById('tujuan-select');
         const radioButtons = document.querySelectorAll('input[name="jenis_transaksi"]');
 
-        // [LOGIKA BARU] Fungsi utama untuk mengatur ulang form berdasarkan pilihan radio
+        // 🔹 Template readonly input
+        const readonlyInputHTML = (loc, nameAttr) => `
+        <input type="text" class="form-control" value="${loc.name}" readonly>
+        <input type="hidden" name="${nameAttr}" value="${loc.id}">
+        `;
+
+
+        // 🔹 Template search input
+        function createSearchInputHTML(nameAttr) {
+            return `
+                <div class="position-relative w-100">
+                    <input type="text" class="form-control facility-search" placeholder="Cari Lokasi..." autocomplete="off">
+                    <input type="hidden" name="${nameAttr}">
+                    <div class="list-group position-absolute w-100 shadow-sm facility-suggestions" 
+                        style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                </div>
+            `;
+        }
+
+        // 🔹 Fungsi aktifkan searchbar
+        function initSearchbar(container, otherLocations, nameAttr) {
+            const searchInput = container.querySelector(".facility-search");
+            const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
+            const suggestionsBox = container.querySelector(".facility-suggestions");
+
+            searchInput.addEventListener("input", function() {
+                const query = this.value.toLowerCase();
+                suggestionsBox.innerHTML = "";
+
+                if (!query) {
+                    suggestionsBox.style.display = "none";
+                    return;
+                }
+
+                const results = otherLocations.filter(loc => loc.name.toLowerCase().includes(query));
+
+                if (results.length > 0) {
+                    results.forEach(loc => {
+                        const item = document.createElement("button");
+                        item.type = "button";
+                        item.className = "list-group-item list-group-item-action";
+                        item.textContent = loc.name;
+                        item.dataset.id = loc.id;
+
+                        item.addEventListener("click", function() {
+                            searchInput.value = loc.name;
+                            hiddenInput.value = loc.id;
+                            suggestionsBox.style.display = "none";
+                        });
+
+                        suggestionsBox.appendChild(item);
+                    });
+                    suggestionsBox.style.display = "block";
+                } else {
+                    suggestionsBox.style.display = "none";
+                }
+            });
+        }
+
+        // 🔹 Fungsi utama update form
         function updateFormUI() {
             const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
-            
-            // Buat daftar lokasi lain (semua lokasi kecuali lokasi saat ini)
+            const asalContainer = document.getElementById('asal-container');
+            const tujuanContainer = document.getElementById('tujuan-container');
             const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
 
             if (selectedType === 'penyaluran') {
-                // ASAL: Terkunci ke lokasi saat ini
-                asalSelect.innerHTML = `<option value="${currentFacility.id}" selected>${currentFacility.name}</option>`;
-                asalSelect.disabled = true;
-
-                // TUJUAN: Bisa memilih dari lokasi lain
-                tujuanSelect.innerHTML = '<option value="" selected disabled>-- Pilih Lokasi Tujuan --</option>';
-                otherLocations.forEach(loc => {
-                    tujuanSelect.add(new Option(loc.name, loc.id));
-                });
-                tujuanSelect.disabled = false;
-
-            } else { // Jika 'penerimaan'
-                // ASAL: Bisa memilih dari lokasi lain
-                asalSelect.innerHTML = '<option value="" selected disabled>-- Pilih Lokasi Asal --</option>';
-                otherLocations.forEach(loc => {
-                    asalSelect.add(new Option(loc.name, loc.id));
-                });
-                asalSelect.disabled = false;
-
-                // TUJUAN: Terkunci ke lokasi saat ini
-                tujuanSelect.innerHTML = `<option value="${currentFacility.id}" selected>${currentFacility.name}</option>`;
-                tujuanSelect.disabled = true;
+                asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
+                tujuanContainer.innerHTML = createSearchInputHTML("tujuan_id");
+                initSearchbar(tujuanContainer, otherLocations, "tujuan_id");
+            } else {
+                asalContainer.innerHTML = createSearchInputHTML("asal_id");
+                tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
+                initSearchbar(asalContainer, otherLocations, "asal_id");
             }
+
         }
 
-        // Saat modal pertama kali dibuka
+        // Saat modal dibuka
         transaksiModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             document.getElementById('transaksiMaterialForm').reset();
-            
-            // Set default radio ke 'penyaluran'
+
+            // Default ke penyaluran
             document.getElementById('jenis-penyaluran').checked = true;
-            
-            // Panggil fungsi utama untuk mengatur form ke kondisi awal
             updateFormUI();
 
-            // Isi info material dan tanggal
+            // Isi info material & tanggal
             document.getElementById('modal-item-id').value = button.getAttribute('data-item-id');
             document.getElementById('modal-nama-material').textContent = button.getAttribute('data-nama-material');
             document.getElementById('modal-stok-akhir').textContent = `${parseInt(button.getAttribute('data-stok-akhir')).toLocaleString('id-ID')} pcs`;
             document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
         });
 
-        // Tambahkan event listener ke setiap radio button
+        // Event radio
         radioButtons.forEach(radio => {
             radio.addEventListener('change', updateFormUI);
         });
 
-        // Logika Fetch untuk submit (tidak berubah)
+        // Submit
         document.getElementById('submitTransaksi').addEventListener('click', function() {
-            // Aktifkan kembali field yang disabled agar nilainya terkirim
-            asalSelect.disabled = false;
-            tujuanSelect.disabled = false;
-
             const form = document.getElementById('transaksiMaterialForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-
-            // Setelah mengambil data, kembalikan ke state disabled jika perlu (agar UI konsisten)
-            updateFormUI(); 
 
             fetch('{{ route("materials.transaction") }}', {
                 method: 'POST',
