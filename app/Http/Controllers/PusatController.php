@@ -110,7 +110,7 @@ class PusatController extends Controller
 
     public function update(Request $request, Item $item)
     {
-        // Validasi untuk stok_awal dihapus
+        // 1. Tambahkan validasi untuk stok_awal
         $validator = Validator::make($request->all(), [
             'nama_material' => [
                 'required',
@@ -124,6 +124,8 @@ class PusatController extends Controller
                 'max:255',
                 Rule::unique('items')->whereNull('facility_id')->ignore($item->id),
             ],
+            // Aturan validasi untuk stok awal
+            'stok_awal' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -135,10 +137,32 @@ class PusatController extends Controller
 
         $oldKode = $item->kode_material;
 
-        // Hanya update nama_material dan kode_material
-        $item->update($request->only(['nama_material', 'kode_material']));
+        // 2. Hitung total penerimaan dan penyaluran untuk item ini dari seluruh riwayat transaksi
+        // Ini diperlukan untuk menghitung ulang stok_akhir secara akurat
+        $totalPenerimaan = $item->transactions()
+            ->whereNotNull('region_to') // Ciri khas penerimaan ke Pusat
+            ->sum('jumlah');
 
-        // Sinkronisasi ke cabang tetap berjalan seperti biasa
+        $totalPenyaluran = $item->transactions()
+            ->whereNotNull('region_from') // Ciri khas penyaluran dari Pusat
+            ->sum('jumlah');
+
+        // 3. Ambil nilai stok awal baru dari request
+        $stokAwalBaru = $request->stok_awal;
+
+        // 4. Hitung stok akhir baru berdasarkan rumus:
+        // Stok Akhir = Stok Awal Baru + Total Penerimaan - Total Penyaluran
+        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran;
+
+        // 5. Update semua field yang relevan dalam satu operasi
+        $item->update([
+            'nama_material' => $request->nama_material,
+            'kode_material' => $request->kode_material,
+            'stok_awal' => $stokAwalBaru,
+            'stok_akhir' => $stokAkhirBaru, // Simpan stok akhir yang sudah dihitung ulang
+        ]);
+
+        // Sinkronisasi nama dan kode material ke cabang tetap berjalan
         Item::whereNotNull('facility_id')
             ->where('kode_material', $oldKode)
             ->update([

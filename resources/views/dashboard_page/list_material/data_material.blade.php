@@ -149,16 +149,26 @@
         @csrf
         @method('PATCH')
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="nama_material-{{ $item->id }}" class="form-label">Nama Material</label>
-            <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" id="nama_material-{{ $item->id }}" name="nama_material" value="{{ old('nama_material', $item->nama_material) }}" required>
+          {{-- Menggunakan gaya form-floating agar konsisten --}}
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" id="nama_material-{{ $item->id }}" name="nama_material" value="{{ old('nama_material', $item->nama_material) }}" placeholder=" " required>
+            <label for="nama_material-{{ $item->id }}">Nama Material</label>
             @if($errors->has('nama_material') && session('error_item_id') == $item->id) <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> @endif
           </div>
-          <div class="mb-3">
-            <label for="kode_material-{{ $item->id }}" class="form-label">Kode Material</label>
-            <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" id="kode_material-{{ $item->id }}" name="kode_material" value="{{ old('kode_material', $item->kode_material) }}" required>
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" id="kode_material-{{ $item->id }}" name="kode_material" value="{{ old('kode_material', $item->kode_material) }}" placeholder=" " required>
+            <label for="kode_material-{{ $item->id }}">Kode Material</label>
             @if($errors->has('kode_material') && session('error_item_id') == $item->id) <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> @endif
           </div>
+
+          {{-- Penambahan Form Stok Awal --}}
+          <div class="form-floating mb-3">
+            <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" id="stok_awal-{{ $item->id }}" name="stok_awal" value="{{ old('stok_awal', $item->stok_awal) }}" placeholder=" " min="0" required>
+            <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
+            @if($errors->has('stok_awal') && session('error_item_id') == $item->id) <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> @endif
+          </div>
+          {{-- Akhir Penambahan --}}
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -168,7 +178,7 @@
     </div>
   </div>
 </div>
-@endforeach 
+@endforeach
 
 {{-- Modal Transaksi --}}
 <div class="modal fade" id="transaksiMaterialModal" tabindex="-1" aria-labelledby="transaksiMaterialModalLabel" aria-hidden="true">

@@ -100,13 +100,11 @@ class MaterialController extends Controller
     }
     public function update(Request $request, Item $item)
     {
-        // Validasi untuk stok_awal dihapus
         $validator = Validator::make($request->all(), [
             'nama_material' => [
                 'required',
                 'string',
                 'max:255',
-                // Aturan unique ini sudah benar, hanya memeriksa dalam lingkup fasilitas yang sama
                 Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
             'kode_material' => [
@@ -115,6 +113,7 @@ class MaterialController extends Controller
                 'max:255',
                 Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
+            'stok_awal' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -124,24 +123,26 @@ class MaterialController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
-        // Simpan kode material lama sebelum diubah
+        // Simpan kode material lama untuk sinkronisasi
         $oldKode = $item->kode_material;
 
-        // Ambil data baru dari request
-        $newNama = $request->input('nama_material');
-        $newKode = $request->input('kode_material');
+        // HANYA UPDATE 'stok_awal' pada item ini.
+        // 'stok_akhir' akan dihitung otomatis oleh Accessor di Model.
+        $item->update([
+            'stok_awal' => $request->input('stok_awal'),
+        ]);
 
-        // [FIX] Lakukan satu query untuk menyinkronkan perubahan ke SEMUA item
-        // (di pusat DAN semua fasilitas lain) yang memiliki kode material lama.
+        // SINKRONISASI nama & kode ke semua item terkait di semua lokasi.
+        // Kode ini tidak perlu diubah.
         Item::where('kode_material', $oldKode)
             ->update([
-                'nama_material' => $newNama,
-                'kode_material' => $newKode,
+                'nama_material' => $request->input('nama_material'),
+                'kode_material' => $request->input('kode_material'),
             ]);
 
         return redirect()
             ->route('materials.index', $item->facility_id)
-            ->with('success', 'Data material berhasil diperbarui di semua lokasi!');
+            ->with('success', 'Data material berhasil diperbarui!');
     }
 
     public function destroy(Item $item)
@@ -149,13 +150,33 @@ class MaterialController extends Controller
         $facilityId = $item->facility_id;
         try {
             DB::transaction(function () use ($item) {
-                // Hapus semua transaksi terkait item ini
-                $item->transactions()->delete();
-                // Reset stok awal menjadi 0
+
+                // 1. Hapus transaksi KELUAR (Penyaluran) dari item ini.
+                // Ini adalah transaksi di mana item ini adalah ASAL pengiriman.
+                // Saya ubah menjadi lebih eksplisit agar mudah dibaca.
+                ItemTransaction::where('item_id', $item->id)->delete();
+
+                // 2. [FIX] Hapus transaksi MASUK (Penerimaan) ke fasilitas ini
+                // untuk kode material yang sesuai.
+                // Kita cari semua transaksi yang tujuannya (facility_to) ke fasilitas ini
+                // DAN berasal dari item lain yang kode materialnya sama.
+                ItemTransaction::where('facility_to', $item->facility_id)
+                    ->whereIn('item_id', function ($query) use ($item) {
+                        $query->select('id')
+                            ->from('items')
+                            ->where('kode_material', $item->kode_material);
+                    })
+                    ->delete();
+
+                // 3. Reset stok awal menjadi 0. Ini sudah benar.
                 $item->update(['stok_awal' => 0]);
+
             });
+
             return redirect()->route('materials.index', $facilityId)->with('success', 'Stok material berhasil di-reset menjadi 0.');
+
         } catch (\Exception $e) {
+            // Tambahkan log atau dd($e) di sini jika ingin debug lebih lanjut
             return redirect()->route('materials.index', $facilityId)->with('error', 'Terjadi kesalahan saat mereset stok material.');
         }
     }
