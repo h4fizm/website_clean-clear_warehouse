@@ -73,7 +73,8 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">No. Surat Persetujuan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">No. BA Serah Terima</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aktivitas</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aktivitas Asal</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aktivitas Tujuan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">User PJ</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi</th>
                             </tr>
@@ -82,31 +83,58 @@
                             @forelse ($transactions as $transaction)
                                 @php
                                     if (!$transaction->item) continue;
-                                    
+
                                     $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
                                     $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
 
-                                    // =================== LOGIKA BADGE SEDERHANA ===================
-                                    $activityText = 'Transfer Antar SPBE/BPT';
-                                    $activityColor = 'bg-gradient-info';
-                                    $activityIcon = 'fa-exchange-alt';
+                                    // =================== LOGIKA BADGE BARU ===================
+                                    $activityAsal = null;
+                                    $activityTujuan = null;
 
-                                    // Jika transaksi berasal dari Pusat (region_from tidak null)
+                                   // Jika transaksi berasal dari Region (pusat)
                                     if ($transaction->region_from) {
-                                        $activityText = 'Penyaluran';
-                                        $activityColor = 'bg-gradient-danger';
-                                        $activityIcon = 'fa-arrow-up';
-                                    } 
-                                    // Jika transaksi menuju ke Pusat (region_to tidak null)
-                                    elseif ($transaction->region_to) {
-                                        $activityText = 'Penerimaan';
-                                        $activityColor = 'bg-gradient-success';
-                                        $activityIcon = 'fa-arrow-down';
+                                        $activityAsal = [
+                                            'text'  => 'Penyaluran',
+                                            'color' => 'bg-gradient-danger',
+                                            'icon'  => 'fa-arrow-up'
+                                        ];
                                     }
-                                    // ============================================================
+
+                                    // Jika transaksi berasal dari Facility (SPBE/BPT)
+                                    if ($transaction->facility_from) {
+                                        $activityAsal = [
+                                            'text'  => 'Penyaluran',
+                                            'color' => 'bg-gradient-danger',
+                                            'icon'  => 'fa-arrow-up'
+                                        ];
+                                    }
+
+                                    // Jika transaksi menuju ke Region (pusat)
+                                    if ($transaction->region_to) {
+                                        $activityTujuan = [
+                                            'text'  => 'Penerimaan',
+                                            'color' => 'bg-gradient-success',
+                                            'icon'  => 'fa-arrow-down'
+                                        ];
+                                    }
+
+                                    // Jika transaksi menuju ke Facility (SPBE/BPT)
+                                    if ($transaction->facility_to) {
+                                        $activityTujuan = [
+                                            'text'  => 'Penerimaan',
+                                            'color' => 'bg-gradient-success',
+                                            'icon'  => 'fa-arrow-down'
+                                        ];
+                                    }
+
+                                    // =========================================================
                                 @endphp
                                 <tr>
-                                    <td class="text-center"><p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + $transactions->firstItem() - 1 }}</p></td>
+                                    <td class="text-center">
+                                        <p class="text-xs font-weight-bold mb-0">
+                                            {{ $loop->iteration + $transactions->firstItem() - 1 }}
+                                        </p>
+                                    </td>
                                     <td>
                                         <div class="d-flex flex-column justify-content-center">
                                             <h6 class="mb-0 text-sm font-weight-bolder">{{ $transaction->item->nama_material }}</h6>
@@ -115,21 +143,37 @@
                                     </td>
                                     <td><p class="text-xs font-weight-bold mb-0">{{ $asal }}</p></td>
                                     <td><p class="text-xs font-weight-bold mb-0">{{ $tujuan }}</p></td>
-                                    
-                                    {{-- Kolom Stok dari snapshot historis lokasi ASAL --}}
+
+                                    {{-- Kolom stok dari snapshot historis lokasi asal --}}
                                     <td class="text-center"><span class="badge bg-secondary text-white text-xs">{{ number_format($transaction->stok_awal_asal ?? 0) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($transaction->jumlah) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-info text-white text-xs">{{ number_format($transaction->stok_akhir_asal ?? 0) }} pcs</span></td>
-                                    
+
                                     <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_surat_persetujuan ?? '-' }}</p></td>
                                     <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_ba_serah_terima ?? '-' }}</p></td>
-                                    
-                                    {{-- Kolom Aktivitas Dinamis --}}
+
+                                    {{-- Kolom Aktivitas Asal --}}
                                     <td class="text-center">
-                                        <span class="badge {{ $activityColor }} text-white text-xs">
-                                            <i class="fas {{ $activityIcon }} me-1"></i>
-                                            {{ $activityText }}
-                                        </span>
+                                        @if ($activityAsal)
+                                            <span class="badge {{ $activityAsal['color'] }} text-white text-xs">
+                                                <i class="fas {{ $activityAsal['icon'] }} me-1"></i>
+                                                {{ $activityAsal['text'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted text-xs">-</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Kolom Aktivitas Tujuan --}}
+                                    <td class="text-center">
+                                        @if ($activityTujuan)
+                                            <span class="badge {{ $activityTujuan['color'] }} text-white text-xs">
+                                                <i class="fas {{ $activityTujuan['icon'] }} me-1"></i>
+                                                {{ $activityTujuan['text'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted text-xs">-</span>
+                                        @endif
                                     </td>
 
                                     <td class="text-center"><p class="text-xs text-secondary mb-0">{{ $transaction->user->name ?? 'N/A' }}</p></td>
@@ -137,7 +181,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="12" class="text-center text-muted py-4">Data tidak ditemukan</td>
+                                    <td colspan="13" class="text-center text-muted py-4">Data tidak ditemukan</td>
                                 </tr>
                             @endforelse
                         </tbody>

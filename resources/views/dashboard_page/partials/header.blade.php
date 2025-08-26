@@ -113,12 +113,20 @@
                 $breadcrumbs[] = $menuMap[$path];
             } elseif (request()->routeIs('materials.index')) {
                 $facility = request()->route('facility'); 
-                $breadcrumbs[] = $menuMap['transaksi']; // tambahkan transaksi (klik ke /transaksi)
+                $breadcrumbs[] = $menuMap['transaksi'];
                 $breadcrumbs[] = ['label' => 'Daftar Stok Material - ' . ($facility->nama ?? 'SPBE/BPT'), 'url' => null];
+            } elseif ($path === 'aktivitas-transaksi') {
+                $breadcrumbs[] = $menuMap['aktivitas'];
+                $breadcrumbs[] = ['label' => 'Riwayat Penerimaan dan Penyaluran Material', 'url' => null];
+            } elseif ($path === 'profil') {
+                $breadcrumbs[] = $menuMap['pengguna']; // Manajemen User
+                $breadcrumbs[] = ['label' => 'Edit Profil', 'url' => null];
             } else {
                 $breadcrumbs[] = ['label' => 'Menu', 'url' => null];
             }
         @endphp
+
+
 
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0">

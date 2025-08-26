@@ -35,7 +35,7 @@
                             <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                         </div>
                         <div class="col-12 col-md-auto">
-                            <button type="button" class="btn btn-success d-flex align-items-center justify-content-center w-100 w-md-auto export-excel-btn" disabled>
+                            <button type="button" class="btn btn-success d-flex align-items-center justify-content-center mt-2 mt-md-0">
                                 <i class="fas fa-file-excel me-2"></i> Export Excel
                             </button>
                         </div>

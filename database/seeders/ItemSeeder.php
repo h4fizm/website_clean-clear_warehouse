@@ -32,7 +32,7 @@ class ItemSeeder extends Seeder
                 'facility_id' => null, // khusus P. Layang bukan facility
                 'nama_material' => $item['nama_material'],
                 'kode_material' => $item['kode_material'],
-                'stok_awal' => 0,
+                'stok_awal' => 1000, // semua stok awal fix 1000
             ]);
         }
     }
