@@ -4,65 +4,87 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ItemTransaction;
-// Tidak perlu use Facility lagi karena sudah tidak digunakan di sini
 
 class AktivitasHarianController extends Controller
 {
     public function index()
     {
+        // Arahkan ke view utama dari menu aktivitas harian
         return view('dashboard_page.menu.aktivitas_harian');
     }
 
     public function logTransaksi(Request $request)
     {
+        // Ambil semua input filter dari request
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // Memuat semua relasi yang dibutuhkan untuk tampilan
+        // Mulai query dengan memuat semua relasi yang dibutuhkan (eager loading)
+        // Ini lebih efisien daripada memuat relasi satu per satu (lazy loading)
         $query = ItemTransaction::with(['item', 'user', 'facilityFrom', 'facilityTo', 'regionFrom', 'regionTo']);
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                // Mencari di tabel utama
-                $q->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
+        // Terapkan filter PENCARIAN jika ada input 'search'
+        $query->when($search, function ($q) use ($search) {
+            $q->where(function ($subQuery) use ($search) {
+                // Mencari di kolom pada tabel 'item_transactions'
+                $subQuery->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
                     ->orWhere('no_ba_serah_terima', 'like', "%{$search}%");
 
-                // Mencari di semua tabel relasi
-                $q->orWhereHas('item', function ($subQuery) use ($search) {
-                    $subQuery->where('nama_material', 'like', "%{$search}%")
+                // Mencari di tabel relasi 'items'
+                $subQuery->orWhereHas('item', function ($itemQuery) use ($search) {
+                    $itemQuery->where('nama_material', 'like', "%{$search}%")
                         ->orWhere('kode_material', 'like', "%{$search}%");
                 });
-                $q->orWhereHas('user', function ($subQuery) use ($search) {
-                    $subQuery->where('name', 'like', "%{$search}%");
+
+                // Mencari di tabel relasi 'users'
+                $subQuery->orWhereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%");
                 });
-                $q->orWhereHas('facilityFrom', function ($subQuery) use ($search) {
-                    $subQuery->where('name', 'like', "%{$search}%"); // Perbaikan: nama_facility -> name
+
+                // Mencari di tabel relasi 'facilities' (sebagai facilityFrom)
+                $subQuery->orWhereHas('facilityFrom', function ($facilityQuery) use ($search) {
+                    // [PERBAIKAN] Menggunakan kolom 'name' sesuai standar
+                    $facilityQuery->where('name', 'like', "%{$search}%");
                 });
-                $q->orWhereHas('facilityTo', function ($subQuery) use ($search) {
-                    $subQuery->where('name', 'like', "%{$search}%"); // Perbaikan: nama_facility -> name
+
+                // Mencari di tabel relasi 'facilities' (sebagai facilityTo)
+                $subQuery->orWhereHas('facilityTo', function ($facilityQuery) use ($search) {
+                    // [PERBAIKAN] Menggunakan kolom 'name' sesuai standar
+                    $facilityQuery->where('name', 'like', "%{$search}%");
                 });
-                $q->orWhereHas('regionFrom', function ($subQuery) use ($search) {
-                    $subQuery->where('name_region', 'like', "%{$search}%"); // Perbaikan: nama_region -> name_region
+
+                // Mencari di tabel relasi 'regions' (sebagai regionFrom)
+                $subQuery->orWhereHas('regionFrom', function ($regionQuery) use ($search) {
+                    // [PERBAIKAN] Menggunakan kolom 'name_region'
+                    $regionQuery->where('name_region', 'like', "%{$search}%");
                 });
-                $q->orWhereHas('regionTo', function ($subQuery) use ($search) {
-                    $subQuery->where('name_region', 'like', "%{$search}%"); // Perbaikan: nama_region -> name_region
+
+                // Mencari di tabel relasi 'regions' (sebagai regionTo)
+                $subQuery->orWhereHas('regionTo', function ($regionQuery) use ($search) {
+                    // [PERBAIKAN] Menggunakan kolom 'name_region'
+                    $regionQuery->where('name_region', 'like', "%{$search}%");
                 });
             });
-        }
+        });
 
-        if ($startDate) {
-            $query->whereDate('created_at', '>=', $startDate);
-        }
-        if ($endDate) {
-            $query->whereDate('created_at', '<=', $endDate);
-        }
+        // Terapkan filter TANGGAL AWAL jika ada input 'start_date'
+        $query->when($startDate, function ($q, $date) {
+            return $q->whereDate('created_at', '>=', $date);
+        });
 
-        $transactions = $query->orderBy('created_at', 'desc')
+        // Terapkan filter TANGGAL AKHIR jika ada input 'end_date'
+        $query->when($endDate, function ($q, $date) {
+            return $q->whereDate('created_at', '<=', $date);
+        });
+
+        // Urutkan hasil berdasarkan tanggal transaksi terbaru
+        // Lakukan paginasi dan pastikan parameter filter tetap ada di URL pagination
+        $transactions = $query->latest('created_at')
             ->paginate(10)
             ->withQueryString();
 
-        // Variabel yang tidak perlu (locations dan locationPov) sudah dihapus
+        // Kirim data ke view
         return view('dashboard_page.aktivitas_harian.data_transaksi', compact(
             'transactions',
             'search',

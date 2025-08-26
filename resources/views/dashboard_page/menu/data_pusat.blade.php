@@ -348,15 +348,6 @@
               <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
             @endif
           </div>
-          <div class="form-floating mb-3">
-            <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
-                   value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
-            <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
-            @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
-            @endif
-          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>

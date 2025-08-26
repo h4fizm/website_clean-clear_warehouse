@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+
 
 class MaterialController extends Controller
 {
-    // app/Http/Controllers/MaterialController.php
-
     public function index(Facility $facility, Request $request)
     {
         $filters = [
@@ -25,52 +25,59 @@ class MaterialController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
-        // [FIX] Panggil select() di awal untuk menetapkan kolom dasar
         $itemsQuery = $facility->items()->select('items.*');
 
-        // Filter (tidak ada perubahan)
+        // Filter pencarian (search)
         $itemsQuery->when($filters['search'], function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('nama_material', 'like', '%' . $search . '%')
                     ->orWhere('kode_material', 'like', '%' . $search . '%');
             });
         });
-        $itemsQuery->when($filters['start_date'], function ($query, $date) {
-            return $query->whereHas('transactions', function ($subQuery) use ($date) {
-                $subQuery->whereDate('created_at', '>=', $date);
-            });
-        });
-        $itemsQuery->when($filters['end_date'], function ($query, $date) {
-            return $query->whereHas('transactions', function ($subQuery) use ($date) {
-                $subQuery->whereDate('created_at', '<=', $date);
+
+        // Filter daftar item utama berdasarkan rentang tanggal transaksi.
+        $itemsQuery->when($filters['start_date'] || $filters['end_date'], function ($query) use ($filters) {
+            $query->whereHas('transactions', function ($subQuery) use ($filters) {
+                if ($filters['start_date']) {
+                    $subQuery->whereDate('created_at', '>=', $filters['start_date']);
+                }
+                if ($filters['end_date']) {
+                    $subQuery->whereDate('created_at', '<=', $filters['end_date']);
+                }
             });
         });
 
-        // =====================================================================
-        // =================== INI BAGIAN YANG DIPERBAIKI ======================
-        // =====================================================================
-
-        // [FIX] Gunakan addSelect() SETELAH select() dan pakai COALESCE untuk kedua perhitungan
+        // [FIX] Logika subquery diubah agar kalkulasi akurat
         $itemsQuery->addSelect([
-            // Subquery untuk PENERIMAAN (barang masuk ke facility ini)
-            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('facility_to', 'items.facility_id')
-                ->whereHas('item', function ($query) {
-                    $query->whereColumn('kode_material', 'items.kode_material');
-                }),
+            // PENERIMAAN: Jumlah total dari transaksi yang DITUJUKAN ke fasilitas ini
+            // dengan kode material yang cocok.
+            'penerimaan_total' => ItemTransaction::query()
+                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
+                ->whereColumn('source_item.kode_material', 'items.kode_material')
+                ->whereColumn('item_transactions.facility_to', 'items.facility_id')
+                ->when($filters['start_date'], function ($query, $date) {
+                    $query->whereDate('item_transactions.created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($query, $date) {
+                    $query->whereDate('item_transactions.created_at', '<=', $date);
+                })
+                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
 
-            // Subquery untuk PENYALURAN (barang keluar dari item ini)
+            // PENYALURAN: Jumlah total dari transaksi yang BERASAL dari item ini.
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
+                ->when($filters['start_date'], function ($query, $date) {
+                    $query->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($query, $date) {
+                    $query->whereDate('created_at', '<=', $date);
+                }),
         ]);
 
-        // =====================================================================
-        // =================== AKHIR BAGIAN PERBAIKAN ==========================
-        // =====================================================================
 
         $itemsQuery->withMax('transactions as latest_transaction_date', 'created_at');
 
-        $items = $itemsQuery->latest('updated_at')->paginate(10);
+        $items = $itemsQuery->latest('updated_at')->paginate(10)->withQueryString();
 
         $allFacilities = Facility::orderBy('name')->get(['id', 'name']);
         $locations = collect([['id' => 'pusat', 'name' => 'P.Layang (Pusat)']]);
@@ -93,11 +100,13 @@ class MaterialController extends Controller
     }
     public function update(Request $request, Item $item)
     {
+        // Validasi untuk stok_awal dihapus
         $validator = Validator::make($request->all(), [
             'nama_material' => [
                 'required',
                 'string',
                 'max:255',
+                // Aturan unique ini sudah benar, hanya memeriksa dalam lingkup fasilitas yang sama
                 Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
             'kode_material' => [
@@ -106,7 +115,6 @@ class MaterialController extends Controller
                 'max:255',
                 Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
-            'stok_awal' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -116,18 +124,24 @@ class MaterialController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
+        // Simpan kode material lama sebelum diubah
         $oldKode = $item->kode_material;
-        $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
-        Item::whereNull('facility_id')
-            ->where('kode_material', $oldKode)
+
+        // Ambil data baru dari request
+        $newNama = $request->input('nama_material');
+        $newKode = $request->input('kode_material');
+
+        // [FIX] Lakukan satu query untuk menyinkronkan perubahan ke SEMUA item
+        // (di pusat DAN semua fasilitas lain) yang memiliki kode material lama.
+        Item::where('kode_material', $oldKode)
             ->update([
-                'nama_material' => $item->nama_material,
-                'kode_material' => $item->kode_material,
+                'nama_material' => $newNama,
+                'kode_material' => $newKode,
             ]);
 
         return redirect()
             ->route('materials.index', $item->facility_id)
-            ->with('success', 'Data material berhasil diperbarui!');
+            ->with('success', 'Data material berhasil diperbarui di semua lokasi!');
     }
 
     public function destroy(Item $item)
@@ -135,7 +149,9 @@ class MaterialController extends Controller
         $facilityId = $item->facility_id;
         try {
             DB::transaction(function () use ($item) {
+                // Hapus semua transaksi terkait item ini
                 $item->transactions()->delete();
+                // Reset stok awal menjadi 0
                 $item->update(['stok_awal' => 0]);
             });
             return redirect()->route('materials.index', $facilityId)->with('success', 'Stok material berhasil di-reset menjadi 0.');
@@ -167,7 +183,6 @@ class MaterialController extends Controller
                 $kodeMaterial = Item::findOrFail($request->item_id)->kode_material;
                 $jumlah = (int) $request->jumlah;
 
-                // ... (logika menentukan itemAsal tetap sama)
                 $itemAsal = null;
                 $asalName = '';
                 $asalIsPusat = $request->asal_id == 'pusat';
@@ -185,11 +200,9 @@ class MaterialController extends Controller
                     return ['success' => false, 'message' => "Stok di {$asalName} tidak mencukupi. Stok saat ini: " . $itemAsal->stok_akhir . " pcs."];
                 }
 
-                // [BARU] Ambil snapshot stok sebelum transaksi
                 $stokAwalAsal = $itemAsal->stok_akhir;
                 $stokAkhirAsal = $stokAwalAsal - $jumlah;
 
-                // ... (logika menentukan itemTujuan tetap sama)
                 $itemTujuan = null;
                 $tujuanName = '';
                 $tujuanIsPusat = $request->tujuan_id == 'pusat';
@@ -211,8 +224,8 @@ class MaterialController extends Controller
                     'user_id' => Auth::id(),
                     'jenis_transaksi' => 'transfer',
                     'jumlah' => $jumlah,
-                    'stok_awal_asal' => $stokAwalAsal,   // <-- SIMPAN
-                    'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                    'stok_awal_asal' => $stokAwalAsal,
+                    'stok_akhir_asal' => $stokAkhirAsal,
                     'facility_from' => $asalIsPusat ? null : $request->asal_id,
                     'region_from' => $asalIsPusat ? $itemAsal->region_id : null,
                     'facility_to' => $tujuanIsPusat ? null : $request->tujuan_id,

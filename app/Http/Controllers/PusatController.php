@@ -15,8 +15,6 @@ use Carbon\Carbon;
 
 class PusatController extends Controller
 {
-    // app/Http/Controllers/PusatController.php
-
     public function index(Request $request)
     {
         $filters = [
@@ -25,43 +23,64 @@ class PusatController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
-        // [FIX] Panggil select() di awal untuk menetapkan kolom dasar
         $query = Item::query()
             ->whereNull('facility_id')
             ->select('items.*');
 
-        // Filter (tidak ada perubahan)
+        // Filter pencarian berdasarkan nama atau kode material
         $query->when($filters['search'], function ($q, $search) {
-            return $q->where('nama_material', 'like', '%' . $search . '%');
-        });
-        $query->when($filters['start_date'], function ($q, $startDate) {
-            return $q->whereDate('updated_at', '>=', $startDate);
-        });
-        $query->when($filters['end_date'], function ($q, $endDate) {
-            return $q->whereDate('updated_at', '<=', $endDate);
+            return $q->where(function ($subQ) use ($search) {
+                $subQ->where('nama_material', 'like', '%' . $search . '%')
+                    ->orWhere('kode_material', 'like', '%' . $search . '%');
+            });
         });
 
-        // [FIX] Panggil addSelect() SETELAH select() untuk menambahkan kolom kalkulasi
+        // Filter daftar item utama berdasarkan rentang tanggal transaksi.
+        $query->when($filters['start_date'] || $filters['end_date'], function ($q) use ($filters) {
+            $q->whereHas('transactions', function ($subQuery) use ($filters) {
+                if ($filters['start_date']) {
+                    $subQuery->whereDate('created_at', '>=', $filters['start_date']);
+                }
+                if ($filters['end_date']) {
+                    $subQuery->whereDate('created_at', '<=', $filters['end_date']);
+                }
+            });
+        });
+
+        // [FIX] Logika subquery diubah agar menargetkan item_id secara spesifik
+        // dan membedakan transaksi masuk (penerimaan) dan keluar (penyaluran).
         $query->addSelect([
+            // PENERIMAAN: Transaksi yang DITUJUKAN ke item ini (region_to diisi)
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('region_to', 'items.region_id')
-                ->whereNull('facility_to')
-                ->whereHas('item', function ($subQuery) {
-                    $subQuery->whereColumn('kode_material', 'items.kode_material');
+                ->whereColumn('item_id', 'items.id') // <-- Kunci: Targetkan item_id spesifik
+                ->whereNotNull('region_to') // <-- Ciri khas transaksi penerimaan ke Pusat
+                ->when($filters['start_date'], function ($subQuery, $date) {
+                    $subQuery->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($subQuery, $date) {
+                    $subQuery->whereDate('created_at', '<=', $date);
                 }),
+
+            // PENYALURAN: Transaksi yang BERASAL dari item ini (region_from diisi)
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id')
+                ->whereColumn('item_id', 'items.id') // <-- Kunci: Targetkan item_id spesifik
+                ->whereNotNull('region_from') // <-- Ciri khas transaksi penyaluran dari Pusat
+                ->when($filters['start_date'], function ($subQuery, $date) {
+                    $subQuery->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($subQuery, $date) {
+                    $subQuery->whereDate('created_at', '<=', $date);
+                }),
         ]);
 
         $query->withMax('transactions as latest_transaction_date', 'created_at');
 
-        $items = $query->latest('updated_at')->paginate(10);
+        $items = $query->latest('updated_at')->paginate(10)->withQueryString();
         $facilities = Facility::orderBy('name')->get();
 
         return view('dashboard_page.menu.data_pusat', compact('items', 'filters', 'facilities'));
     }
 
-    // Method lainnya tidak perlu diubah
     public function create()
     {
         return view('dashboard_page.menu.tambah_material');
@@ -91,6 +110,7 @@ class PusatController extends Controller
 
     public function update(Request $request, Item $item)
     {
+        // Validasi untuk stok_awal dihapus
         $validator = Validator::make($request->all(), [
             'nama_material' => [
                 'required',
@@ -104,7 +124,6 @@ class PusatController extends Controller
                 'max:255',
                 Rule::unique('items')->whereNull('facility_id')->ignore($item->id),
             ],
-            'stok_awal' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -114,13 +133,12 @@ class PusatController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
-        // simpan kode lama dulu
         $oldKode = $item->kode_material;
 
-        // update pusat
-        $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
+        // Hanya update nama_material dan kode_material
+        $item->update($request->only(['nama_material', 'kode_material']));
 
-        // sinkronkan ke semua cabang (hanya nama & kode)
+        // Sinkronisasi ke cabang tetap berjalan seperti biasa
         Item::whereNotNull('facility_id')
             ->where('kode_material', $oldKode)
             ->update([
@@ -170,7 +188,6 @@ class PusatController extends Controller
                         throw ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi!']);
                     }
 
-                    // [BARU] Ambil snapshot stok sebelum transaksi
                     $stokAwalAsal = $itemFrom->stok_akhir;
                     $stokAkhirAsal = $stokAwalAsal - $jumlah;
 
@@ -184,8 +201,8 @@ class PusatController extends Controller
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,    // <-- SIMPAN
-                        'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                        'stok_awal_asal' => $stokAwalAsal,
+                        'stok_akhir_asal' => $stokAkhirAsal,
                         'region_from' => $itemFrom->region_id,
                         'facility_to' => $request->facility_id_selected,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -198,6 +215,7 @@ class PusatController extends Controller
                 }
 
                 if ($jenis_transaksi == 'penerimaan') {
+                    // Cek stok di fasilitas asal
                     $itemFrom = Item::where('facility_id', $request->facility_id_selected)
                         ->where('kode_material', $request->kode_material)
                         ->first();
@@ -206,19 +224,22 @@ class PusatController extends Controller
                         throw ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
                     }
 
-                    // [BARU] Ambil snapshot stok sebelum transaksi
+                    // Cari item spesifik yang menjadi tujuan di Pusat
+                    $itemToPusat = Item::findOrFail($request->item_id_pusat);
+
                     $stokAwalAsal = $itemFrom->stok_akhir;
                     $stokAkhirAsal = $stokAwalAsal - $jumlah;
 
+                    // Buat transaksi dengan `item_id` yang menunjuk ke item tujuan (Pusat).
                     ItemTransaction::create([
-                        'item_id' => $itemFrom->id,
+                        'item_id' => $itemToPusat->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,    // <-- SIMPAN
-                        'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                        'stok_awal_asal' => $stokAwalAsal,
+                        'stok_akhir_asal' => $stokAkhirAsal,
                         'facility_from' => $request->facility_id_selected,
-                        'region_to' => Item::findOrFail($request->item_id_pusat)->region_id,
+                        'region_to' => $itemToPusat->region_id,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
                         'no_ba_serah_terima' => $request->no_ba_serah_terima,
                         'created_at' => Carbon::parse($request->tanggal_transaksi),
