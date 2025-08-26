@@ -15,6 +15,8 @@ use Carbon\Carbon;
 
 class PusatController extends Controller
 {
+    // app/Http/Controllers/PusatController.php
+
     public function index(Request $request)
     {
         $filters = [
@@ -24,10 +26,10 @@ class PusatController extends Controller
         ];
 
         $query = Item::query()
-            ->whereNull('facility_id')
+            ->whereNull('facility_id') // Hanya item Pusat
             ->select('items.*');
 
-        // Filter pencarian berdasarkan nama atau kode material
+        // Filter pencarian (tidak berubah)
         $query->when($filters['search'], function ($q, $search) {
             return $q->where(function ($subQ) use ($search) {
                 $subQ->where('nama_material', 'like', '%' . $search . '%')
@@ -35,43 +37,34 @@ class PusatController extends Controller
             });
         });
 
-        // Filter daftar item utama berdasarkan rentang tanggal transaksi.
-        $query->when($filters['start_date'] || $filters['end_date'], function ($q) use ($filters) {
-            $q->whereHas('transactions', function ($subQuery) use ($filters) {
-                if ($filters['start_date']) {
-                    $subQuery->whereDate('created_at', '>=', $filters['start_date']);
-                }
-                if ($filters['end_date']) {
-                    $subQuery->whereDate('created_at', '<=', $filters['end_date']);
-                }
-            });
-        });
-
-        // [FIX] Logika subquery diubah agar menargetkan item_id secara spesifik
-        // dan membedakan transaksi masuk (penerimaan) dan keluar (penyaluran).
+        // ======================== BLOK UTAMA PERBAIKAN QUERY ========================
         $query->addSelect([
-            // PENERIMAAN: Transaksi yang DITUJUKAN ke item ini (region_to diisi)
-            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id') // <-- Kunci: Targetkan item_id spesifik
-                ->whereNotNull('region_to') // <-- Ciri khas transaksi penerimaan ke Pusat
-                ->when($filters['start_date'], function ($subQuery, $date) {
-                    $subQuery->whereDate('created_at', '>=', $date);
+            // [FIX] PENERIMAAN: Cari transaksi yang DITUJUKAN ke region pusat ini
+            // dengan mencocokkan 'region_to' dan 'kode_material'.
+            'penerimaan_total' => ItemTransaction::query()
+                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
+                ->whereColumn('source_item.kode_material', 'items.kode_material')
+                ->whereColumn('item_transactions.region_to', 'items.region_id') // <-- Kunci Logika Baru
+                ->when($filters['start_date'], function ($q, $date) {
+                    $q->whereDate('item_transactions.created_at', '>=', $date);
                 })
-                ->when($filters['end_date'], function ($subQuery, $date) {
-                    $subQuery->whereDate('created_at', '<=', $date);
-                }),
+                ->when($filters['end_date'], function ($q, $date) {
+                    $q->whereDate('item_transactions.created_at', '<=', $date);
+                })
+                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
 
-            // PENYALURAN: Transaksi yang BERASAL dari item ini (region_from diisi)
+            // PENYALURAN: Logika ini sudah benar, tidak perlu diubah.
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id') // <-- Kunci: Targetkan item_id spesifik
-                ->whereNotNull('region_from') // <-- Ciri khas transaksi penyaluran dari Pusat
-                ->when($filters['start_date'], function ($subQuery, $date) {
-                    $subQuery->whereDate('created_at', '>=', $date);
+                ->whereColumn('item_id', 'items.id')
+                ->whereNotNull('region_from')
+                ->when($filters['start_date'], function ($q, $date) {
+                    $q->whereDate('created_at', '>=', $date);
                 })
-                ->when($filters['end_date'], function ($subQuery, $date) {
-                    $subQuery->whereDate('created_at', '<=', $date);
+                ->when($filters['end_date'], function ($q, $date) {
+                    $q->whereDate('created_at', '<=', $date);
                 }),
         ]);
+        // =========================================================================
 
         $query->withMax('transactions as latest_transaction_date', 'created_at');
 
@@ -238,8 +231,10 @@ class PusatController extends Controller
                     return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
                 }
 
+                // Di dalam method transfer(), ganti HANYA blok if ($jenis_transaksi == 'penerimaan')
+
                 if ($jenis_transaksi == 'penerimaan') {
-                    // Cek stok di fasilitas asal
+                    // Cek stok di fasilitas asal (pengirim) -> Sudah Benar
                     $itemFrom = Item::where('facility_id', $request->facility_id_selected)
                         ->where('kode_material', $request->kode_material)
                         ->first();
@@ -248,29 +243,29 @@ class PusatController extends Controller
                         throw ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
                     }
 
-                    // Cari item spesifik yang menjadi tujuan di Pusat
-                    $itemToPusat = Item::findOrFail($request->item_id_pusat);
+                    // Cari item tujuan di Pusat untuk mendapatkan region_id-nya -> Sudah Benar
+                    $itemToPusat = Item::whereNull('facility_id')->where('kode_material', $request->kode_material)->firstOrFail();
 
                     $stokAwalAsal = $itemFrom->stok_akhir;
                     $stokAkhirAsal = $stokAwalAsal - $jumlah;
 
-                    // Buat transaksi dengan `item_id` yang menunjuk ke item tujuan (Pusat).
+                    // Buat transaksi dengan `item_id` yang menunjuk ke item PENGIRIM.
                     ItemTransaction::create([
-                        'item_id' => $itemToPusat->id,
+                        'item_id' => $itemFrom->id, // [FIX] Transaksi dicatat pada item PENGIRIM
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
                         'stok_akhir_asal' => $stokAkhirAsal,
-                        'facility_from' => $request->facility_id_selected,
-                        'region_to' => $itemToPusat->region_id,
+                        'facility_from' => $request->facility_id_selected, // Asal dari fasilitas
+                        'region_to' => $itemToPusat->region_id, // Tujuan ke region Pusat
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
                         'no_ba_serah_terima' => $request->no_ba_serah_terima,
                         'created_at' => Carbon::parse($request->tanggal_transaksi),
                         'updated_at' => Carbon::parse($request->tanggal_transaksi),
                     ]);
 
-                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Penerimaan material berhasil dicatat!'];
                 }
             });
             return response()->json($response);

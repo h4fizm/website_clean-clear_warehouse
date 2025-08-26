@@ -261,11 +261,11 @@
                         <div class="d-flex">
                             <div class="form-check me-4">
                                 <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran" checked>
-                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran (Kirim dari P.Layang)</label>
+                                <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan">
-                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan (Ambil dari SPBE/BPT)</label>
+                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
                         </div>
                     </div>
