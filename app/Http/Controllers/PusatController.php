@@ -15,27 +15,25 @@ use Carbon\Carbon;
 
 class PusatController extends Controller
 {
-    /**
-     * Menampilkan data item P.Layang (Pusat) dan daftar facility untuk dropdown.
-     */
+    // app/Http/Controllers/PusatController.php
+
     public function index(Request $request)
     {
-        // Ambil semua input filter dari request
         $filters = [
             'search' => $request->query('search'),
             'start_date' => $request->query('start_date'),
             'end_date' => $request->query('end_date'),
         ];
 
-        $query = Item::query();
-        $query->whereNotNull('region_id')->whereNull('facility_id');
+        // [FIX] Panggil select() di awal untuk menetapkan kolom dasar
+        $query = Item::query()
+            ->whereNull('facility_id')
+            ->select('items.*');
 
-        // Filter berdasarkan pencarian nama material
+        // Filter (tidak ada perubahan)
         $query->when($filters['search'], function ($q, $search) {
             return $q->where('nama_material', 'like', '%' . $search . '%');
         });
-
-        // Filter berdasarkan tanggal
         $query->when($filters['start_date'], function ($q, $startDate) {
             return $q->whereDate('updated_at', '>=', $startDate);
         });
@@ -43,32 +41,23 @@ class PusatController extends Controller
             return $q->whereDate('updated_at', '<=', $endDate);
         });
 
-        // [INI BAGIAN YANG DITAMBAHKAN]
-        // Menghitung total penerimaan untuk setiap item
-        $query->withSum([
-            'transactions as penerimaan_total' => function ($q) {
-                $q->where('jenis_transaksi', 'penerimaan');
-            }
-        ], 'jumlah');
+        // [FIX] Panggil addSelect() SETELAH select() untuk menambahkan kolom kalkulasi
+        $query->addSelect([
+            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
+                ->whereColumn('region_to', 'items.region_id')
+                ->whereNull('facility_to')
+                ->whereHas('item', function ($subQuery) {
+                    $subQuery->whereColumn('kode_material', 'items.kode_material');
+                }),
+            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+        ]);
 
-        // Menghitung total penyaluran untuk setiap item
-        $query->withSum([
-            'transactions as penyaluran_total' => function ($q) {
-                $q->where('jenis_transaksi', 'penyaluran');
-            }
-        ], 'jumlah');
-
-        // [INI PERBAIKANNYA]
-        // Mengambil tanggal transaksi paling baru untuk setiap item
         $query->withMax('transactions as latest_transaction_date', 'created_at');
 
-        // Eksekusi query dengan pagination
         $items = $query->latest('updated_at')->paginate(10);
-
-        // Ambil data facility untuk dropdown
         $facilities = Facility::orderBy('name')->get();
 
-        // Kirim semua data ke view
         return view('dashboard_page.menu.data_pusat', compact('items', 'filters', 'facilities'));
     }
 
@@ -175,72 +164,72 @@ class PusatController extends Controller
                 $jenis_transaksi = $request->jenis_transaksi;
                 $jumlah = $request->jumlah;
 
-                // --- LOGIKA PENYALURAN (DARI PUSAT KE SPBE/BPT) ---
                 if ($jenis_transaksi == 'penyaluran') {
-                    $itemFrom = Item::findOrFail($request->item_id_pusat); // Item dari Pusat
-                    $facilityToId = $request->facility_id_selected;
-
+                    $itemFrom = Item::findOrFail($request->item_id_pusat);
                     if ($itemFrom->stok_akhir < $jumlah) {
-                        throw \Illuminate\Validation\ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi!']);
+                        throw ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi!']);
                     }
 
-                    // Ciptakan item di tujuan jika belum ada
+                    // [BARU] Ambil snapshot stok sebelum transaksi
+                    $stokAwalAsal = $itemFrom->stok_akhir;
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah;
+
                     Item::firstOrCreate(
-                        ['facility_id' => $facilityToId, 'kode_material' => $itemFrom->kode_material],
+                        ['facility_id' => $request->facility_id_selected, 'kode_material' => $itemFrom->kode_material],
                         ['nama_material' => $itemFrom->nama_material, 'stok_awal' => 0]
                     );
 
-                    // HANYA BUAT SATU TRANSAKSI
-                    ItemTransaction::create([
-                        'item_id' => $itemFrom->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'transfer', // Gunakan jenis 'transfer' agar lebih jelas
-                        'jumlah' => $jumlah,
-                        'region_from' => $itemFrom->region_id, // ASAL: PUSAT
-                        'facility_to' => $facilityToId,        // TUJUAN: SPBE/BPT
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
-                        'updated_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
-                    ]);
-
-                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
-                }
-
-                // --- LOGIKA PENERIMAAN (DARI SPBE/BPT KE PUSAT) ---
-                if ($jenis_transaksi == 'penerimaan') {
-                    $facilityFromId = $request->facility_id_selected;
-                    $itemTo = Item::findOrFail($request->item_id_pusat); // Item Tujuan (Pusat)
-
-                    $itemFrom = Item::where('facility_id', $facilityFromId)
-                        ->where('kode_material', $request->kode_material)
-                        ->first();
-
-                    if (!$itemFrom || $itemFrom->stok_akhir < $jumlah) {
-                        throw \Illuminate\Validation\ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
-                    }
-
-                    // HANYA BUAT SATU TRANSAKSI
                     ItemTransaction::create([
                         'item_id' => $itemFrom->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
-                        'facility_from' => $facilityFromId, // ASAL: SPBE/BPT
-                        'region_to' => $itemTo->region_id,    // TUJUAN: PUSAT
+                        'stok_awal_asal' => $stokAwalAsal,    // <-- SIMPAN
+                        'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                        'region_from' => $itemFrom->region_id,
+                        'facility_to' => $request->facility_id_selected,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
                         'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
-                        'updated_at' => \Carbon\Carbon::parse($request->tanggal_transaksi),
+                        'created_at' => Carbon::parse($request->tanggal_transaksi),
+                        'updated_at' => Carbon::parse($request->tanggal_transaksi),
+                    ]);
+
+                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
+                }
+
+                if ($jenis_transaksi == 'penerimaan') {
+                    $itemFrom = Item::where('facility_id', $request->facility_id_selected)
+                        ->where('kode_material', $request->kode_material)
+                        ->first();
+
+                    if (!$itemFrom || $itemFrom->stok_akhir < $jumlah) {
+                        throw ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
+                    }
+
+                    // [BARU] Ambil snapshot stok sebelum transaksi
+                    $stokAwalAsal = $itemFrom->stok_akhir;
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah;
+
+                    ItemTransaction::create([
+                        'item_id' => $itemFrom->id,
+                        'user_id' => Auth::id(),
+                        'jenis_transaksi' => 'transfer',
+                        'jumlah' => $jumlah,
+                        'stok_awal_asal' => $stokAwalAsal,    // <-- SIMPAN
+                        'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                        'facility_from' => $request->facility_id_selected,
+                        'region_to' => Item::findOrFail($request->item_id_pusat)->region_id,
+                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
+                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
+                        'created_at' => Carbon::parse($request->tanggal_transaksi),
+                        'updated_at' => Carbon::parse($request->tanggal_transaksi),
                     ]);
 
                     return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
                 }
             });
-
             return response()->json($response);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);

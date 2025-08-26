@@ -17,6 +17,8 @@ class ItemTransaction extends Model
         'region_from',
         'region_to',
         'jumlah',
+        'stok_awal_asal',   // <-- TAMBAHKAN INI
+        'stok_akhir_asal',  // <-- TAMBAHKAN INI
         'jenis_transaksi',
         'no_surat_persetujuan',
         'no_ba_serah_terima',

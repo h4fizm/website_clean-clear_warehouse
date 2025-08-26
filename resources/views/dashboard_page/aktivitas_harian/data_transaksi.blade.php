@@ -7,9 +7,6 @@
     <div class="card p-4 position-relative welcome-card">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="w-100 order-md-1 text-center text-md-start">
-                <a href="{{ route('aktivitas.index') }}" class="text-secondary me-3 d-inline-block">
-                    <i class="fas fa-arrow-left fa-2x"></i>
-                </a>
                 <h4 class="mb-1 fw-bold d-inline-block" id="summary-title">
                     Aktivitas Log Harian Transaksi
                 </h4>
@@ -42,16 +39,21 @@
             </div>
             
             <div class="card-body px-0 pt-0 pb-5">
+                {{-- Ganti bagian form Anda dengan ini --}}
                 <form action="{{ route('aktivitas.transaksi') }}" method="GET">
-                    <div class="d-flex flex-wrap gap-2 mb-3 px-3 align-items-center justify-content-between">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Material, Kode, Asal, Tujuan, User..." value="{{ $search ?? '' }}" style="width: 600px; height: 35px;">
+                    <div class="d-flex flex-wrap gap-3 mb-3 px-3 align-items-center justify-content-between">
+                        {{-- Kolom Kiri: Search & Filter Lokasi --}}
+                        <div class="d-flex flex-wrap gap-3">
+                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Material, Kode, Lokasi, User..." value="{{ $search ?? '' }}" style="width: 300px; height: 38px;">
+                        </div>
                         
+                        {{-- Kolom Kanan: Filter Tanggal & Tombol Cari --}}
                         <div class="d-flex align-items-center gap-2">
                             <label for="start_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Dari:</label>
-                            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate ?? '' }}" style="width: 150px; height: 35px;">
+                            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate ?? '' }}" style="width: 150px; height: 38px;">
                             
                             <label for="end_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Sampai:</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate ?? '' }}" style="width: 150px; height: 35px;">
+                            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate ?? '' }}" style="width: 150px; height: 38px;">
 
                             <button type="submit" class="btn btn-primary btn-sm mb-0">Cari</button>
                         </div>
@@ -80,11 +82,28 @@
                             @forelse ($transactions as $transaction)
                                 @php
                                     if (!$transaction->item) continue;
-                                    $isPenerimaan = $transaction->jenis_transaksi === 'Penerimaan';
-                                    $activityColor = $isPenerimaan ? 'bg-gradient-success' : 'bg-gradient-primary';
-                                    $stokAkhir = $isPenerimaan 
-                                        ? ($transaction->item->stok_awal + $transaction->jumlah) 
-                                        : ($transaction->item->stok_awal - $transaction->jumlah);
+                                    
+                                    $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
+                                    $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
+
+                                    // =================== LOGIKA BADGE SEDERHANA ===================
+                                    $activityText = 'Transfer Antar SPBE/BPT';
+                                    $activityColor = 'bg-gradient-info';
+                                    $activityIcon = 'fa-exchange-alt';
+
+                                    // Jika transaksi berasal dari Pusat (region_from tidak null)
+                                    if ($transaction->region_from) {
+                                        $activityText = 'Penyaluran';
+                                        $activityColor = 'bg-gradient-danger';
+                                        $activityIcon = 'fa-arrow-up';
+                                    } 
+                                    // Jika transaksi menuju ke Pusat (region_to tidak null)
+                                    elseif ($transaction->region_to) {
+                                        $activityText = 'Penerimaan';
+                                        $activityColor = 'bg-gradient-success';
+                                        $activityIcon = 'fa-arrow-down';
+                                    }
+                                    // ============================================================
                                 @endphp
                                 <tr>
                                     <td class="text-center"><p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + $transactions->firstItem() - 1 }}</p></td>
@@ -94,18 +113,25 @@
                                             <p class="text-xs text-secondary mb-0">Kode: {{ $transaction->item->kode_material }}</p>
                                         </div>
                                     </td>
+                                    <td><p class="text-xs font-weight-bold mb-0">{{ $asal }}</p></td>
+                                    <td><p class="text-xs font-weight-bold mb-0">{{ $tujuan }}</p></td>
                                     
-                                    {{-- =================== PERBAIKAN DI SINI =================== --}}
-                                    <td><p class="text-xs font-weight-bold mb-0">{{ $transaction->facilityFrom ? $transaction->facilityFrom->nama_facility : ($transaction->regionFrom->nama_region ?? 'N/A') }}</p></td> 
-                                    <td><p class="text-xs font-weight-bold mb-0">{{ $transaction->facilityTo ? $transaction->facilityTo->nama_facility : ($transaction->regionTo->nama_region ?? 'N/A') }}</p></td>
-                                    {{-- ========================================================= --}}
+                                    {{-- Kolom Stok dari snapshot historis lokasi ASAL --}}
+                                    <td class="text-center"><span class="badge bg-secondary text-white text-xs">{{ number_format($transaction->stok_awal_asal ?? 0) }} pcs</span></td>
+                                    <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($transaction->jumlah) }} pcs</span></td>
+                                    <td class="text-center"><span class="badge bg-info text-white text-xs">{{ number_format($transaction->stok_akhir_asal ?? 0) }} pcs</span></td>
                                     
-                                    <td class="text-center"><span class="badge bg-secondary text-white text-xs">{{ $transaction->item->stok_awal }} pcs</span></td>
-                                    <td class="text-center"><span class="badge {{ $activityColor }} text-white text-xs">{{ $transaction->jumlah }} pcs</span></td>
-                                    <td class="text-center"><span class="badge bg-info text-white text-xs">{{ $stokAkhir }} pcs</span></td>
                                     <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_surat_persetujuan ?? '-' }}</p></td>
                                     <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_ba_serah_terima ?? '-' }}</p></td>
-                                    <td class="text-center"><span class="badge {{ $activityColor }} text-white text-xs">{{ $transaction->jenis_transaksi }}</span></td>
+                                    
+                                    {{-- Kolom Aktivitas Dinamis --}}
+                                    <td class="text-center">
+                                        <span class="badge {{ $activityColor }} text-white text-xs">
+                                            <i class="fas {{ $activityIcon }} me-1"></i>
+                                            {{ $activityText }}
+                                        </span>
+                                    </td>
+
                                     <td class="text-center"><p class="text-xs text-secondary mb-0">{{ $transaction->user->name ?? 'N/A' }}</p></td>
                                     <td class="text-center"><p class="text-xs text-secondary mb-0">{{ \Carbon\Carbon::parse($transaction->created_at)->isoFormat('dddd, D MMMM YYYY') }}</p></td>
                                 </tr>

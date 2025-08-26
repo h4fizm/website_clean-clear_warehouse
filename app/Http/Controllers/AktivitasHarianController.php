@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ItemTransaction;
+// Tidak perlu use Facility lagi karena sudah tidak digunakan di sini
 
 class AktivitasHarianController extends Controller
 {
@@ -18,14 +19,13 @@ class AktivitasHarianController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // PENTING: Muat SEMUA relasi yang dibutuhkan untuk tampilan
+        // Memuat semua relasi yang dibutuhkan untuk tampilan
         $query = ItemTransaction::with(['item', 'user', 'facilityFrom', 'facilityTo', 'regionFrom', 'regionTo']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 // Mencari di tabel utama
-                $q->orWhere('jenis_transaksi', 'like', "%{$search}%")
-                    ->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
+                $q->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
                     ->orWhere('no_ba_serah_terima', 'like', "%{$search}%");
 
                 // Mencari di semua tabel relasi
@@ -37,16 +37,16 @@ class AktivitasHarianController extends Controller
                     $subQuery->where('name', 'like', "%{$search}%");
                 });
                 $q->orWhereHas('facilityFrom', function ($subQuery) use ($search) {
-                    $subQuery->where('nama_facility', 'like', "%{$search}%");
+                    $subQuery->where('name', 'like', "%{$search}%"); // Perbaikan: nama_facility -> name
                 });
                 $q->orWhereHas('facilityTo', function ($subQuery) use ($search) {
-                    $subQuery->where('nama_facility', 'like', "%{$search}%");
+                    $subQuery->where('name', 'like', "%{$search}%"); // Perbaikan: nama_facility -> name
                 });
                 $q->orWhereHas('regionFrom', function ($subQuery) use ($search) {
-                    $subQuery->where('nama_region', 'like', "%{$search}%");
+                    $subQuery->where('name_region', 'like', "%{$search}%"); // Perbaikan: nama_region -> name_region
                 });
                 $q->orWhereHas('regionTo', function ($subQuery) use ($search) {
-                    $subQuery->where('nama_region', 'like', "%{$search}%");
+                    $subQuery->where('name_region', 'like', "%{$search}%"); // Perbaikan: nama_region -> name_region
                 });
             });
         }
@@ -62,6 +62,7 @@ class AktivitasHarianController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Variabel yang tidak perlu (locations dan locationPov) sudah dihapus
         return view('dashboard_page.aktivitas_harian.data_transaksi', compact(
             'transactions',
             'search',

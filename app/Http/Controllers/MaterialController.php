@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\ItemTransaction;
 use App\Models\Facility;
 use App\Models\Region;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -14,31 +15,26 @@ use Illuminate\Support\Facades\Auth;
 
 class MaterialController extends Controller
 {
-    /**
-     * Menampilkan daftar material untuk sebuah facility yang spesifik.
-     * Ditambah logika untuk mengirim daftar semua lokasi untuk dropdown transaksi.
-     */
+    // app/Http/Controllers/MaterialController.php
+
     public function index(Facility $facility, Request $request)
     {
-        // 1. Ambil semua parameter filter dari request
         $filters = [
             'search' => $request->query('search'),
             'start_date' => $request->query('start_date'),
             'end_date' => $request->query('end_date'),
         ];
 
-        // 2. Mulai query untuk mengambil item dari facility yang dipilih
-        $itemsQuery = $facility->items();
+        // [FIX] Panggil select() di awal untuk menetapkan kolom dasar
+        $itemsQuery = $facility->items()->select('items.*');
 
-        // 3. Terapkan filter pencarian berdasarkan nama atau kode material
+        // Filter (tidak ada perubahan)
         $itemsQuery->when($filters['search'], function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('nama_material', 'like', '%' . $search . '%')
                     ->orWhere('kode_material', 'like', '%' . $search . '%');
             });
         });
-
-        // 4. Terapkan filter tanggal berdasarkan tanggal transaksi
         $itemsQuery->when($filters['start_date'], function ($query, $date) {
             return $query->whereHas('transactions', function ($subQuery) use ($date) {
                 $subQuery->whereDate('created_at', '>=', $date);
@@ -50,36 +46,38 @@ class MaterialController extends Controller
             });
         });
 
-        // 5. Hitung total penerimaan, penyaluran, dan ambil tanggal transaksi terakhir
-        $itemsQuery->withSum([
-            'transactions as penerimaan_total' => function ($q) {
-                $q->where('jenis_transaksi', 'penerimaan');
-            }
-        ], 'jumlah');
+        // =====================================================================
+        // =================== INI BAGIAN YANG DIPERBAIKI ======================
+        // =====================================================================
 
-        $itemsQuery->withSum([
-            'transactions as penyaluran_total' => function ($q) {
-                $q->where('jenis_transaksi', 'penyaluran');
-            }
-        ], 'jumlah');
+        // [FIX] Gunakan addSelect() SETELAH select() dan pakai COALESCE untuk kedua perhitungan
+        $itemsQuery->addSelect([
+            // Subquery untuk PENERIMAAN (barang masuk ke facility ini)
+            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
+                ->whereColumn('facility_to', 'items.facility_id')
+                ->whereHas('item', function ($query) {
+                    $query->whereColumn('kode_material', 'items.kode_material');
+                }),
+
+            // Subquery untuk PENYALURAN (barang keluar dari item ini)
+            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+        ]);
+
+        // =====================================================================
+        // =================== AKHIR BAGIAN PERBAIKAN ==========================
+        // =====================================================================
 
         $itemsQuery->withMax('transactions as latest_transaction_date', 'created_at');
 
-        // 6. Eksekusi query dengan urutan dan pagination
         $items = $itemsQuery->latest('updated_at')->paginate(10);
 
-        // 7. [BARU] Siapkan data semua lokasi untuk dropdown di modal transaksi
         $allFacilities = Facility::orderBy('name')->get(['id', 'name']);
-
-        // Gabungkan P.Layang dan semua facility menjadi satu koleksi
-        $locations = collect([
-            ['id' => 'pusat', 'name' => 'P.Layang (Pusat)']
-        ]);
+        $locations = collect([['id' => 'pusat', 'name' => 'P.Layang (Pusat)']]);
         foreach ($allFacilities as $fac) {
             $locations->push(['id' => $fac->id, 'name' => $fac->name]);
         }
 
-        // 8. Kirim data ke view
         return view('dashboard_page.list_material.data_material', [
             'facility' => $facility,
             'items' => $items,
@@ -92,13 +90,7 @@ class MaterialController extends Controller
                 'Daftar Stok Material - ' . $facility->name,
             ],
         ]);
-
-
     }
-    // [TAMBAHKAN METHOD UPDATE DI SINI]
-    /**
-     * Memperbarui data material.
-     */
     public function update(Request $request, Item $item)
     {
         $validator = Validator::make($request->all(), [
@@ -106,17 +98,13 @@ class MaterialController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('items')
-                    ->where('facility_id', $item->facility_id)
-                    ->ignore($item->id),
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
             'kode_material' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('items')
-                    ->where('facility_id', $item->facility_id)
-                    ->ignore($item->id),
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
             ],
             'stok_awal' => 'required|integer|min:0',
         ]);
@@ -128,13 +116,8 @@ class MaterialController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
-        // simpan kode lama dulu sebelum update
         $oldKode = $item->kode_material;
-
-        // update item cabang
         $item->update($request->only(['nama_material', 'kode_material', 'stok_awal']));
-
-        // sinkronkan perubahan ke pusat
         Item::whereNull('facility_id')
             ->where('kode_material', $oldKode)
             ->update([
@@ -147,43 +130,24 @@ class MaterialController extends Controller
             ->with('success', 'Data material berhasil diperbarui!');
     }
 
-
-    // [TAMBAHKAN METHOD DESTROY DI SINI]
-    /**
-     * Menghapus data material.
-     */
     public function destroy(Item $item)
     {
-        // Simpan facility_id untuk redirect sebelum item dihapus/diubah
         $facilityId = $item->facility_id;
-
         try {
-            // Gunakan DB Transaction untuk memastikan semua proses berhasil
             DB::transaction(function () use ($item) {
-                // 1. Hapus semua transaksi yang terkait dengan item ini
                 $item->transactions()->delete();
-
-                // 2. Atur stok awal item ini menjadi 0
                 $item->update(['stok_awal' => 0]);
             });
-
             return redirect()->route('materials.index', $facilityId)->with('success', 'Stok material berhasil di-reset menjadi 0.');
-
         } catch (\Exception $e) {
-            // Jika terjadi error, kembalikan dengan pesan kesalahan
             return redirect()->route('materials.index', $facilityId)->with('error', 'Terjadi kesalahan saat mereset stok material.');
         }
     }
 
-    /**
-     * [MODIFIKASI]
-     * Disesuaikan untuk menerima kembali 'jenis_transaksi' dari radio button.
-     */
     public function processTransaction(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'item_id' => 'required|exists:items,id',
-            'jenis_transaksi' => 'required|in:penerimaan,penyaluran', // Ini akan kita abaikan dan ganti dengan 'transfer'
             'asal_id' => 'required|string',
             'tujuan_id' => 'required|string|different:asal_id',
             'jumlah' => 'required|integer|min:1',
@@ -203,73 +167,68 @@ class MaterialController extends Controller
                 $kodeMaterial = Item::findOrFail($request->item_id)->kode_material;
                 $jumlah = (int) $request->jumlah;
 
-                // 1. Tentukan Item & Nama Lokasi Asal
+                // ... (logika menentukan itemAsal tetap sama)
                 $itemAsal = null;
                 $asalName = '';
-                if ($request->asal_id == 'pusat') {
-                    $itemAsal = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->first();
-                    $pusatRegion = Region::where('name_region', 'like', '%P.Layang%')->first();
-                    $asalName = $pusatRegion->name_region ?? 'P.Layang (Pusat)';
+                $asalIsPusat = $request->asal_id == 'pusat';
+
+                if ($asalIsPusat) {
+                    $itemAsal = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->firstOrFail();
+                    $asalName = Region::find($itemAsal->region_id)->name_region ?? 'P.Layang (Pusat)';
                 } else {
-                    $itemAsal = Item::where('facility_id', $request->asal_id)->where('kode_material', $kodeMaterial)->first();
+                    $itemAsal = Item::where('facility_id', $request->asal_id)->where('kode_material', $kodeMaterial)->firstOrFail();
                     $asalName = Facility::find($request->asal_id)->name;
                 }
 
-                // Validasi Stok Asal
-                if (!$itemAsal) {
-                    return ['success' => false, 'message' => "Material tidak ditemukan di lokasi asal ({$asalName})."];
-                }
+
                 if ($itemAsal->stok_akhir < $jumlah) {
                     return ['success' => false, 'message' => "Stok di {$asalName} tidak mencukupi. Stok saat ini: " . $itemAsal->stok_akhir . " pcs."];
                 }
 
-                // 2. Tentukan Item & Nama Lokasi Tujuan (Buat jika belum ada)
+                // [BARU] Ambil snapshot stok sebelum transaksi
+                $stokAwalAsal = $itemAsal->stok_akhir;
+                $stokAkhirAsal = $stokAwalAsal - $jumlah;
+
+                // ... (logika menentukan itemTujuan tetap sama)
                 $itemTujuan = null;
                 $tujuanName = '';
-                if ($request->tujuan_id == 'pusat') {
-                    $itemTujuan = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->first();
-                    $pusatRegion = Region::where('name_region', 'like', '%P.Layang%')->first();
-                    $tujuanName = $pusatRegion->name_region ?? 'P.Layang (Pusat)';
-                    if (!$itemTujuan) {
-                        return ['success' => false, 'message' => 'Material ini belum terdaftar di P.Layang (Pusat).'];
-                    }
+                $tujuanIsPusat = $request->tujuan_id == 'pusat';
+
+                if ($tujuanIsPusat) {
+                    $itemTujuan = Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->firstOrFail();
+                    $tujuanName = Region::find($itemTujuan->region_id)->name_region ?? 'P.Layang (Pusat)';
                 } else {
                     $tujuanFacility = Facility::find($request->tujuan_id);
                     $tujuanName = $tujuanFacility->name;
                     $itemTujuan = Item::firstOrCreate(
                         ['facility_id' => $request->tujuan_id, 'kode_material' => $kodeMaterial],
-                        [
-                            'nama_material' => $itemAsal->nama_material,
-                            'stok_awal' => 0,
-                        ]
+                        ['nama_material' => $itemAsal->nama_material, 'stok_awal' => 0]
                     );
                 }
 
-                // 3. Siapkan data `from` dan `to` yang akan disimpan
-                $dataFromTo = [
-                    'facility_from' => ($request->asal_id != 'pusat') ? $request->asal_id : null,
-                    'region_from' => ($request->asal_id == 'pusat') ? $itemAsal->region_id : null,
-                    'facility_to' => ($request->tujuan_id != 'pusat') ? $request->tujuan_id : null,
-                    'region_to' => ($request->tujuan_id == 'pusat') ? $itemTujuan->region_id : null,
-                ];
-
-                // 4. Buat SATU catatan transaksi yang jelas
-                ItemTransaction::create(array_merge($dataFromTo, [
+                ItemTransaction::create([
                     'item_id' => $itemAsal->id,
-                    'user_id' => Auth::id(), // <-- Menyimpan User PJ
+                    'user_id' => Auth::id(),
                     'jenis_transaksi' => 'transfer',
                     'jumlah' => $jumlah,
+                    'stok_awal_asal' => $stokAwalAsal,   // <-- SIMPAN
+                    'stok_akhir_asal' => $stokAkhirAsal,  // <-- SIMPAN
+                    'facility_from' => $asalIsPusat ? null : $request->asal_id,
+                    'region_from' => $asalIsPusat ? $itemAsal->region_id : null,
+                    'facility_to' => $tujuanIsPusat ? null : $request->tujuan_id,
+                    'region_to' => $tujuanIsPusat ? $itemTujuan->region_id : null,
                     'no_surat_persetujuan' => $request->no_surat_persetujuan,
                     'no_ba_serah_terima' => $request->no_ba_serah_terima,
                     'created_at' => $request->tanggal_transaksi . ' ' . now()->toTimeString(),
                     'updated_at' => $request->tanggal_transaksi . ' ' . now()->toTimeString(),
-                ]));
+                ]);
 
-                $formattedDate = \Carbon\Carbon::parse($request->tanggal_transaksi)->locale('id')->translatedFormat('l, d F Y');
+                $formattedDate = Carbon::parse($request->tanggal_transaksi)->locale('id')->translatedFormat('l, d F Y');
                 return ['success' => true, 'message' => "Transfer {$jumlah} pcs dari {$asalName} ke {$tujuanName} pada {$formattedDate} berhasil."];
             });
-
             return response()->json($result, $result['success'] ? 200 : 400);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Material tidak ditemukan di salah satu lokasi.'], 404);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server: ' . $e->getMessage()], 500);
         }
