@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\MaterialController;
@@ -51,9 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profil/update', [AuthController::class, 'updateProfile'])->name('profile.update');
 
     // --- Halaman Utama Setelah Login ---
-    Route::get('/dashboard', function () {
-        return view('dashboard_page.menu.dashboard');
-    })->name('dashboard'); // Beri nama untuk redirect setelah login
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Laman Data P.Layang (Pusat)
     Route::get('/pusat', [PusatController::class, 'index'])

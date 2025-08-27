@@ -186,6 +186,7 @@
                     </table>
                 </div>
 
+                {{-- PAGINATION --}}
                 @if ($items->hasPages())
                 <div class="mt-4 px-3 d-flex justify-content-center">
                     <nav aria-label="Page navigation">
