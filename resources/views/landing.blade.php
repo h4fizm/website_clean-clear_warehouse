@@ -42,7 +42,7 @@
         <ul>
           <li><a href="#hero" class="active">Home</a></li>
           <li><a href="#about">About</a></li>
-          <li><a href="#services">Services</a></li>
+          <li><a href="#features">Features</a></li>
           <li><a href="#work-process">Work Process</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
@@ -62,10 +62,10 @@
       <div class="container">
         <div class="row gy-4">
           <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center" data-aos="zoom-out">
-            <h1>Better Solutions For Your Business</h1>
-            <p>We are team of talented designers making websites with Bootstrap</p>
+            <h1>Solusi Cerdas untuk Monitoring Stok Material</h1>
+            <p>Sistem pemantau stok material lengkap dengan rekap aktivitas harian serta fitur ekspor dokumen.</p>
             <div class="d-flex">
-              <a href="#about" class="btn-get-started">Daftar</a>
+              <a href="/register" class="btn-get-started">Registrasi Akun</a>
             </div>
           </div>
           <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out" data-aos-delay="200">
@@ -140,37 +140,43 @@
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>About Us</h2>
+        <h2>Tentang</h2>
       </div><!-- End Section Title -->
 
       <div class="container">
 
-        {{-- isi konten --}}
         <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-        <div class="row">
+          <div class="row">
 
-          <div class="col-lg-6 d-flex align-items-center">
-            <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="">
+            <div class="col-lg-6 d-flex align-items-center">
+              <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="Ilustrasi Monitoring Stok Material">
+            </div>
+
+            <div class="col-lg-6 pt-4 pt-lg-0 content">
+
+              <h3>Monitoring Transaksi Material Secara Realtime</h3>
+              <p class="fst-italic">
+                Website ini dirancang untuk memudahkan pemantauan transaksi material dari pusat <b>Pulau Layang</b> ke berbagai <b>Sales Area</b> 
+                termasuk Jambi, Bengkulu, Lampung, dan 6 SA lainnya. 
+              </p>
+              <p>
+                Seluruh data transaksi dapat dipantau secara <b>realtime</b>, dilengkapi fitur rekap aktivitas harian, 
+                serta dapat diekspor ke dalam berbagai format dokumen. 
+                Dengan sistem ini, pengguna lebih mudah dalam melacak <b>history transaksi material per region</b> 
+                dan memastikan distribusi material berjalan transparan serta efisien.
+              </p>
+
+            </div>
           </div>
 
-          <div class="col-lg-6 pt-4 pt-lg-0 content">
-
-            <h3>Voluptatem dignissimos provident quasi corporis voluptas</h3>
-            <p class="fst-italic">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-
-          </div>
         </div>
-
-      </div>
 
       </div>
 
     </section>
 
-    {{-- About 2  --}}
+    {{-- About 2 / FAQ --}}
     <section id="why-us" class="section why-us light-background" data-builder="section">
 
       <div class="container-fluid">
@@ -180,45 +186,69 @@
           <div class="col-lg-7 d-flex flex-column justify-content-center order-2 order-lg-1">
 
             <div class="content px-xl-5" data-aos="fade-up" data-aos-delay="100">
-              <h3><span>Eum ipsam laborum deleniti </span><strong>velit pariatur architecto aut nihil</strong></h3>
+              <h3><span>Pertanyaan Umum </span><strong>Tentang Sistem Ini</strong></h3>
               <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Duis aute irure dolor in reprehenderit
+                Berikut beberapa pertanyaan yang sering diajukan seputar teknologi dan fitur utama pada website monitoring stok material ini.
               </p>
             </div>
 
             <div class="faq-container px-xl-5" data-aos="fade-up" data-aos-delay="200">
 
+              <!-- FAQ 1 -->
               <div class="faq-item faq-active">
-
-                <h3><span>01</span> Non consectetur a erat nam at lectus urna duis?</h3>
+                <h3><span>01</span> Apa teknologi stack yang digunakan?</h3>
                 <div class="faq-content">
-                  <p>Feugiat pretium nibh ipsum consequat. Tempus iaculis urna id volutpat lacus laoreet non curabitur gravida. Venenatis lectus magna fringilla urna porttitor rhoncus dolor purus non.</p>
+                  <p>
+                    Website ini dibangun menggunakan <b>Laravel</b> sebagai framework utama, 
+                    <b>MySQL</b> untuk basis data, dan <b>Bootstrap</b> untuk tampilan berbasis SSR (Server Side Rendering).  
+                    Selain itu, sistem ini juga menggunakan <b>Spatie Laravel Permission</b> untuk mengelola role dan akses pengguna.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
 
+              <!-- FAQ 2 -->
               <div class="faq-item">
-                <h3><span>02</span> Feugiat scelerisque varius morbi enim nunc faucibus a pellentesque?</h3>
+                <h3><span>02</span> Apakah data transaksi dapat dipantau secara realtime?</h3>
                 <div class="faq-content">
-                  <p>Dolor sit amet consectetur adipiscing elit pellentesque habitant morbi. Id interdum velit laoreet id donec ultrices. Fringilla phasellus faucibus scelerisque eleifend donec pretium. Est pellentesque elit ullamcorper dignissim. Mauris ultrices eros in cursus turpis massa tincidunt dui.</p>
+                  <p>
+                    Ya, semua transaksi material dari pusat hingga cabang tercatat dan dapat dipantau secara <b>realtime</b>.  
+                    Hal ini memudahkan manajemen dalam mengambil keputusan cepat dan akurat.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
 
+              <!-- FAQ 3 -->
               <div class="faq-item">
-                <h3><span>03</span> Dolor sit amet consectetur adipiscing elit pellentesque?</h3>
+                <h3><span>03</span> Apakah tersedia fitur export laporan?</h3>
                 <div class="faq-content">
-                  <p>Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Faucibus pulvinar elementum integer enim. Sem nulla pharetra diam sit amet nisl suscipit. Rutrum tellus pellentesque eu tincidunt. Lectus urna duis convallis convallis tellus. Urna molestie at elementum eu facilisis sed odio morbi quis</p>
+                  <p>
+                    Sistem menyediakan fitur <b>export ke Excel maupun dokumen</b> sehingga pengguna dapat dengan mudah 
+                    membuat laporan transaksi dan rekap aktivitas harian untuk kebutuhan administrasi maupun analisis.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
+
+              <!-- FAQ 4 -->
+              <div class="faq-item">
+                <h3><span>04</span> Bagaimana kemudahan penggunaan sistem ini?</h3>
+                <div class="faq-content">
+                  <p>
+                    Tampilan antarmuka dibuat sederhana dan intuitif, sehingga mudah dipahami baik oleh admin pusat maupun pengguna di level cabang.  
+                    Semua menu navigasi dirancang agar proses monitoring lebih cepat dan efisien.
+                  </p>
+                </div>
+                <i class="faq-toggle bi bi-chevron-right"></i>
+              </div><!-- End FAQ item-->
 
             </div>
 
           </div>
 
           <div class="col-lg-5 order-1 order-lg-2 why-us-img">
-            <img src="{{ asset('landing_template/assets/img/why-us.png') }}" class="img-fluid" alt="" data-aos="zoom-in" data-aos-delay="100">
+            <img src="{{ asset('landing_template/assets/img/why-us.png') }}" class="img-fluid" alt="FAQ Monitoring Stok" data-aos="zoom-in" data-aos-delay="100">
           </div>
         </div>
 
@@ -227,47 +257,48 @@
     </section>
 
     <!-- About 3 -->
-    <section id="about" class="about section">
-
-      <!-- Section Title -->
-      {{-- <div class="container section-title" data-aos="fade-up">
-        <h2>About Us</h2>
-      </div><!-- End Section Title --> --}}
+    <section id="about-3" class="about section">
 
       <div class="container">
 
-        {{-- isi konten --}}
         <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-        <div class="row">
+          <div class="row">
 
-          <div class="col-lg-6 d-flex align-items-center">
-            <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="">
+            <div class="col-lg-6 d-flex align-items-center">
+              <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="Ilustrasi Fitur Utama">
+            </div>
+
+            <div class="col-lg-6 pt-4 pt-lg-0 content">
+
+              <h3>Fitur Utama Sistem Monitoring</h3>
+              <p class="fst-italic">
+                Sistem ini tidak hanya mencatat transaksi, tetapi juga dirancang untuk memberikan kemudahan, kecepatan, dan transparansi dalam proses distribusi material.
+              </p>
+
+              <ul>
+                <li><i class="bi bi-check-circle"></i> Pemantauan stok material secara realtime dari pusat hingga cabang.</li>
+                <li><i class="bi bi-check-circle"></i> Rekap aktivitas harian otomatis dan bisa diekspor ke Excel/Dokumen.</li>
+                <li><i class="bi bi-check-circle"></i> Pengelolaan akses berbasis role & permission menggunakan Spatie.</li>
+                <li><i class="bi bi-check-circle"></i> Dashboard interaktif yang menampilkan data transaksi per region.</li>
+              </ul>
+
+            </div>
           </div>
 
-          <div class="col-lg-6 pt-4 pt-lg-0 content">
-
-            <h3>Voluptatem dignissimos provident quasi corporis voluptas</h3>
-            <p class="fst-italic">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-            
-          </div>
         </div>
-
-      </div>
 
       </div>
 
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services section light-background">
+    <!-- Features Section -->
+    <section id="features" class="services section light-background">
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Services</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+        <h2>Fitur Utama</h2>
+        <p>Sistem ini dilengkapi berbagai fitur yang memudahkan monitoring, pelaporan, dan pengelolaan stok material secara terpusat maupun per cabang.</p>
       </div><!-- End Section Title -->
 
       <div class="container">
@@ -277,54 +308,56 @@
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="100">
             <div class="service-item position-relative">
               <div class="icon"><i class="bi bi-activity icon"></i></div>
-              <h4><a href="" class="stretched-link">Lorem Ipsum</a></h4>
-              <p>Voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi</p>
+              <h4><a href="#" class="stretched-link">Monitoring Realtime</a></h4>
+              <p>Pemantauan stok material dari pusat hingga cabang yang selalu terupdate secara realtime.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="200">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-bounding-box-circles icon"></i></div>
-              <h4><a href="" class="stretched-link">Sed ut perspici</a></h4>
-              <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore</p>
+              <div class="icon"><i class="bi bi-clipboard-data icon"></i></div>
+              <h4><a href="#" class="stretched-link">Rekap Harian</a></h4>
+              <p>Aktivitas transaksi material otomatis direkap harian untuk memudahkan pengawasan.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="300">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-calendar4-week icon"></i></div>
-              <h4><a href="" class="stretched-link">Magni Dolores</a></h4>
-              <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia</p>
+              <div class="icon"><i class="bi bi-file-earmark-excel icon"></i></div>
+              <h4><a href="#" class="stretched-link">Export Laporan</a></h4>
+              <p>Data dapat diekspor ke Excel atau dokumen lain untuk kebutuhan laporan dan analisis.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="400">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-broadcast icon"></i></div>
-              <h4><a href="" class="stretched-link">Nemo Enim</a></h4>
-              <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis</p>
+              <div class="icon"><i class="bi bi-shield-lock icon"></i></div>
+              <h4><a href="#" class="stretched-link">Role & Permission</a></h4>
+              <p>Pengelolaan akses pengguna berbasis role untuk menjaga keamanan dan keteraturan data.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
         </div>
 
       </div>
 
-    </section><!-- /Services Section -->
+    </section><!-- /Features Section -->
+
 
     <!-- Work Process Section -->
     <section id="work-process" class="work-process section">
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Work Process</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+        <h2>Alur Penggunaan Sistem</h2>
+        <p>Sistem monitoring ini dirancang sederhana dan terstruktur, mulai dari login hingga export dokumen, sehingga memudahkan pengguna dalam setiap proses pengelolaan material.</p>
       </div><!-- End Section Title -->
 
       <div class="container" data-aos="fade-up" data-aos-delay="100">
 
         <div class="row gy-5">
 
+          <!-- Step 1 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
             <div class="steps-item">
               <div class="steps-image">
@@ -332,26 +365,18 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">01</div>
-                <h3>Research &amp; Analysis</h3>
-                <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione.</p>
+                <h3>Login &amp; Registrasi</h3>
+                <p>Pengguna masuk ke sistem dengan akun yang sudah terdaftar atau melakukan registrasi terlebih dahulu sebelum mengakses fitur.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Market Research</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Data Analysis</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>User Feedback</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Login</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Registrasi Akun</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Akses Dashboard</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
           </div>
 
+          <!-- Step 2 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
             <div class="steps-item">
               <div class="steps-image">
@@ -359,26 +384,18 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">02</div>
-                <h3>Design &amp; Planning</h3>
-                <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.</p>
+                <h3>Kelola Data Material & Region</h3>
+                <p>CRUD data stok material serta data Region SPBE/BPT untuk memastikan setiap transaksi tercatat sesuai lokasi.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Wireframing</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>UI/UX Design</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Prototyping</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Tambah & Update Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Kelola Region SPBE/BPT</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Manajemen Data</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
           </div>
 
+          <!-- Step 3 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="400">
             <div class="steps-item">
               <div class="steps-image">
@@ -386,21 +403,54 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">03</div>
-                <h3>Development &amp; Launch</h3>
-                <p>Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil.</p>
+                <h3>Transaksi Material</h3>
+                <p>Melakukan transaksi penerimaan atau penyaluran produk material antar SPBE/BPT atau dari pusat.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Development</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Testing</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Deployment</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Penerimaan Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Penyaluran Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Distribusi Antar Region</span></div>
+                </div>
+              </div>
+            </div><!-- End Steps Item -->
+          </div>
+
+        </div>
+
+        <div class="row gy-5 mt-4">
+
+          <!-- Step 4 -->
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
+            <div class="steps-item">
+              <div class="steps-image">
+                <img src="{{ asset('landing_template/assets/img/steps/steps-1.webp') }}" alt="Step 4" class="img-fluid" loading="lazy">
+              </div>
+              <div class="steps-content">
+                <div class="steps-number">04</div>
+                <h3>Log Aktivitas Harian</h3>
+                <p>Semua transaksi otomatis tercatat dalam log aktivitas harian, sehingga memudahkan pelacakan dan evaluasi.</p>
+                <div class="steps-features">
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Catatan Otomatis</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>History Transaksi</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Monitoring Harian</span></div>
+                </div>
+              </div>
+            </div><!-- End Steps Item -->
+          </div>
+
+          <!-- Step 5 -->
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="600">
+            <div class="steps-item">
+              <div class="steps-image">
+                <img src="{{ asset('landing_template/assets/img/steps/steps-2.webp') }}" alt="Step 5" class="img-fluid" loading="lazy">
+              </div>
+              <div class="steps-content">
+                <div class="steps-number">05</div>
+                <h3>Export Dokumen</h3>
+                <p>Data transaksi dan rekap harian dapat diekspor ke dokumen Excel atau format lain untuk kebutuhan laporan.</p>
+                <div class="steps-features">
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Export Excel</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Laporan Otomatis</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Dokumentasi Data</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
@@ -411,6 +461,7 @@
       </div>
 
     </section><!-- /Work Process Section -->
+
 
     <!-- Contact Section -->
     <section id="contact" class="contact section">
@@ -464,12 +515,13 @@
       <div class="container">
         <div class="row justify-content-center text-center">
           <div class="col-lg-6">
-            <h4>Dapatkan Info & Penawaran Terbaru</h4>
-            <p>Daftarkan email Anda untuk mendapatkan berita terbaru seputar layanan kami dan tips manajemen logistik!</p>
+            <h4>Dapatkan Update & Tips Terbaru</h4>
+            <p>Daftarkan email Anda untuk menerima informasi terbaru seputar monitoring stok, laporan aktivitas harian, dan tips manajemen distribusi.</p>
           </div>
         </div>
       </div>
     </div>
+
 
     <div class="container footer-top">
       <div class="row gy-4 justify-content-between">
@@ -492,18 +544,18 @@
           <ul>
             <li><i class="bi bi-chevron-right"></i> <a href="#hero">Home</a></li>
             <li><i class="bi bi-chevron-right"></i> <a href="#about">Tentang Kami</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#services">Layanan</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Fitur</a></li>
             <li><i class="bi bi-chevron-right"></i> <a href="#contact">Kontak</a></li>
           </ul>
         </div>
 
         <div class="col-lg-3 col-md-3 footer-links">
-          <h4>Layanan Utama Kami</h4>
+          <h4>Fitur Utama Sistem</h4>
           <ul>
-            <li><i class="bi bi-chevron-right"></i> <a href="#services">Penyimpanan Barang</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#services">Manajemen Inventaris</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#services">Order Fulfillment</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#services">Sistem Keamanan 24/7</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Monitoring Stok Material</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Rekap Aktivitas Harian</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Export Data ke Excel/Dokumen</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Manajemen Akses (Role & Permission)</a></li>
           </ul>
         </div>
 
