@@ -35,9 +35,9 @@
                             <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                         </div>
                         <div class="col-12 col-md-auto">
-                            <button type="button" class="btn btn-success d-flex align-items-center justify-content-center mt-2 mt-md-0">
+                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
                                 <i class="fas fa-file-excel me-2"></i> Export Excel
-                            </button>
+                            </span>
                         </div>
                     </div>
 
@@ -372,6 +372,34 @@
 </div>
 @endforeach
 
+{{-- Modal untuk Export Excel --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data ke Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-secondary">Pilih rentang tanggal untuk data yang ingin Anda export.</p>
+                <div class="mb-3">
+                    <label for="exportStartDate" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="exportEndDate" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="exportEndDate">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                    <i class="fas fa-file-excel me-2"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -568,6 +596,24 @@
                     text: error.message
                 });
             });
+        });
+    });
+</script>
+
+{{-- modal export excel --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi modal Bootstrap
+        var exportModalElement = document.getElementById('exportExcelModal');
+        var exportModal = new bootstrap.Modal(exportModalElement);
+
+        // Cari tombol custom kita
+        var openExportModalBtn = document.getElementById('openExportModalBtn');
+
+        // Tambahkan event listener saat tombol custom di-klik
+        openExportModalBtn.addEventListener('click', function() {
+            // Tampilkan modal
+            exportModal.show();
         });
     });
 </script>

@@ -15,8 +15,6 @@ use Carbon\Carbon;
 
 class PusatController extends Controller
 {
-    // app/Http/Controllers/PusatController.php
-
     public function index(Request $request)
     {
         $filters = [
@@ -26,10 +24,10 @@ class PusatController extends Controller
         ];
 
         $query = Item::query()
-            ->whereNull('facility_id') // Hanya item Pusat
+            ->whereNull('facility_id') // hanya item pusat
             ->select('items.*');
 
-        // Filter pencarian (tidak berubah)
+        // 🔎 Filter pencarian
         $query->when($filters['search'], function ($q, $search) {
             return $q->where(function ($subQ) use ($search) {
                 $subQ->where('nama_material', 'like', '%' . $search . '%')
@@ -37,42 +35,71 @@ class PusatController extends Controller
             });
         });
 
-        // ======================== BLOK UTAMA PERBAIKAN QUERY ========================
+        // 📅 Filter item berdasarkan transaksi ATAU updated_at
+        $query->when($filters['start_date'] || $filters['end_date'], function ($q) use ($filters) {
+            $q->where(function ($sub) use ($filters) {
+                // Kondisi 1: ada transaksi di rentang tanggal
+                $sub->whereHas('transactions', function ($subQ) use ($filters) {
+                    if ($filters['start_date']) {
+                        $subQ->whereDate('created_at', '>=', $filters['start_date']);
+                    }
+                    if ($filters['end_date']) {
+                        $subQ->whereDate('created_at', '<=', $filters['end_date']);
+                    }
+                });
+
+                // Kondisi 2: item dibuat/diedit dalam rentang tanggal
+                if ($filters['start_date']) {
+                    $sub->orWhereDate('items.updated_at', '>=', $filters['start_date']);
+                }
+                if ($filters['end_date']) {
+                    $sub->whereDate('items.updated_at', '<=', $filters['end_date']);
+                }
+            });
+        });
+
+        // ➕ Subquery kalkulasi
         $query->addSelect([
-            // [FIX] PENERIMAAN: Cari transaksi yang DITUJUKAN ke region pusat ini
-            // dengan mencocokkan 'region_to' dan 'kode_material'.
+            // Penerimaan
             'penerimaan_total' => ItemTransaction::query()
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.region_to', 'items.region_id') // <-- Kunci Logika Baru
-                ->when($filters['start_date'], function ($q, $date) {
-                    $q->whereDate('item_transactions.created_at', '>=', $date);
+                ->whereColumn('item_transactions.region_to', 'items.region_id')
+                ->when($filters['start_date'], function ($subQ, $date) {
+                    $subQ->whereDate('item_transactions.created_at', '>=', $date);
                 })
-                ->when($filters['end_date'], function ($q, $date) {
-                    $q->whereDate('item_transactions.created_at', '<=', $date);
+                ->when($filters['end_date'], function ($subQ, $date) {
+                    $subQ->whereDate('item_transactions.created_at', '<=', $date);
                 })
                 ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
 
-            // PENYALURAN: Logika ini sudah benar, tidak perlu diubah.
-            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
+            // Penyaluran
+            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
-                ->whereNotNull('region_from')
-                ->when($filters['start_date'], function ($q, $date) {
-                    $q->whereDate('created_at', '>=', $date);
+                ->when($filters['start_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '>=', $date);
                 })
-                ->when($filters['end_date'], function ($q, $date) {
-                    $q->whereDate('created_at', '<=', $date);
+                ->when($filters['end_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '<=', $date);
                 }),
         ]);
-        // =========================================================================
 
+        // Ambil transaksi terbaru
         $query->withMax('transactions as latest_transaction_date', 'created_at');
 
+        // Urutkan by updated_at
         $items = $query->latest('updated_at')->paginate(10)->withQueryString();
+
         $facilities = Facility::orderBy('name')->get();
 
-        return view('dashboard_page.menu.data_pusat', compact('items', 'filters', 'facilities'));
+        return view('dashboard_page.menu.data_pusat', [
+            'items' => $items,
+            'filters' => $filters,
+            'facilities' => $facilities,
+        ]);
     }
+
+
 
     public function create()
     {
