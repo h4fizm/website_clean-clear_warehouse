@@ -223,6 +223,7 @@
     </div>
 </div>
 
+{{-- modal export excel --}}
 <div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -252,21 +253,61 @@
 </div>
 
 @push('scripts')
+{{-- modal export excel --}}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inisialisasi modal Bootstrap
-    var exportModalElement = document.getElementById('exportExcelModal');
-    var exportModal = new bootstrap.Modal(exportModalElement);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi modal Bootstrap
+        const exportModalElement = document.getElementById('exportExcelModal');
+        const exportModal = new bootstrap.Modal(exportModalElement);
 
-    // Cari tombol custom kita
-    var openExportModalBtn = document.getElementById('openExportModalBtn');
+        // Cari semua tombol yang relevan
+        const openExportModalBtn = document.getElementById('openExportModalBtn');
+        const confirmExportBtn = document.getElementById('confirmExportBtn');
+        const searchInput = document.querySelector('input[name="search"]');
 
-    // Tambahkan event listener saat tombol custom di-klik
-    openExportModalBtn.addEventListener('click', function() {
-        // Tampilkan modal
-        exportModal.show();
+        // Event listener untuk membuka modal
+        if (openExportModalBtn) {
+            openExportModalBtn.addEventListener('click', function() {
+                exportModal.show();
+            });
+        }
+
+        // Event listener untuk tombol "Export" di dalam modal
+        if (confirmExportBtn) {
+            confirmExportBtn.addEventListener('click', function() {
+                // 1. Ambil nilai filter dari modal
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+                
+                // 2. Ambil nilai filter pencarian utama dari halaman
+                const searchValue = searchInput ? searchInput.value : '';
+
+                // 3. Siapkan URL dasar dari route Laravel
+                const baseUrl = "{{ route('aktivitas.transaksi.export') }}";
+
+                // 4. Buat URLSearchParams untuk menambahkan semua parameter filter
+                const params = new URLSearchParams();
+                if (startDate) {
+                    params.append('start_date', startDate);
+                }
+                if (endDate) {
+                    params.append('end_date', endDate);
+                }
+                if (searchValue) {
+                    params.append('search', searchValue);
+                }
+
+                // 5. Gabungkan URL dasar dengan parameter
+                const exportUrl = `${baseUrl}?${params.toString()}`;
+
+                // 6. Sembunyikan modal
+                exportModal.hide();
+
+                // 7. Arahkan browser ke URL export untuk memulai download
+                window.location.href = exportUrl;
+            });
+        }
     });
-});
 </script>
 @endpush
 

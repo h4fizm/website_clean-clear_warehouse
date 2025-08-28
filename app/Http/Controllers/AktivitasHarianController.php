@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ItemTransaction;
+use App\Exports\TransaksiLogExport; // <-- Tambahkan ini
+use Maatwebsite\Excel\Facades\Excel; // <-- Tambahkan ini
+use Carbon\Carbon; // <-- Tambahkan ini
 
 class AktivitasHarianController extends Controller
 {
@@ -91,5 +94,20 @@ class AktivitasHarianController extends Controller
             'startDate',
             'endDate'
         ));
+    }
+
+    public function exportTransaksiExcel(Request $request)
+    {
+        $filters = [
+            'search' => $request->query('search'),
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+        ];
+
+        // Sesuai permintaan Anda, format tanggal menjadi Hari, Tanggal Bulan Tahun
+        $today = Carbon::now()->isoFormat('dddd, D MMMM YYYY');
+        $filename = "Laporan Aktivitas Transaksi - Dicetak {$today}.xlsx";
+
+        return Excel::download(new TransaksiLogExport($filters), $filename);
     }
 }

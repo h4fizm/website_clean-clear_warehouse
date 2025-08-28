@@ -443,6 +443,7 @@
     });
 </script>
 
+{{-- script transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil data facilities dari Controller
@@ -605,17 +606,51 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi modal Bootstrap
-        var exportModalElement = document.getElementById('exportExcelModal');
-        var exportModal = new bootstrap.Modal(exportModalElement);
+        const exportModalElement = document.getElementById('exportExcelModal');
+        const exportModal = new bootstrap.Modal(exportModalElement);
 
-        // Cari tombol custom kita
-        var openExportModalBtn = document.getElementById('openExportModalBtn');
+        // Cari tombol untuk membuka modal
+        const openExportModalBtn = document.getElementById('openExportModalBtn');
+        // Cari tombol konfirmasi export di dalam modal
+        const confirmExportBtn = document.getElementById('confirmExportBtn');
 
-        // Tambahkan event listener saat tombol custom di-klik
-        openExportModalBtn.addEventListener('click', function() {
-            // Tampilkan modal
-            exportModal.show();
-        });
+        // Tambahkan event listener saat tombol untuk membuka modal di-klik
+        if (openExportModalBtn) {
+            openExportModalBtn.addEventListener('click', function() {
+                // Tampilkan modal
+                exportModal.show();
+            });
+        }
+
+        // Tambahkan event listener untuk tombol "Export" di dalam modal
+        if (confirmExportBtn) {
+            confirmExportBtn.addEventListener('click', function() {
+                // 1. Ambil nilai dari input tanggal
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+
+                // 2. Siapkan URL dasar dari route Laravel
+                const baseUrl = "{{ route('pusat.export') }}";
+
+                // 3. Buat URLSearchParams untuk menambahkan parameter tanggal
+                const params = new URLSearchParams();
+                if (startDate) {
+                    params.append('start_date', startDate);
+                }
+                if (endDate) {
+                    params.append('end_date', endDate);
+                }
+
+                // 4. Gabungkan URL dasar dengan parameter
+                const exportUrl = `${baseUrl}?${params.toString()}`;
+
+                // 5. Sembunyikan modal
+                exportModal.hide();
+
+                // 6. Arahkan browser ke URL export untuk memulai download
+                window.location.href = exportUrl;
+            });
+        }
     });
 </script>
 

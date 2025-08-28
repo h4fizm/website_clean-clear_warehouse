@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel; // <-- Tambahkan ini
+use App\Exports\PusatDataExport;     // <-- Tambahkan ini
 use App\Models\Item;
 use App\Models\Facility;
 use App\Models\ItemTransaction;
@@ -98,14 +100,10 @@ class PusatController extends Controller
             'facilities' => $facilities,
         ]);
     }
-
-
-
     public function create()
     {
         return view('dashboard_page.menu.tambah_material');
     }
-
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -127,7 +125,6 @@ class PusatController extends Controller
         ]);
         return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
     }
-
     public function update(Request $request, Item $item)
     {
         // 1. Tambahkan validasi untuk stok_awal
@@ -192,8 +189,6 @@ class PusatController extends Controller
 
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
     }
-
-
     public function destroy(Item $item)
     {
         if ($item->transactions()->exists()) {
@@ -203,7 +198,6 @@ class PusatController extends Controller
         $item->delete();
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil dihapus!');
     }
-
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -301,5 +295,28 @@ class PusatController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
+    }
+    public function exportExcel(Request $request)
+    {
+        // Validasi sederhana, pastikan tanggalnya valid jika ada
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        // Ambil filter dari request, sama seperti di method index
+        $filters = [
+            'search' => $request->query('search'),
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+        ];
+
+        // Buat nama file yang dinamis
+        $startDate = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d-m-Y') : 'Awal';
+        $endDate = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d-m-Y') : 'Akhir';
+        $filename = "Laporan Data Pusat ({$startDate} - {$endDate}).xlsx";
+
+        // Panggil class Export dan download file
+        return Excel::download(new PusatDataExport($filters), $filename);
     }
 }

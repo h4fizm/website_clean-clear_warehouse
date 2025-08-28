@@ -59,6 +59,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('pusat.index')
         ->middleware(['can:manage data playang']);
 
+    // Route baru untuk export Excel
+    Route::get('/pusat/export', [PusatController::class, 'exportExcel'])
+        ->name('pusat.export')
+        ->middleware(['can:manage data playang']);
+
     // Laman untuk menampilkan form tambah material pusat
     Route::get('/pusat/create', [PusatController::class, 'create'])
         ->name('pusat.create')
@@ -139,6 +144,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('aktivitas.index') // Menambahkan nama route
         ->middleware('can:manage aktivitas harian'); // Middleware di sini
 
+    // ===== TAMBAHKAN ROUTE DI BAWAH INI =====
+    Route::get('/aktivitas/transaksi/export', [AktivitasHarianController::class, 'exportTransaksiExcel'])
+        ->name('aktivitas.transaksi.export')
+        ->middleware('can:manage aktivitas harian');
+
     // Route untuk halaman log transaksi
     Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'logTransaksi'])
         ->name('aktivitas.transaksi') // Menambahkan nama route
@@ -146,7 +156,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
-
 
     // ini dibiarkan dulu
     Route::get('/upp-material', function () {
