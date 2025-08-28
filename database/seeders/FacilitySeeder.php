@@ -13,10 +13,6 @@ class FacilitySeeder extends Seeder
     public function run(): void
     {
         $facilities = [
-            // Region 1 - P. Layang
-            ['name' => 'SPBE P. Layang', 'kode_plant' => 'PLY001', 'province' => 'Kalimantan Selatan', 'regency' => 'Kotabaru', 'type' => 'SPBE', 'region_id' => 1],
-            ['name' => 'BPT P. Layang', 'kode_plant' => 'PLY002', 'province' => 'Kalimantan Selatan', 'regency' => 'Kotabaru', 'type' => 'BPT', 'region_id' => 1],
-
             // Region 2 - Jambi
             ['name' => 'SPBE Jambi', 'kode_plant' => 'JMB001', 'province' => 'Jambi', 'regency' => 'Kota Jambi', 'type' => 'SPBE', 'region_id' => 2],
             ['name' => 'BPT Jambi', 'kode_plant' => 'JMB002', 'province' => 'Jambi', 'regency' => 'Muaro Jambi', 'type' => 'BPT', 'region_id' => 2],

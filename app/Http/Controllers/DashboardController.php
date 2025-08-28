@@ -34,27 +34,27 @@ class DashboardController extends Controller
             ['title' => 'UPP Material', 'value' => $totalUpp, 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
         ];
 
-        // 3. Mengambil data material dari PUSAT SAJA dengan paginasi dan search
-        // ✅ PERUBAHAN DI SINI: Ditambahkan ->whereNull('facility_id')
-        $query = Item::whereNull('facility_id');
+        // 3. Ambil data material dari PUSAT SAJA (facility_id null) + pencarian
+        $query = Item::query()
+            ->whereNull('facility_id')
+            ->when($request->filled('search_material'), function ($q) use ($request) {
+                $searchTerm = $request->search_material;
+                $q->where(function ($sub) use ($searchTerm) {
+                    $sub->where('nama_material', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('kode_material', 'like', '%' . $searchTerm . '%');
+                });
+            })
+            ->orderByDesc('id');
 
-        if ($request->has('search_material') && $request->search_material != '') {
-            $searchTerm = $request->search_material;
-            // Query di dalam where untuk memastikan kondisi whereNull tetap berlaku
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('nama_material', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('kode_material', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
-        $items = $query->latest()->paginate(5)->appends($request->only('search_material'));
+        // Paginate hasil
+        $items = $query->paginate(5)->appends($request->only('search_material'));
 
         // Kirim semua data ke view
         return view('dashboard_page.menu.dashboard', [
             'user' => $user,
             'roleName' => $roleName,
             'cards' => $cards,
-            'items' => $items
+            'items' => $items,
         ]);
     }
 }
