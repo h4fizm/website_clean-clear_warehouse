@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class PusatDataExport implements FromQuery, WithHeadings, WithMapping
 {
@@ -21,7 +22,6 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
 
     /**
      * Mendefinisikan judul kolom di file Excel.
-     * @return array
      */
     public function headings(): array
     {
@@ -38,8 +38,6 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
 
     /**
      * Memetakan data dari setiap item ke baris Excel.
-     * @param mixed $item
-     * @return array
      */
     public function map($item): array
     {
@@ -58,11 +56,11 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * Ini adalah query utama yang mengambil data.
-     * Kita copy-paste dari method index() di controller Anda.
-     * @return \Illuminate\Database\Query\Builder
+     * Query utama untuk export.
+     *
+     * @return Builder
      */
-    public function query()
+    public function query(): Builder
     {
         $filters = $this->filters;
 

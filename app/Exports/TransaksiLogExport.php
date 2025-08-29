@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
 {
@@ -17,9 +18,6 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
         $this->filters = $filters;
     }
 
-    /**
-     * @return array
-     */
     public function headings(): array
     {
         return [
@@ -38,10 +36,6 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
         ];
     }
 
-    /**
-     * @param mixed $transaction
-     * @return array
-     */
     public function map($transaction): array
     {
         $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
@@ -72,25 +66,35 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * @return \Illuminate\Database\Query\Builder
+     * Query utama untuk export.
+     *
+     * @return Builder
      */
-    public function query()
+    public function query(): Builder
     {
         $search = $this->filters['search'];
         $startDate = $this->filters['start_date'];
         $endDate = $this->filters['end_date'];
 
-        // === Copy-paste query dari controller Anda ===
-        $query = ItemTransaction::with(['item', 'user', 'facilityFrom', 'facilityTo', 'regionFrom', 'regionTo']);
+        $query = ItemTransaction::with([
+            'item',
+            'user',
+            'facilityFrom',
+            'facilityTo',
+            'regionFrom',
+            'regionTo'
+        ]);
 
         $query->when($search, function ($q) use ($search) {
             $q->where(function ($subQuery) use ($search) {
                 $subQuery->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
                     ->orWhere('no_ba_serah_terima', 'like', "%{$search}%");
+
                 $subQuery->orWhereHas('item', function ($itemQuery) use ($search) {
                     $itemQuery->where('nama_material', 'like', "%{$search}%")
                         ->orWhere('kode_material', 'like', "%{$search}%");
                 });
+
                 $subQuery->orWhereHas('user', fn($q) => $q->where('name', 'like', "%{$search}%"));
                 $subQuery->orWhereHas('facilityFrom', fn($q) => $q->where('name', 'like', "%{$search}%"));
                 $subQuery->orWhereHas('facilityTo', fn($q) => $q->where('name', 'like', "%{$search}%"));
