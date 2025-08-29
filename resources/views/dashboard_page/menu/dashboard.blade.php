@@ -96,7 +96,9 @@
                                         </div>
                                     </td>
                                     <td><div class="text-center"><h6 class="text-sm mb-0">{{ $item->kode_material }}</h6></div></td>
-                                    <td class="text-center"><h6 class="text-sm mb-0">{{ number_format($item->stok_akhir) }} pcs</h6></td>
+                                    <td class="text-center">
+                                        <h6 class="text-sm mb-0">{{ number_format($item->total_stok_awal) }} pcs</h6>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

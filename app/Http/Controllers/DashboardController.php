@@ -34,9 +34,14 @@ class DashboardController extends Controller
             ['title' => 'UPP Material', 'value' => $totalUpp, 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
         ];
 
-        // 3. Ambil data material dari PUSAT SAJA (facility_id null) + pencarian
+        // 3. Ambil semua data material (pusat + semua region) + pencarian
         $query = Item::query()
-            ->whereNull('facility_id')
+            ->selectRaw('
+                            nama_material,
+                            kode_material,
+                            SUM(stok_awal) as total_stok_awal
+                        ')
+            ->groupBy('nama_material', 'kode_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
                 $searchTerm = $request->search_material;
                 $q->where(function ($sub) use ($searchTerm) {
@@ -44,10 +49,12 @@ class DashboardController extends Controller
                         ->orWhere('kode_material', 'like', '%' . $searchTerm . '%');
                 });
             })
-            ->orderByDesc('id');
+            ->orderBy('nama_material');
 
         // Paginate hasil
         $items = $query->paginate(5)->appends($request->only('search_material'));
+
+
 
         // Kirim semua data ke view
         return view('dashboard_page.menu.dashboard', [
