@@ -9,8 +9,8 @@
   <meta name="keywords" content="">
 
   <!-- Favicons -->
-  <link href="{{ asset('landing_template/assets/img/favicon.png') }}" rel="icon">
-  <link href="{{ asset('landing_template/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+  <link href="{{ asset('dashboard_template/assets/img/icon.PNG') }}" rel="icon">
+  <link href="{{ asset('dashboard_template/assets/img/icon.PNG') }}" rel="apple-touch-icon">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -30,41 +30,20 @@
 
 <body class="index-page">
 
+  {{-- HEADER --}}
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid container-xl position-relative d-flex align-items-center">
 
-      <a href="index.html" class="logo d-flex align-items-center me-auto">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.webp" alt=""> -->
-        <h1 class="sitename">Arsha</h1>
+      <a href="/" class="logo d-flex align-items-center me-auto">
+        <h1 class="sitename">Clean & Clear Warehouse</h1>
       </a>
 
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="#hero" class="active">Home</a></li>
           <li><a href="#about">About</a></li>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#portfolio">Portfolio</a></li>
-          <li><a href="#team">Team</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="blog.html">Blog</a></li>
-          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#work-process">Work Process</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -83,10 +62,10 @@
       <div class="container">
         <div class="row gy-4">
           <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center" data-aos="zoom-out">
-            <h1>Better Solutions For Your Business</h1>
-            <p>We are team of talented designers making websites with Bootstrap</p>
+            <h1>Solusi Cerdas untuk Monitoring Stok Material</h1>
+            <p>Sistem pemantau stok material lengkap dengan rekap aktivitas harian serta fitur ekspor dokumen.</p>
             <div class="d-flex">
-              <a href="#about" class="btn-get-started">Sign In</a>
+              <a href="/register" class="btn-get-started">Registrasi Akun</a>
             </div>
           </div>
           <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out" data-aos-delay="200">
@@ -156,42 +135,48 @@
 
     </section><!-- /Clients Section -->
 
-    <!-- About Section -->
+    <!-- About 1 Section -->
     <section id="about" class="about section">
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>About Us</h2>
+        <h2>Tentang</h2>
       </div><!-- End Section Title -->
 
       <div class="container">
 
-        <div class="row gy-4">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-          <div class="col-lg-6 content" data-aos="fade-up" data-aos-delay="100">
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-              magna aliqua.
-            </p>
-            <ul>
-              <li><i class="bi bi-check2-circle"></i> <span>Ullamco laboris nisi ut aliquip ex ea commodo consequat.</span></li>
-              <li><i class="bi bi-check2-circle"></i> <span>Duis aute irure dolor in reprehenderit in voluptate velit.</span></li>
-              <li><i class="bi bi-check2-circle"></i> <span>Ullamco laboris nisi ut aliquip ex ea commodo</span></li>
-            </ul>
-          </div>
+          <div class="row">
 
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
-            <p>Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. </p>
-            <a href="#" class="read-more"><span>Read More</span><i class="bi bi-arrow-right"></i></a>
+            <div class="col-lg-6 d-flex align-items-center">
+              <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="Ilustrasi Monitoring Stok Material">
+            </div>
+
+            <div class="col-lg-6 pt-4 pt-lg-0 content">
+
+              <h3>Monitoring Transaksi Material Secara Realtime</h3>
+              <p class="fst-italic">
+                Website ini dirancang untuk memudahkan pemantauan transaksi material dari pusat <b>Pulau Layang</b> ke berbagai <b>Sales Area</b> 
+                termasuk Jambi, Bengkulu, Lampung, dan 6 SA lainnya. 
+              </p>
+              <p>
+                Seluruh data transaksi dapat dipantau secara <b>realtime</b>, dilengkapi fitur rekap aktivitas harian, 
+                serta dapat diekspor ke dalam berbagai format dokumen. 
+                Dengan sistem ini, pengguna lebih mudah dalam melacak <b>history transaksi material per region</b> 
+                dan memastikan distribusi material berjalan transparan serta efisien.
+              </p>
+
+            </div>
           </div>
 
         </div>
 
       </div>
 
-    </section><!-- /About Section -->
+    </section>
 
-    <!-- Why Us Section -->
+    {{-- About 2 / FAQ --}}
     <section id="why-us" class="section why-us light-background" data-builder="section">
 
       <div class="container-fluid">
@@ -201,116 +186,119 @@
           <div class="col-lg-7 d-flex flex-column justify-content-center order-2 order-lg-1">
 
             <div class="content px-xl-5" data-aos="fade-up" data-aos-delay="100">
-              <h3><span>Eum ipsam laborum deleniti </span><strong>velit pariatur architecto aut nihil</strong></h3>
+              <h3><span>Pertanyaan Umum </span><strong>Tentang Sistem Ini</strong></h3>
               <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Duis aute irure dolor in reprehenderit
+                Berikut beberapa pertanyaan yang sering diajukan seputar teknologi dan fitur utama pada website monitoring stok material ini.
               </p>
             </div>
 
             <div class="faq-container px-xl-5" data-aos="fade-up" data-aos-delay="200">
 
+              <!-- FAQ 1 -->
               <div class="faq-item faq-active">
-
-                <h3><span>01</span> Non consectetur a erat nam at lectus urna duis?</h3>
+                <h3><span>01</span> Apa teknologi stack yang digunakan?</h3>
                 <div class="faq-content">
-                  <p>Feugiat pretium nibh ipsum consequat. Tempus iaculis urna id volutpat lacus laoreet non curabitur gravida. Venenatis lectus magna fringilla urna porttitor rhoncus dolor purus non.</p>
+                  <p>
+                    Website ini dibangun menggunakan <b>Laravel</b> sebagai framework utama, 
+                    <b>MySQL</b> untuk basis data, dan <b>Bootstrap</b> untuk tampilan berbasis SSR (Server Side Rendering).  
+                    Selain itu, sistem ini juga menggunakan <b>Spatie Laravel Permission</b> untuk mengelola role dan akses pengguna.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
 
+              <!-- FAQ 2 -->
               <div class="faq-item">
-                <h3><span>02</span> Feugiat scelerisque varius morbi enim nunc faucibus a pellentesque?</h3>
+                <h3><span>02</span> Apakah data transaksi dapat dipantau secara realtime?</h3>
                 <div class="faq-content">
-                  <p>Dolor sit amet consectetur adipiscing elit pellentesque habitant morbi. Id interdum velit laoreet id donec ultrices. Fringilla phasellus faucibus scelerisque eleifend donec pretium. Est pellentesque elit ullamcorper dignissim. Mauris ultrices eros in cursus turpis massa tincidunt dui.</p>
+                  <p>
+                    Ya, semua transaksi material dari pusat hingga cabang tercatat dan dapat dipantau secara <b>realtime</b>.  
+                    Hal ini memudahkan manajemen dalam mengambil keputusan cepat dan akurat.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
 
+              <!-- FAQ 3 -->
               <div class="faq-item">
-                <h3><span>03</span> Dolor sit amet consectetur adipiscing elit pellentesque?</h3>
+                <h3><span>03</span> Apakah tersedia fitur export laporan?</h3>
                 <div class="faq-content">
-                  <p>Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Faucibus pulvinar elementum integer enim. Sem nulla pharetra diam sit amet nisl suscipit. Rutrum tellus pellentesque eu tincidunt. Lectus urna duis convallis convallis tellus. Urna molestie at elementum eu facilisis sed odio morbi quis</p>
+                  <p>
+                    Sistem menyediakan fitur <b>export ke Excel maupun dokumen</b> sehingga pengguna dapat dengan mudah 
+                    membuat laporan transaksi dan rekap aktivitas harian untuk kebutuhan administrasi maupun analisis.
+                  </p>
                 </div>
                 <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
+              </div><!-- End FAQ item-->
+
+              <!-- FAQ 4 -->
+              <div class="faq-item">
+                <h3><span>04</span> Bagaimana kemudahan penggunaan sistem ini?</h3>
+                <div class="faq-content">
+                  <p>
+                    Tampilan antarmuka dibuat sederhana dan intuitif, sehingga mudah dipahami baik oleh admin pusat maupun pengguna di level cabang.  
+                    Semua menu navigasi dirancang agar proses monitoring lebih cepat dan efisien.
+                  </p>
+                </div>
+                <i class="faq-toggle bi bi-chevron-right"></i>
+              </div><!-- End FAQ item-->
 
             </div>
 
           </div>
 
           <div class="col-lg-5 order-1 order-lg-2 why-us-img">
-            <img src="{{ asset('landing_template/assets/img/why-us.png') }}" class="img-fluid" alt="" data-aos="zoom-in" data-aos-delay="100">
+            <img src="{{ asset('landing_template/assets/img/why-us.png') }}" class="img-fluid" alt="FAQ Monitoring Stok" data-aos="zoom-in" data-aos-delay="100">
           </div>
         </div>
 
       </div>
 
-    </section><!-- /Why Us Section -->
+    </section>
 
-    <!-- Skills Section -->
-    <section id="skills" class="skills section">
+    <!-- About 3 -->
+    <section id="about-3" class="about section">
 
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <div class="container">
 
-        <div class="row">
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
 
-          <div class="col-lg-6 d-flex align-items-center">
-            <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="">
-          </div>
+          <div class="row">
 
-          <div class="col-lg-6 pt-4 pt-lg-0 content">
-
-            <h3>Voluptatem dignissimos provident quasi corporis voluptas</h3>
-            <p class="fst-italic">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-
-            <div class="skills-content skills-animation">
-
-              <div class="progress">
-                <span class="skill"><span>HTML</span> <i class="val">100%</i></span>
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-              </div><!-- End Skills Item -->
-
-              <div class="progress">
-                <span class="skill"><span>CSS</span> <i class="val">90%</i></span>
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-              </div><!-- End Skills Item -->
-
-              <div class="progress">
-                <span class="skill"><span>JavaScript</span> <i class="val">75%</i></span>
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-              </div><!-- End Skills Item -->
-
-              <div class="progress">
-                <span class="skill"><span>Photoshop</span> <i class="val">55%</i></span>
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar" role="progressbar" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-              </div><!-- End Skills Item -->
-
+            <div class="col-lg-6 d-flex align-items-center">
+              <img src="{{ asset('landing_template/assets/img/illustration/illustration-10.webp') }}" class="img-fluid" alt="Ilustrasi Fitur Utama">
             </div>
 
+            <div class="col-lg-6 pt-4 pt-lg-0 content">
+
+              <h3>Fitur Utama Sistem Monitoring</h3>
+              <p class="fst-italic">
+                Sistem ini tidak hanya mencatat transaksi, tetapi juga dirancang untuk memberikan kemudahan, kecepatan, dan transparansi dalam proses distribusi material.
+              </p>
+
+              <ul>
+                <li><i class="bi bi-check-circle"></i> Pemantauan stok material secara realtime dari pusat hingga cabang.</li>
+                <li><i class="bi bi-check-circle"></i> Rekap aktivitas harian otomatis dan bisa diekspor ke Excel/Dokumen.</li>
+                <li><i class="bi bi-check-circle"></i> Pengelolaan akses berbasis role & permission menggunakan Spatie.</li>
+                <li><i class="bi bi-check-circle"></i> Dashboard interaktif yang menampilkan data transaksi per region.</li>
+              </ul>
+
+            </div>
           </div>
+
         </div>
 
       </div>
 
-    </section><!-- /Skills Section -->
+    </section>
 
-    <!-- Services Section -->
-    <section id="services" class="services section light-background">
+    <!-- Features Section -->
+    <section id="features" class="services section light-background">
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Services</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+        <h2>Fitur Utama</h2>
+        <p>Sistem ini dilengkapi berbagai fitur yang memudahkan monitoring, pelaporan, dan pengelolaan stok material secara terpusat maupun per cabang.</p>
       </div><!-- End Section Title -->
 
       <div class="container">
@@ -320,54 +308,56 @@
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="100">
             <div class="service-item position-relative">
               <div class="icon"><i class="bi bi-activity icon"></i></div>
-              <h4><a href="" class="stretched-link">Lorem Ipsum</a></h4>
-              <p>Voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi</p>
+              <h4><a href="#" class="stretched-link">Monitoring Realtime</a></h4>
+              <p>Pemantauan stok material dari pusat hingga cabang yang selalu terupdate secara realtime.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="200">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-bounding-box-circles icon"></i></div>
-              <h4><a href="" class="stretched-link">Sed ut perspici</a></h4>
-              <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore</p>
+              <div class="icon"><i class="bi bi-clipboard-data icon"></i></div>
+              <h4><a href="#" class="stretched-link">Rekap Harian</a></h4>
+              <p>Aktivitas transaksi material otomatis direkap harian untuk memudahkan pengawasan.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="300">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-calendar4-week icon"></i></div>
-              <h4><a href="" class="stretched-link">Magni Dolores</a></h4>
-              <p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia</p>
+              <div class="icon"><i class="bi bi-file-earmark-excel icon"></i></div>
+              <h4><a href="#" class="stretched-link">Export Laporan</a></h4>
+              <p>Data dapat diekspor ke Excel atau dokumen lain untuk kebutuhan laporan dan analisis.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
           <div class="col-xl-3 col-md-6 d-flex" data-aos="fade-up" data-aos-delay="400">
             <div class="service-item position-relative">
-              <div class="icon"><i class="bi bi-broadcast icon"></i></div>
-              <h4><a href="" class="stretched-link">Nemo Enim</a></h4>
-              <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis</p>
+              <div class="icon"><i class="bi bi-shield-lock icon"></i></div>
+              <h4><a href="#" class="stretched-link">Role & Permission</a></h4>
+              <p>Pengelolaan akses pengguna berbasis role untuk menjaga keamanan dan keteraturan data.</p>
             </div>
-          </div><!-- End Service Item -->
+          </div><!-- End Feature Item -->
 
         </div>
 
       </div>
 
-    </section><!-- /Services Section -->
+    </section><!-- /Features Section -->
+
 
     <!-- Work Process Section -->
     <section id="work-process" class="work-process section">
 
       <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Work Process</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+        <h2>Alur Penggunaan Sistem</h2>
+        <p>Sistem monitoring ini dirancang sederhana dan terstruktur, mulai dari login hingga export dokumen, sehingga memudahkan pengguna dalam setiap proses pengelolaan material.</p>
       </div><!-- End Section Title -->
 
       <div class="container" data-aos="fade-up" data-aos-delay="100">
 
         <div class="row gy-5">
 
+          <!-- Step 1 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
             <div class="steps-item">
               <div class="steps-image">
@@ -375,26 +365,18 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">01</div>
-                <h3>Research &amp; Analysis</h3>
-                <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione.</p>
+                <h3>Login &amp; Registrasi</h3>
+                <p>Pengguna masuk ke sistem dengan akun yang sudah terdaftar atau melakukan registrasi terlebih dahulu sebelum mengakses fitur.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Market Research</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Data Analysis</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>User Feedback</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Login</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Registrasi Akun</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Akses Dashboard</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
           </div>
 
+          <!-- Step 2 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
             <div class="steps-item">
               <div class="steps-image">
@@ -402,26 +384,18 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">02</div>
-                <h3>Design &amp; Planning</h3>
-                <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.</p>
+                <h3>Kelola Data Material & Region</h3>
+                <p>CRUD data stok material serta data Region SPBE/BPT untuk memastikan setiap transaksi tercatat sesuai lokasi.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Wireframing</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>UI/UX Design</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Prototyping</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Tambah & Update Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Kelola Region SPBE/BPT</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Manajemen Data</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
           </div>
 
+          <!-- Step 3 -->
           <div class="col-lg-4" data-aos="fade-up" data-aos-delay="400">
             <div class="steps-item">
               <div class="steps-image">
@@ -429,21 +403,54 @@
               </div>
               <div class="steps-content">
                 <div class="steps-number">03</div>
-                <h3>Development &amp; Launch</h3>
-                <p>Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil.</p>
+                <h3>Transaksi Material</h3>
+                <p>Melakukan transaksi penerimaan atau penyaluran produk material antar SPBE/BPT atau dari pusat.</p>
                 <div class="steps-features">
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Development</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Testing</span>
-                  </div>
-                  <div class="feature-item">
-                    <i class="bi bi-check-circle"></i>
-                    <span>Deployment</span>
-                  </div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Penerimaan Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Penyaluran Material</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Distribusi Antar Region</span></div>
+                </div>
+              </div>
+            </div><!-- End Steps Item -->
+          </div>
+
+        </div>
+
+        <div class="row gy-5 mt-4">
+
+          <!-- Step 4 -->
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
+            <div class="steps-item">
+              <div class="steps-image">
+                <img src="{{ asset('landing_template/assets/img/steps/steps-1.webp') }}" alt="Step 4" class="img-fluid" loading="lazy">
+              </div>
+              <div class="steps-content">
+                <div class="steps-number">04</div>
+                <h3>Log Aktivitas Harian</h3>
+                <p>Semua transaksi otomatis tercatat dalam log aktivitas harian, sehingga memudahkan pelacakan dan evaluasi.</p>
+                <div class="steps-features">
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Catatan Otomatis</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>History Transaksi</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Monitoring Harian</span></div>
+                </div>
+              </div>
+            </div><!-- End Steps Item -->
+          </div>
+
+          <!-- Step 5 -->
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="600">
+            <div class="steps-item">
+              <div class="steps-image">
+                <img src="{{ asset('landing_template/assets/img/steps/steps-2.webp') }}" alt="Step 5" class="img-fluid" loading="lazy">
+              </div>
+              <div class="steps-content">
+                <div class="steps-number">05</div>
+                <h3>Export Dokumen</h3>
+                <p>Data transaksi dan rekap harian dapat diekspor ke dokumen Excel atau format lain untuk kebutuhan laporan.</p>
+                <div class="steps-features">
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Export Excel</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Laporan Otomatis</span></div>
+                  <div class="feature-item"><i class="bi bi-check-circle"></i><span>Dokumentasi Data</span></div>
                 </div>
               </div>
             </div><!-- End Steps Item -->
@@ -455,702 +462,110 @@
 
     </section><!-- /Work Process Section -->
 
-    <!-- Call To Action Section -->
-    <section id="call-to-action" class="call-to-action section dark-background">
-
-      <img src="{{ asset('landing_template/assets/img/bg/bg-8.webp') }}" alt="">
-
-      <div class="container">
-
-        <div class="row" data-aos="zoom-in" data-aos-delay="100">
-          <div class="col-xl-9 text-center text-xl-start">
-            <h3>Call To Action</h3>
-            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          </div>
-          <div class="col-xl-3 cta-btn-container text-center">
-            <a class="cta-btn align-middle" href="#">Call To Action</a>
-          </div>
-        </div>
-
-      </div>
-
-    </section><!-- /Call To Action Section -->
-
-    <!-- Portfolio Section -->
-    <section id="portfolio" class="portfolio section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Portfolio</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
-
-      <div class="container">
-
-        <div class="isotope-layout" data-default-filter="*" data-layout="masonry" data-sort="original-order">
-
-          <ul class="portfolio-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
-            <li data-filter="*" class="filter-active">All</li>
-            <li data-filter=".filter-app">App</li>
-            <li data-filter=".filter-product">Card</li>
-            <li data-filter=".filter-branding">Web</li>
-          </ul><!-- End Portfolio Filters -->
-
-          <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
-
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-            <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" class="img-fluid" alt="">
-              <div class="portfolio-info">
-                <h4>App 1</h4>
-                <p>Lorem ipsum, dolor sit</p>
-                <a href="{{ asset('landing_template/assets/img/portfolio/portfolio-portrait-1.webp') }}" title="App 1" data-gallery="portfolio-gallery-app" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
-                <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
-              </div>
-            </div><!-- End Portfolio Item -->
-
-
-          </div><!-- End Portfolio Container -->
-
-        </div>
-
-      </div>
-
-    </section><!-- /Portfolio Section -->
-
-    <!-- Team Section -->
-    <section id="team" class="team section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Team</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
-
-      <div class="container">
-
-        <div class="row gy-4">
-
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="team-member d-flex align-items-start">
-              <div class="pic"><img src="{{ asset('landing_template/assets/img/person/person-m-7.webp') }}" class="img-fluid" alt=""></div>
-              <div class="member-info">
-                <h4>Walter White</h4>
-                <span>Chief Executive Officer</span>
-                <p>Explicabo voluptatem mollitia et repellat qui dolorum quasi</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-twitter-x"></i></a>
-                  <a href=""><i class="bi bi-facebook"></i></a>
-                  <a href=""><i class="bi bi-instagram"></i></a>
-                  <a href=""> <i class="bi bi-linkedin"></i> </a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
-            <div class="team-member d-flex align-items-start">
-              <div class="pic"><img src="{{ asset('landing_template/assets/img/person/person-m-7.webp') }}" class="img-fluid" alt=""></div>
-              <div class="member-info">
-                <h4>Walter White</h4>
-                <span>Chief Executive Officer</span>
-                <p>Explicabo voluptatem mollitia et repellat qui dolorum quasi</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-twitter-x"></i></a>
-                  <a href=""><i class="bi bi-facebook"></i></a>
-                  <a href=""><i class="bi bi-instagram"></i></a>
-                  <a href=""> <i class="bi bi-linkedin"></i> </a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
-            <div class="team-member d-flex align-items-start">
-              <div class="pic"><img src="{{ asset('landing_template/assets/img/person/person-m-7.webp') }}" class="img-fluid" alt=""></div>
-              <div class="member-info">
-                <h4>Walter White</h4>
-                <span>Chief Executive Officer</span>
-                <p>Explicabo voluptatem mollitia et repellat qui dolorum quasi</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-twitter-x"></i></a>
-                  <a href=""><i class="bi bi-facebook"></i></a>
-                  <a href=""><i class="bi bi-instagram"></i></a>
-                  <a href=""> <i class="bi bi-linkedin"></i> </a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-         
-        </div>
-
-      </div>
-
-    </section><!-- /Team Section -->
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="pricing section light-background">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Pricing</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
-
-      <div class="container">
-
-        <div class="row gy-4">
-
-          <div class="col-lg-4" data-aos="zoom-in" data-aos-delay="100">
-            <div class="pricing-item">
-              <h3>Free Plan</h3>
-              <h4><sup>$</sup>0<span> / month</span></h4>
-              <ul>
-                <li><i class="bi bi-check"></i> <span>Quam adipiscing vitae proin</span></li>
-                <li><i class="bi bi-check"></i> <span>Nec feugiat nisl pretium</span></li>
-                <li><i class="bi bi-check"></i> <span>Nulla at volutpat diam uteera</span></li>
-                <li class="na"><i class="bi bi-x"></i> <span>Pharetra massa massa ultricies</span></li>
-                <li class="na"><i class="bi bi-x"></i> <span>Massa ultricies mi quis hendrerit</span></li>
-              </ul>
-              <a href="#" class="buy-btn">Buy Now</a>
-            </div>
-          </div><!-- End Pricing Item -->
-
-          <div class="col-lg-4" data-aos="zoom-in" data-aos-delay="200">
-            <div class="pricing-item featured">
-              <h3>Business Plan</h3>
-              <h4><sup>$</sup>29<span> / month</span></h4>
-              <ul>
-                <li><i class="bi bi-check"></i> <span>Quam adipiscing vitae proin</span></li>
-                <li><i class="bi bi-check"></i> <span>Nec feugiat nisl pretium</span></li>
-                <li><i class="bi bi-check"></i> <span>Nulla at volutpat diam uteera</span></li>
-                <li><i class="bi bi-check"></i> <span>Pharetra massa massa ultricies</span></li>
-                <li><i class="bi bi-check"></i> <span>Massa ultricies mi quis hendrerit</span></li>
-              </ul>
-              <a href="#" class="buy-btn">Buy Now</a>
-            </div>
-          </div><!-- End Pricing Item -->
-
-          <div class="col-lg-4" data-aos="zoom-in" data-aos-delay="300">
-            <div class="pricing-item">
-              <h3>Developer Plan</h3>
-              <h4><sup>$</sup>49<span> / month</span></h4>
-              <ul>
-                <li><i class="bi bi-check"></i> <span>Quam adipiscing vitae proin</span></li>
-                <li><i class="bi bi-check"></i> <span>Nec feugiat nisl pretium</span></li>
-                <li><i class="bi bi-check"></i> <span>Nulla at volutpat diam uteera</span></li>
-                <li><i class="bi bi-check"></i> <span>Pharetra massa massa ultricies</span></li>
-                <li><i class="bi bi-check"></i> <span>Massa ultricies mi quis hendrerit</span></li>
-              </ul>
-              <a href="#" class="buy-btn">Buy Now</a>
-            </div>
-          </div><!-- End Pricing Item -->
-
-        </div>
-
-      </div>
-
-    </section><!-- /Pricing Section -->
-
-    <!-- Testimonials Section -->
-    <section id="testimonials" class="testimonials section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Testimonials</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
-
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-        <div class="swiper init-swiper">
-          <script type="application/json" class="swiper-config">
-            {
-              "loop": true,
-              "speed": 600,
-              "autoplay": {
-                "delay": 5000
-              },
-              "slidesPerView": "auto",
-              "pagination": {
-                "el": ".swiper-pagination",
-                "type": "bullets",
-                "clickable": true
-              }
-            }
-          </script>
-          <div class="swiper-wrapper">
-
-            <div class="swiper-slide">
-              <div class="testimonial-item">
-                <img src="{{ asset('landing_template/assets/img/person/person-m-9.webp') }}" class="testimonial-img" alt="">
-                <h3>Saul Goodman</h3>
-                <h4>Ceo &amp; Founder</h4>
-                <div class="stars">
-                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                </div>
-                <p>
-                  <i class="bi bi-quote quote-icon-left"></i>
-                  <span>Proin iaculis purus consequat sem cure digni ssim donec porttitora entum suscipit rhoncus. Accusantium quam, ultricies eget id, aliquam eget nibh et. Maecen aliquam, risus at semper.</span>
-                  <i class="bi bi-quote quote-icon-right"></i>
-                </p>
-              </div>
-            </div><!-- End testimonial item -->
-            <div class="swiper-slide">
-              <div class="testimonial-item">
-                <img src="{{ asset('landing_template/assets/img/person/person-m-9.webp') }}" class="testimonial-img" alt="">
-                <h3>Saul Goodman</h3>
-                <h4>Ceo &amp; Founder</h4>
-                <div class="stars">
-                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                </div>
-                <p>
-                  <i class="bi bi-quote quote-icon-left"></i>
-                  <span>Proin iaculis purus consequat sem cure digni ssim donec porttitora entum suscipit rhoncus. Accusantium quam, ultricies eget id, aliquam eget nibh et. Maecen aliquam, risus at semper.</span>
-                  <i class="bi bi-quote quote-icon-right"></i>
-                </p>
-              </div>
-            </div><!-- End testimonial item -->
-            <div class="swiper-slide">
-              <div class="testimonial-item">
-                <img src="{{ asset('landing_template/assets/img/person/person-m-9.webp') }}" class="testimonial-img" alt="">
-                <h3>Saul Goodman</h3>
-                <h4>Ceo &amp; Founder</h4>
-                <div class="stars">
-                  <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                </div>
-                <p>
-                  <i class="bi bi-quote quote-icon-left"></i>
-                  <span>Proin iaculis purus consequat sem cure digni ssim donec porttitora entum suscipit rhoncus. Accusantium quam, ultricies eget id, aliquam eget nibh et. Maecen aliquam, risus at semper.</span>
-                  <i class="bi bi-quote quote-icon-right"></i>
-                </p>
-              </div>
-            </div><!-- End testimonial item -->
-          </div>
-          <div class="swiper-pagination"></div>
-        </div>
-
-      </div>
-
-    </section><!-- /Testimonials Section -->
-
-    <!-- Faq 2 Section -->
-    <section id="faq-2" class="faq-2 section light-background">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Frequently Asked Questions</h2>
-        <p>Magnam dolores commodi suscipit. Necessitatibus eius consequatur ex aliquid fuga eum quidem. Sit sint consectetur velit. Quisquam quos quisquam cupiditate. Et nemo qui impedit suscipit alias ea. Quia fugiat sit in iste officiis commodi quidem hic quas.</p>
-      </div><!-- End Section Title -->
-
-      <div class="container">
-
-        <div class="row justify-content-center">
-
-          <div class="col-lg-10">
-
-            <div class="faq-container">
-
-              <div class="faq-item faq-active" data-aos="fade-up" data-aos-delay="200">
-                <i class="faq-icon bi bi-question-circle"></i>
-                <h3>Non consectetur a erat nam at lectus urna duis?</h3>
-                <div class="faq-content">
-                  <p>Feugiat pretium nibh ipsum consequat. Tempus iaculis urna id volutpat lacus laoreet non curabitur gravida. Venenatis lectus magna fringilla urna porttitor rhoncus dolor purus non.</p>
-                </div>
-                <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
-
-              <div class="faq-item" data-aos="fade-up" data-aos-delay="300">
-                <i class="faq-icon bi bi-question-circle"></i>
-                <h3>Feugiat scelerisque varius morbi enim nunc faucibus a pellentesque?</h3>
-                <div class="faq-content">
-                  <p>Dolor sit amet consectetur adipiscing elit pellentesque habitant morbi. Id interdum velit laoreet id donec ultrices. Fringilla phasellus faucibus scelerisque eleifend donec pretium. Est pellentesque elit ullamcorper dignissim. Mauris ultrices eros in cursus turpis massa tincidunt dui.</p>
-                </div>
-                <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
-
-              <div class="faq-item" data-aos="fade-up" data-aos-delay="400">
-                <i class="faq-icon bi bi-question-circle"></i>
-                <h3>Dolor sit amet consectetur adipiscing elit pellentesque?</h3>
-                <div class="faq-content">
-                  <p>Eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Faucibus pulvinar elementum integer enim. Sem nulla pharetra diam sit amet nisl suscipit. Rutrum tellus pellentesque eu tincidunt. Lectus urna duis convallis convallis tellus. Urna molestie at elementum eu facilisis sed odio morbi quis</p>
-                </div>
-                <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
-
-              <div class="faq-item" data-aos="fade-up" data-aos-delay="500">
-                <i class="faq-icon bi bi-question-circle"></i>
-                <h3>Ac odio tempor orci dapibus. Aliquam eleifend mi in nulla?</h3>
-                <div class="faq-content">
-                  <p>Dolor sit amet consectetur adipiscing elit pellentesque habitant morbi. Id interdum velit laoreet id donec ultrices. Fringilla phasellus faucibus scelerisque eleifend donec pretium. Est pellentesque elit ullamcorper dignissim. Mauris ultrices eros in cursus turpis massa tincidunt dui.</p>
-                </div>
-                <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
-
-              <div class="faq-item" data-aos="fade-up" data-aos-delay="600">
-                <i class="faq-icon bi bi-question-circle"></i>
-                <h3>Tempus quam pellentesque nec nam aliquam sem et tortor consequat?</h3>
-                <div class="faq-content">
-                  <p>Molestie a iaculis at erat pellentesque adipiscing commodo. Dignissim suspendisse in est ante in. Nunc vel risus commodo viverra maecenas accumsan. Sit amet nisl suscipit adipiscing bibendum est. Purus gravida quis blandit turpis cursus in</p>
-                </div>
-                <i class="faq-toggle bi bi-chevron-right"></i>
-              </div><!-- End Faq item-->
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section><!-- /Faq 2 Section -->
-
-    <!-- Subscribe Section -->
-    <section id="subscribe" class="subscribe section">
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <div class="row gy-4 justify-content-between align-items-center">
-          <div class="col-lg-6">
-            <div class="cta-content" data-aos="fade-up" data-aos-delay="200">
-              <h2>Subscribe to our newsletter</h2>
-              <p>Proin eget tortor risus. Mauris blandit aliquet elit, eget tincidunt nibh pulvinar a. Curabitur aliquet quam id dui posuere blandit.</p>
-              <form action="forms/newsletter.php" method="post" class="php-email-form cta-form" data-aos="fade-up" data-aos-delay="300">
-                <div class="input-group mb-3">
-                  <input type="email" class="form-control" placeholder="Email address..." aria-label="Email address" aria-describedby="button-subscribe">
-                  <button class="btn btn-primary" type="submit" id="button-subscribe">Subscribe</button>
-                </div>
-                <div class="loading">Loading</div>
-                <div class="error-message"></div>
-                <div class="sent-message">Your subscription request has been sent. Thank you!</div>
-              </form>
-            </div>
-          </div>
-          <div class="col-lg-4">
-            <div class="cta-image" data-aos="zoom-out" data-aos-delay="200">
-              <img src="{{ asset('landing_template/assets/img/cta/cta-1.webp') }}" alt="" class="img-fluid">
-            </div>
-          </div>
-        </div>
-      </div>
-    </section><!-- /Subscribe Section -->
-
-    <!-- Recent Blog Postst Section -->
-    <section id="recent-blog-postst" class="recent-blog-postst section light-background">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Recent Blog Posts</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
-
-      <div class="container">
-
-        <div class="row gy-5">
-
-          <div class="col-xl-4 col-md-6">
-            <div class="post-item position-relative h-100" data-aos="fade-up" data-aos-delay="100">
-
-              <div class="post-img position-relative overflow-hidden">
-                <img src="{{ asset('landing_template/assets/img/blog/blog-post-1.webp') }}" class="img-fluid" alt="">
-                <span class="post-date">December 12</span>
-              </div>
-
-              <div class="post-content d-flex flex-column">
-
-                <h3 class="post-title">Eum ad dolor et. Autem aut fugiat debitis</h3>
-
-                <div class="meta d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-person"></i> <span class="ps-2">Julia Parker</span>
-                  </div>
-                  <span class="px-3 text-black-50">/</span>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-folder2"></i> <span class="ps-2">Politics</span>
-                  </div>
-                </div>
-
-                <hr>
-
-                <a href="blog-details.html" class="readmore stretched-link"><span>Read More</span><i class="bi bi-arrow-right"></i></a>
-
-              </div>
-
-            </div>
-          </div><!-- End post item -->
-          <div class="col-xl-4 col-md-6">
-            <div class="post-item position-relative h-100" data-aos="fade-up" data-aos-delay="200">
-
-              <div class="post-img position-relative overflow-hidden">
-                <img src="{{ asset('landing_template/assets/img/blog/blog-post-1.webp') }}" class="img-fluid" alt="">
-                <span class="post-date">December 12</span>
-              </div>
-
-              <div class="post-content d-flex flex-column">
-
-                <h3 class="post-title">Eum ad dolor et. Autem aut fugiat debitis</h3>
-
-                <div class="meta d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-person"></i> <span class="ps-2">Julia Parker</span>
-                  </div>
-                  <span class="px-3 text-black-50">/</span>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-folder2"></i> <span class="ps-2">Politics</span>
-                  </div>
-                </div>
-
-                <hr>
-
-                <a href="blog-details.html" class="readmore stretched-link"><span>Read More</span><i class="bi bi-arrow-right"></i></a>
-
-              </div>
-
-            </div>
-          </div><!-- End post item -->
-          <div class="col-xl-4 col-md-6">
-            <div class="post-item position-relative h-100" data-aos="fade-up" data-aos-delay="300">
-
-              <div class="post-img position-relative overflow-hidden">
-                <img src="{{ asset('landing_template/assets/img/blog/blog-post-1.webp') }}" class="img-fluid" alt="">
-                <span class="post-date">December 12</span>
-              </div>
-
-              <div class="post-content d-flex flex-column">
-
-                <h3 class="post-title">Eum ad dolor et. Autem aut fugiat debitis</h3>
-
-                <div class="meta d-flex align-items-center">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-person"></i> <span class="ps-2">Julia Parker</span>
-                  </div>
-                  <span class="px-3 text-black-50">/</span>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-folder2"></i> <span class="ps-2">Politics</span>
-                  </div>
-                </div>
-
-                <hr>
-
-                <a href="blog-details.html" class="readmore stretched-link"><span>Read More</span><i class="bi bi-arrow-right"></i></a>
-
-              </div>
-
-            </div>
-          </div><!-- End post item -->
-
-         
-
-        </div>
-
-      </div>
-
-    </section><!-- /Recent Blog Postst Section -->
 
     <!-- Contact Section -->
     <section id="contact" class="contact section">
 
-      <!-- Section Title -->
       <div class="container section-title" data-aos="fade-up">
-        <h2>Contact</h2>
-        <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
-      </div><!-- End Section Title -->
+        <h2>Kontak Kami</h2>
+        <p>Kami siap membantu Anda. Hubungi kami melalui informasi di bawah ini atau kunjungi langsung gudang kami untuk konsultasi lebih lanjut.</p>
+      </div><div class="container" data-aos="fade-up" data-aos-delay="100">
 
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="col-lg-12">
 
-        <div class="row gy-4">
+          <div class="info-wrap">
+            <div class="row">
 
-          <div class="col-lg-5">
-
-            <div class="info-wrap">
-              <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="200">
+              <div class="col-md-4 info-item d-flex" data-aos="fade-up" data-aos-delay="200">
                 <i class="bi bi-geo-alt flex-shrink-0"></i>
                 <div>
-                  <h3>Address</h3>
-                  <p>A108 Adam Street, New York, NY 535022</p>
+                  <h3>Alamat Gudang</h3>
+                  <p>Jl. Raya Rungkut Industri No. 10, Surabaya, Jawa Timur 60293</p>
                 </div>
-              </div><!-- End Info Item -->
-
-              <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="300">
+              </div><div class="col-md-4 info-item d-flex" data-aos="fade-up" data-aos-delay="300">
                 <i class="bi bi-telephone flex-shrink-0"></i>
                 <div>
-                  <h3>Call Us</h3>
-                  <p>+1 5589 55488 55</p>
+                  <h3>Telepon & WhatsApp</h3>
+                  <p>+62 31 1234 5678 (Office)<br>+62 812 3456 7890 (WhatsApp)</p>
                 </div>
-              </div><!-- End Info Item -->
-
-              <div class="info-item d-flex" data-aos="fade-up" data-aos-delay="400">
+              </div><div class="col-md-4 info-item d-flex" data-aos="fade-up" data-aos-delay="400">
                 <i class="bi bi-envelope flex-shrink-0"></i>
                 <div>
-                  <h3>Email Us</h3>
-                  <p>info@example.com</p>
+                  <h3>Email</h3>
+                  <p>info@cleanclearwarehouse.com<br>sales@cleanclearwarehouse.com</p>
                 </div>
-              </div><!-- End Info Item -->
+              </div></div>
 
-              <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d48389.78314118045!2d-74.006138!3d40.710059!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a22a3bda30d%3A0xb89d1fe6bc499443!2sDowntown%20Conference%20Center!5e0!3m2!1sen!2sus!4v1676961268712!5m2!1sen!2sus" frameborder="0" style="border:0; width: 100%; height: 270px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <div class="mt-4" data-aos="fade-up" data-aos-delay="500">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15829.41207914023!2d112.7843403871582!3d-7.314592099999992!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7fb07399b19c3%3A0x1e3272ba2033a37d!2sRungkut%20Industri!5e0!3m2!1sen!2sid!4v1693129541587!5m2!1sen!2sid" frameborder="0" style="border:0; width: 100%; height: 384px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
+
           </div>
-
-          <div class="col-lg-7">
-            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
-              <div class="row gy-4">
-
-                <div class="col-md-6">
-                  <label for="name-field" class="pb-2">Your Name</label>
-                  <input type="text" name="name" id="name-field" class="form-control" required="">
-                </div>
-
-                <div class="col-md-6">
-                  <label for="email-field" class="pb-2">Your Email</label>
-                  <input type="email" class="form-control" name="email" id="email-field" required="">
-                </div>
-
-                <div class="col-md-12">
-                  <label for="subject-field" class="pb-2">Subject</label>
-                  <input type="text" class="form-control" name="subject" id="subject-field" required="">
-                </div>
-
-                <div class="col-md-12">
-                  <label for="message-field" class="pb-2">Message</label>
-                  <textarea class="form-control" name="message" rows="10" id="message-field" required=""></textarea>
-                </div>
-
-                <div class="col-md-12 text-center">
-                  <div class="loading">Loading</div>
-                  <div class="error-message"></div>
-                  <div class="sent-message">Your message has been sent. Thank you!</div>
-
-                  <button type="submit">Send Message</button>
-                </div>
-
-              </div>
-            </form>
-          </div><!-- End Contact Form -->
-
         </div>
 
       </div>
 
-    </section><!-- /Contact Section -->
-
+    </section>
   </main>
 
+  {{-- FOOTER --}}
   <footer id="footer" class="footer">
 
     <div class="footer-newsletter">
       <div class="container">
         <div class="row justify-content-center text-center">
           <div class="col-lg-6">
-            <h4>Join Our Newsletter</h4>
-            <p>Subscribe to our newsletter and receive the latest news about our products and services!</p>
-            <form action="forms/newsletter.php" method="post" class="php-email-form">
-              <div class="newsletter-form"><input type="email" name="email"><input type="submit" value="Subscribe"></div>
-              <div class="loading">Loading</div>
-              <div class="error-message"></div>
-              <div class="sent-message">Your subscription request has been sent. Thank you!</div>
-            </form>
+            <h4>Dapatkan Update & Tips Terbaru</h4>
+            <p>Daftarkan email Anda untuk menerima informasi terbaru seputar monitoring stok, laporan aktivitas harian, dan tips manajemen distribusi.</p>
           </div>
         </div>
       </div>
     </div>
 
+
     <div class="container footer-top">
-      <div class="row gy-4">
+      <div class="row gy-4 justify-content-between">
+        
         <div class="col-lg-4 col-md-6 footer-about">
-          <a href="index.html" class="d-flex align-items-center">
-            <span class="sitename">Arsha</span>
+          <a href="index.html" class="logo d-flex align-items-center">
+            <span class="sitename">Clean & Clear Warehouse</span>
           </a>
+          <p class="mt-3">Solusi pergudangan modern yang mengedepankan kebersihan, keamanan, dan transparansi untuk mendukung pertumbuhan bisnis Anda.</p>
           <div class="footer-contact pt-3">
-            <p>A108 Adam Street</p>
-            <p>New York, NY 535022</p>
-            <p class="mt-3"><strong>Phone:</strong> <span>+1 5589 55488 55</span></p>
-            <p><strong>Email:</strong> <span>info@example.com</span></p>
+            <p>Jl. Raya Rungkut Industri No. 10</p>
+            <p>Surabaya, Jawa Timur 60293</p>
+            <p class="mt-3"><strong>Phone:</strong> <span>+62 812 3456 7890</span></p>
+            <p><strong>Email:</strong> <span>info@cleanclearwarehouse.com</span></p>
           </div>
         </div>
 
         <div class="col-lg-2 col-md-3 footer-links">
-          <h4>Useful Links</h4>
+          <h4>Link Navigasi</h4>
           <ul>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Home</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">About us</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Services</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Terms of service</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#hero">Home</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#about">Tentang Kami</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Fitur</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#contact">Kontak</a></li>
           </ul>
         </div>
 
-        <div class="col-lg-2 col-md-3 footer-links">
-          <h4>Our Services</h4>
+        <div class="col-lg-3 col-md-3 footer-links">
+          <h4>Fitur Utama Sistem</h4>
           <ul>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Web Design</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Web Development</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Product Management</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="#">Marketing</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Monitoring Stok Material</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Rekap Aktivitas Harian</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Export Data ke Excel/Dokumen</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="#features">Manajemen Akses (Role & Permission)</a></li>
           </ul>
-        </div>
-
-        <div class="col-lg-4 col-md-12">
-          <h4>Follow Us</h4>
-          <p>Cras fermentum odio eu feugiat lide par naso tierra videa magna derita valies</p>
-          <div class="social-links d-flex">
-            <a href=""><i class="bi bi-twitter-x"></i></a>
-            <a href=""><i class="bi bi-facebook"></i></a>
-            <a href=""><i class="bi bi-instagram"></i></a>
-            <a href=""><i class="bi bi-linkedin"></i></a>
-          </div>
         </div>
 
       </div>
     </div>
 
     <div class="container copyright text-center mt-4">
-      <p>© <span>Copyright</span> <strong class="px-1 sitename">Arsha</strong> <span>All Rights Reserved</span></p>
+      <p>© <span>Copyright 2025</span> <strong class="px-1 sitename">Clean & Clear Warehouse</strong> <span>All Rights Reserved</span></p>
       <div class="credits">
-        <!-- All the links in the footer should remain intact. -->
-        <!-- You can delete the links only if you've purchased the pro version. -->
-        <!-- Licensing information: https://bootstrapmade.com/license/ -->
-        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+        Created by Myself and thanks to <a href="https://www.creative-tim.com/product/argon-dashboard">BootstrapMade and Argon Dashboard</a> to share cool design 
       </div>
     </div>
 

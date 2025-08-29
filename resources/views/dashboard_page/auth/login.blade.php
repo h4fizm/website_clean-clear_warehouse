@@ -5,7 +5,7 @@
   <meta charset="utf--8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="apple-touch-icon" sizes="76x76" href="{{ asset('dashboard_template/assets/img/apple-icon.png') }}">
-  <link rel="icon" type="image/png" href="{{ asset('dashboard_template/assets/img/favicon.png') }}">
+  <link rel="icon" type="image/png" href="{{ asset('dashboard_template/assets/img/icon.PNG') }}">
   <title>
     Laman Login
   </title>
@@ -18,7 +18,7 @@
 
 <body class="">
   <main class="main-content  mt-0">
-    <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg" style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg'); background-position: top;">
+    <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg" style="background-image: url('{{ asset('dashboard_template/assets/img/login.jpg') }}'); background-position: center;">
       <span class="mask bg-gradient-dark opacity-6"></span>
       <div class="container">
         <div class="row justify-content-center">

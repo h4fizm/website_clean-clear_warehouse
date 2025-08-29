@@ -2,14 +2,14 @@
 @section('title', 'Daftar Data P.Layang (Pusat)')
 @section('content')
 
-{{-- Welcome Section (Title for P.Layang) --}}
+{{-- Welcome Section --}}
 <div class="col-12 mb-3">
     <div class="card p-4 position-relative welcome-card">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                    alt="Branch Icon"
-                    class="welcome-card-icon">
+                     alt="Branch Icon"
+                     class="welcome-card-icon">
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
@@ -28,40 +28,90 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
-           <div class="card-header pb-0">
-                {{-- Row for Table Title and Export Button --}}
-                <div class="row mb-3 align-items-center">
-                    <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
-                        <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
-                    </div>
-                    <div class="col-12 col-md-auto">
-                        <button type="button" class="btn btn-success d-flex align-items-center justify-content-center w-100 w-md-auto export-excel-btn">
-                            <i class="fas fa-file-excel me-2"></i> Export Excel
-                        </button>
-                    </div>
-                </div>
-
-                {{-- New row for search and date filters --}}
-                <div class="row mb-3 align-items-center">
-                    {{-- Search Bar --}}
-                    <div class="col-12 col-md-6 mb-2 mb-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" id="searchInput" class="form-control" placeholder="Cari material..." onkeyup="filterData()">
+            <div class="card-header pb-0">
+                <form method="GET" action="{{ route('pusat.index') }}">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
+                            <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
+                        </div>
+                        <div class="col-12 col-md-auto">
+                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
+                                <i class="fas fa-file-excel me-2"></i> Export Excel
+                            </span>
                         </div>
                     </div>
-                    {{-- Date Range Filter --}}
-                    <div class="col-12 col-md-6 d-flex align-items-center justify-content-start justify-content-md-end date-range-picker">
-                        <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Dari:</label>
-                        <input type="date" id="startDate" class="form-control me-2 date-input" onchange="filterData()">
-                        <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7">Sampai:</label>
-                        <input type="date" id="endDate" class="form-control date-input" onchange="filterData()">
+
+                    {{-- Area untuk menampilkan Bootstrap Alert dan Validasi Server-Side --}}
+                    <div class="px-0 pt-2">
+                        @if(session('success'))
+                            <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                        @if(session('error'))
+                            <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                        @if ($errors->any())
+                        <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                            <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
+                            <ul class="mb-0 ps-3">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        @endif
                     </div>
-                </div>
-           </div>
-           <div class="card-body px-0 pt-0 pb-5">
+                    
+                   <div class="row mb-3 align-items-start">
+                        {{-- Input Search --}}
+                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="search" id="searchInput" 
+                                    class="form-control" 
+                                    placeholder="Cari material..." 
+                                    value="{{ $filters['search'] ?? '' }}">
+                            </div>
+                        </div>
+
+                        {{-- Date Range + Filter Button --}}
+                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
+                            {{-- Start Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                                <input type="date" name="start_date" id="startDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ $filters['start_date'] ?? '' }}">
+                            </div>
+
+                            {{-- End Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                                <input type="date" name="end_date" id="endDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ $filters['end_date'] ?? '' }}">
+                            </div>
+
+                            {{-- Button Filter (diturunkan sedikit) --}}
+                            <div class="align-self-end">
+                                <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="card-body px-0 pt-0 pb-5">
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0" id="table-material-1">
+                    <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -76,23 +126,107 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- Data will be rendered here by JavaScript --}}
+                            @forelse ($items as $item)
+                            <tr>
+                                <td class="text-center">
+                                    <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($items->currentPage() - 1) * $items->perPage() }}</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $item->nama_material }}</p>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs text-secondary mb-0">{{ $item->kode_material }}</p>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-secondary text-white text-xs">{{ $item->stok_awal }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-primary text-white text-xs">{{ $item->penerimaan_total }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-info text-white text-xs">{{ $item->penyaluran_total }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-success text-white text-xs">{{ $item->stok_akhir }} pcs</span>
+                                </td>
+                                {{-- DENGAN KODE BARU INI --}}
+                                <td class="text-center">
+                                    <p class="text-xs text-secondary font-weight-bold mb-0">
+                                        {{-- Gunakan tanggal transaksi terakhir, jika tidak ada, gunakan tanggal update item --}}
+                                        @php
+                                            $tanggal = $item->latest_transaction_date ?? $item->updated_at;
+                                        @endphp
+                                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                                    </p>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" data-id="{{ $item->id }}" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger text-white delete-btn" title="Hapus">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">Data Kosong</td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
-                    <div id="no-data-material-1" class="text-center text-muted py-4" style="display: none;">
-                        Data Kosong
-                    </div>
                 </div>
 
-                {{-- Pagination --}}
-                <div class="mt-3 px-3 d-flex justify-content-center">
-                    <nav aria-label="Page navigation material 1">
-                        <ul class="pagination pagination-sm mb-0" id="pagination-material-1">
-                            {{-- Pagination links will be rendered here by JavaScript --}}
+                {{-- PAGINATION --}}
+                @if ($items->hasPages())
+                <div class="mt-4 px-3 d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            @php
+                                $total = $items->lastPage();
+                                $current = $items->currentPage();
+                                $window = 1; 
+                            @endphp
+                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->url(1) }}">&laquo;</a>
+                            </li>
+                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->previousPageUrl() }}">&lsaquo;</a>
+                            </li>
+                            @php $wasGap = false; @endphp
+                            @for ($i = 1; $i <= $total; $i++)
+                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
+                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ $items->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                    @php $wasGap = false; @endphp
+                                @else
+                                    @if (!$wasGap)
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        @php $wasGap = true; @endphp
+                                    @endif
+                                @endif
+                            @endfor
+                            <li class="page-item {{ $items->hasMorePages() ? '' : 'disabled' }}">
+                                <a class="page-link" href="{{ $items->nextPageUrl() }}">&rsaquo;</a>
+                            </li>
+                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->url($total) }}">&raquo;</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
-           </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
@@ -102,109 +236,167 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="kirimMaterialModalLabel">Kirim Material <span id="modal-nama-material"></span></h5>
+                <h5 class="modal-title" id="kirimMaterialModalLabel">Proses Transaksi Material</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="card p-3 mb-3 bg-light">
+                {{-- Info Material --}}
+                <div class="card p-3 mb-3 bg-light border">
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">NAMA MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material-display"></p>
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">KODE MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-kode-material-display"></p>
-                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK AKHIR</p>
-                    <p class="mb-0 text-sm font-weight-bold" id="modal-total-stok-display"></p>
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK SAAT INI DI P.LAYANG</p>
+                    <p class="mb-0 text-sm font-weight-bold" id="modal-stok-akhir-display"></p>
                 </div>
-                
-                <form id="kirimMaterialForm">
-                    <input type="hidden" id="kirim-material-id">
 
-                    <div class="mb-3">
-                        <label for="asal-transaksi" class="form-label">Asal Transaksi</label>
-                        <input type="text" class="form-control" id="asal-transaksi" value="P.Layang" readonly>
-                    </div>
+                {{-- Form Transaksi --}}
+                <form id="kirimMaterialForm" onsubmit="return false;">
+                    @csrf
+                    <input type="hidden" id="item-id-pusat">
+                    <input type="hidden" id="kode-material-selected">
 
-                    {{-- Searchable input for Tujuan Transaksi --}}
-                    <div class="mb-3">
-                        <label for="tujuan-transaksi-search" class="form-label">Tujuan Transaksi</label>
-                        <input type="text" class="form-control" id="tujuan-transaksi-search" placeholder="Cari tujuan..." required>
-                        <ul id="tujuan-transaksi-list" class="list-group mt-1" style="max-height: 150px; overflow-y: auto; display: none;">
-                            {{-- List items will be populated by JavaScript --}}
-                        </ul>
-                    </div>
-                    
-                    {{-- NEW: No. Surat Persetujuan --}}
-                    <div class="mb-3">
-                        <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan (Opsional)</label>
-                        <input type="text" class="form-control" id="no-surat-persetujuan">
-                    </div>
-                    
-                    {{-- NEW: No. BA Serah Terima --}}
-                    <div class="mb-3">
-                        <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima (Opsional)</label>
-                        <input type="text" class="form-control" id="no-ba-serah-terima">
-                    </div>
-
+                    {{-- Pilihan Jenis Transaksi --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan" checked>
-                                <label class="form-check-label" for="jenis-penerimaan">
-                                    Penerimaan
-                                </label>
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran">
-                                <label class="form-check-label" for="jenis-penyaluran">
-                                    Penyaluran
-                                </label>
+                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan">
+                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
                         </div>
                     </div>
 
+                    {{-- Form Dinamis --}}
                     <div class="mb-3">
-                        <label for="jumlah-stok" class="form-label">Jumlah Stok</label>
-                        <input type="number" class="form-control" id="jumlah-stok" required>
+                        <label id="asal-label" class="form-label">Asal Transaksi</label>
+                        <div id="asal-container">
+                            {{-- Akan diisi oleh JavaScript --}}
+                        </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label id="tujuan-label" class="form-label">Tujuan Transaksi</label>
+                        <div id="tujuan-container">
+                             {{-- Akan diisi oleh JavaScript --}}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tanggal-transaksi" class="form-label">Tanggal Transaksi</label>
+                        <input type="date" class="form-control" id="tanggal-transaksi" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
+                            <input type="text" class="form-control" id="no-surat-persetujuan" placeholder="(Opsional)">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <input type="text" class="form-control" id="no-ba-serah-terima" placeholder="(Opsional)">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="jumlah-stok" class="form-label">Jumlah (pcs)</label>
+                        <input type="number" class="form-control" id="jumlah-stok" min="1" required>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="submitKirim">Kirim</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="submitKirim">
+                    <i class="fas fa-check me-2"></i> Konfirmasi Transaksi
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Modal for Editing Material Data --}}
-<div class="modal fade" id="editMaterialModal" tabindex="-1" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
+{{-- Modal Edit dibuat di dalam Loop --}}
+@foreach ($items as $item)
+<div class="modal fade" id="editMaterialModal-{{ $item->id }}" tabindex="-1" aria-labelledby="editMaterialModalLabel-{{ $item->id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ route('pusat.update', $item->id) }}" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="modal-body">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                   id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
+                   value="{{ old('nama_material', $item->nama_material) }}">
+            <label for="nama_material-{{ $item->id }}">Nama Material</label>
+            @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
+              <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
+            @endif
+          </div>
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                   id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
+                   value="{{ old('kode_material', $item->kode_material) }}">
+            <label for="kode_material-{{ $item->id }}">Kode Material</label>
+            @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
+              <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
+            @endif
+          </div>
+          
+          {{-- Penambahan Form Stok Awal --}}
+          <div class="form-floating mb-3">
+            <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
+                   id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
+                   value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
+            <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
+            @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
+              <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
+            @endif
+          </div>
+          {{-- Akhir Penambahan --}}
+          
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endforeach
+
+{{-- Modal untuk Export Excel --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editMaterialModalLabel">Edit Data Material</h5>
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data ke Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editMaterialForm">
-                    <input type="hidden" id="edit-material-id">
-                    <div class="mb-3">
-                        <label for="edit-nama-material" class="form-label">Nama Material</label>
-                        <input type="text" class="form-control" id="edit-nama-material" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-kode-material" class="form-label">Kode Material</label>
-                        <input type="text" class="form-control" id="edit-kode-material" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-total-stok" class="form-label">Stok Akhir</label>
-                        <input type="number" class="form-control" id="edit-total-stok" required>
-                    </div>
-                </form>
+                <p class="text-sm text-secondary">Pilih rentang tanggal untuk data yang ingin Anda export.</p>
+                <div class="mb-3">
+                    <label for="exportStartDate" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="exportEndDate" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="exportEndDate">
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="saveMaterialChanges">Simpan Perubahan</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                    <i class="fas fa-file-excel me-2"></i> Export
+                </button>
             </div>
         </div>
     </div>
@@ -212,350 +404,259 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{{-- Script untuk membuka kembali modal jika ada error validasi --}}
+@if ($errors->any() && session('error_item_id'))
 <script>
-    const tableData = [
-        { id: 1, nama_material: 'Material A (Kertas)', kode_material: 'KT-01', stok_awal: 500, penerimaan: 1200, penyaluran: 1000, total_stok: 700, tanggal: '2025-08-05' },
-        { id: 2, nama_material: 'Material B (Tinta Cetak)', kode_material: 'TINT-02', stok_awal: 100, penerimaan: 250, penyaluran: 200, total_stok: 150, tanggal: '2025-08-04' },
-        { id: 3, nama_material: 'Material C (Seal Karet)', kode_material: 'SK-03', stok_awal: 200, penerimaan: 400, penyaluran: 350, total_stok: 250, tanggal: '2025-08-03' },
-        { id: 4, nama_material: 'Material D (Pelumas)', kode_material: 'PLM-04', stok_awal: 60, penerimaan: 100, penyaluran: 80, total_stok: 80, tanggal: '2025-08-02' },
-        { id: 5, nama_material: 'Material E (Spare Part)', kode_material: 'SP-05', stok_awal: 30, penerimaan: 50, penyaluran: 20, total_stok: 60, tanggal: '2025-08-01' },
-        { id: 6, nama_material: 'Material F (Kabel)', kode_material: 'KBL-06', stok_awal: 1500, penerimaan: 300, penyaluran: 200, total_stok: 1600, tanggal: '2025-07-31' },
-        { id: 7, nama_material: 'Material G (Baut)', kode_material: 'BT-07', stok_awal: 2000, penerimaan: 500, penyaluran: 750, total_stok: 1750, tanggal: '2025-07-30' },
-        { id: 8, nama_material: 'Material H (Cat)', kode_material: 'CAT-08', stok_awal: 80, penerimaan: 50, penyaluran: 30, total_stok: 100, tanggal: '2025-07-29' },
-        { id: 9, nama_material: 'Material I (Gasket)', kode_material: 'GSK-09', stok_awal: 120, penerimaan: 40, penyaluran: 60, total_stok: 100, tanggal: '2025-07-28' },
-        { id: 10, nama_material: 'Material J (Filter)', kode_material: 'FLTR-10', stok_awal: 400, penerimaan: 150, penyaluran: 200, total_stok: 350, tanggal: '2025-07-27' },
-        { id: 11, nama_material: 'Material K (Pipa)', kode_material: 'PIP-11', stok_awal: 100, penerimaan: 50, penyaluran: 30, total_stok: 120, tanggal: '2025-07-26' },
-        { id: 12, nama_material: 'Material L (Kawat)', kode_material: 'KWT-12', stok_awal: 200, penerimaan: 100, penyaluran: 50, total_stok: 250, tanggal: '2025-07-25' },
-    ];
+    document.addEventListener('DOMContentLoaded', function() {
+        var editModal = new bootstrap.Modal(document.getElementById('editMaterialModal-{{ session('error_item_id') }}'));
+        editModal.show();
+    });
+</script>
+@endif
 
-    const perPage = 10;
-    let currentPage = 1;
-    let filteredData = [...tableData];
-    // Object to store the last entered quantity for each material ID
-    const lastTransactionQuantities = {};
-    // Object to store the last entered destination for each material ID
-    const lastTransactionDestination = {};
-    // Object to store the new optional fields
-    const lastTransactionDokumen = {};
-
-    function formatTanggal(tgl) {
-        const d = new Date(tgl);
-        return d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-    }
-    
-    function filterData() {
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-
-        let tempFilteredData = [...tableData];
-
-        if (searchQuery) {
-            tempFilteredData = tempFilteredData.filter(item => {
-                return item.nama_material.toLowerCase().includes(searchQuery) ||
-                        item.kode_material.toLowerCase().includes(searchQuery);
-            });
-        }
-        
-        if (startDate || endDate) {
-            tempFilteredData = tempFilteredData.filter(item => {
-                const itemDate = new Date(item.tanggal);
-                const start = startDate ? new Date(startDate) : null;
-                const end = endDate ? new Date(endDate) : null;
-
-                if (start) start.setHours(0, 0, 0, 0);
-                if (end) end.setHours(23, 59, 59, 999);
+{{-- Script konfirmasi hapus untuk form submit --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault(); 
+                const form = this.closest('form');
                 
-                return (!start || itemDate >= start) && (!end || itemDate <= end);
-            });
-        }
-        
-        filteredData = tempFilteredData;
-        currentPage = 1;
-        renderTable();
-    }
-
-    function renderTable() {
-        const tbody = document.querySelector('#table-material-1 tbody');
-        const noData = document.querySelector('#no-data-material-1');
-        
-        const start = (currentPage - 1) * perPage;
-        const dataPage = filteredData.slice(start, start + perPage);
-
-        tbody.innerHTML = '';
-        if (dataPage.length === 0) {
-            noData.style.display = 'block';
-        } else {
-            noData.style.display = 'none';
-            dataPage.forEach((item, index) => {
-                const rowIndex = start + index + 1;
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="text-center"><p class="text-xs font-weight-bold mb-0">${rowIndex}</p></td>
-                        <td>
-                            <div class="d-flex flex-column justify-content-center">
-                                <p class="mb-0 text-sm font-weight-bolder text-primary">${item.nama_material}</p>
-                            </div>
-                        </td>
-                        <td><p class="text-xs text-secondary mb-0">${item.kode_material}</p></td>
-                        <td class="text-center"><span class="badge bg-gradient-secondary text-white text-xs">${item.stok_awal} pcs</span></td>
-                        <td class="text-center"><span class="badge bg-gradient-primary text-white text-xs">${item.penerimaan} pcs</span></td>
-                        <td class="text-center"><span class="badge bg-gradient-info text-white text-xs">${item.penyaluran} pcs</span></td>
-                        <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">${item.total_stok} pcs</span></td>
-                        <td class="text-center"><p class="text-xs text-secondary font-weight-bold mb-0">${formatTanggal(item.tanggal)}</p></td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#editMaterialModal">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger text-white delete-btn" data-id="${item.id}">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            attachActionListeners();
-        }
-        renderPagination(filteredData.length);
-    }
-
-    function attachActionListeners() {
-        // Event listener for "Kirim" button
-        document.querySelectorAll('.kirim-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const material = tableData.find(item => item.id == id);
-                if (material) {
-                    document.getElementById('kirim-material-id').value = material.id;
-                    document.getElementById('modal-nama-material-display').textContent = material.nama_material;
-                    document.getElementById('modal-kode-material-display').textContent = material.kode_material;
-                    document.getElementById('modal-total-stok-display').textContent = `${material.total_stok} pcs`;
-                    
-                    // Populate with the last saved values, or empty strings
-                    const lastValues = lastTransactionDokumen[id] || { no_surat: '', no_ba: '' };
-                    document.getElementById('jumlah-stok').value = lastTransactionQuantities[id] || '';
-                    document.getElementById('tujuan-transaksi-search').value = lastTransactionDestination[id] || '';
-                    document.getElementById('no-surat-persetujuan').value = lastValues.no_surat;
-                    document.getElementById('no-ba-serah-terima').value = lastValues.no_ba;
-
-                    document.getElementById('tujuan-transaksi-list').style.display = 'none';
-                    // Reset radio button to default (Penerimaan)
-                    document.getElementById('jenis-penerimaan').checked = true;
-                }
-            });
-        });
-
-        // Event listener for "Edit" button
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const material = tableData.find(item => item.id == id);
-                if (material) {
-                    document.getElementById('edit-material-id').value = material.id;
-                    document.getElementById('edit-nama-material').value = material.nama_material;
-                    document.getElementById('edit-kode-material').value = material.kode_material;
-                    document.getElementById('edit-total-stok').value = material.total_stok;
-                }
-            });
-        });
-
-        // Event listener for "Hapus" button
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.dataset.id;
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    text: "Data ini akan dihapus secara permanen!",
+                    text: "Data material ini akan dihapus secara permanen!",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
+                    cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Ya, hapus!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire(
-                            'Berhasil Dihapus!',
-                            'Data material telah berhasil dihapus.',
-                            'success'
-                        );
+                        form.submit(); 
                     }
                 });
             });
         });
-    }
-
-    function renderPagination(totalItems) {
-        const pagination = document.getElementById('pagination-material-1');
-        const totalPages = Math.ceil(totalItems / perPage);
-        pagination.innerHTML = '';
-
-        function createButton(label, page, disabled = false, active = false) {
-            const li = document.createElement('li');
-            li.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#">${label}</a>`;
-            if (!disabled) {
-                li.querySelector('a').addEventListener('click', e => {
-                    e.preventDefault();
-                    currentPage = page;
-                    renderTable();
-                });
-            }
-            return li;
-        }
-
-        if (totalPages > 1) {
-            pagination.appendChild(createButton('«', 1, currentPage === 1));
-            pagination.appendChild(createButton('‹', currentPage - 1, currentPage === 1));
-
-            const maxPagesToShow = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-            if (endPage - startPage + 1 < maxPagesToShow) {
-                startPage = Math.max(1, endPage - maxPagesToShow + 1);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                pagination.appendChild(createButton(i, i, false, i === currentPage));
-            }
-
-            pagination.appendChild(createButton('›', currentPage + 1, currentPage === totalPages));
-            pagination.appendChild(createButton('»', totalPages, currentPage === totalPages));
-        }
-    }
-    
-    document.getElementById('submitKirim').addEventListener('click', function() {
-        const id = document.getElementById('kirim-material-id').value;
-        const tujuan = document.getElementById('tujuan-transaksi-search').value;
-        const jenis = document.querySelector('input[name="jenisTransaksi"]:checked').value;
-        const jumlah = parseInt(document.getElementById('jumlah-stok').value);
-        const noSurat = document.getElementById('no-surat-persetujuan').value; // Get new field value
-        const noBa = document.getElementById('no-ba-serah-terima').value; // Get new field value
-
-        // Validation
-        if (!tujuan || isNaN(jumlah) || jumlah <= 0) {
-            Swal.fire('Gagal!', 'Harap isi form dengan benar.', 'error');
-            return;
-        }
-
-        // Find the material data to get the current stock
-        const material = tableData.find(item => item.id == id);
-        if (!material) {
-            Swal.fire('Error!', 'Data material tidak ditemukan.', 'error');
-            return;
-        }
-
-        let stokAkhir;
-        if (jenis === 'penerimaan') {
-            stokAkhir = material.total_stok + jumlah;
-            material.penerimaan += jumlah; // Update penerimaan count
-        } else if (jenis === 'penyaluran') {
-            if (material.total_stok < jumlah) {
-                Swal.fire('Gagal!', 'Stok tidak mencukupi untuk penyaluran.', 'warning');
-                return;
-            }
-            stokAkhir = material.total_stok - jumlah;
-            material.penyaluran += jumlah; // Update penyaluran count
-        }
-
-        // Save the last transaction quantity, destination, and the new optional fields
-        lastTransactionQuantities[id] = jumlah;
-        lastTransactionDestination[id] = tujuan;
-        lastTransactionDokumen[id] = { no_surat: noSurat, no_ba: noBa };
-
-        // Update the data in our mock array and re-render the table
-        material.total_stok = stokAkhir;
-        material.tanggal = new Date().toISOString().slice(0, 10);
-        filterData(); // Re-render table to reflect changes
-
-        const myModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
-        myModal.hide();
-
-        Swal.fire('Berhasil Dikirim!', `Stok akhir material saat ini adalah **${stokAkhir} pcs**.`, 'success');
-    });
-
-    document.getElementById('saveMaterialChanges').addEventListener('click', function() {
-        const id = document.getElementById('edit-material-id').value;
-        const nama = document.getElementById('edit-nama-material').value;
-        const kode = document.getElementById('edit-kode-material').value;
-        const stok = parseInt(document.getElementById('edit-total-stok').value);
-    
-        if (!nama || !kode || isNaN(stok)) {
-            Swal.fire('Gagal!', 'Harap isi semua form edit dengan benar.', 'error');
-            return;
-        }
-    
-        const materialIndex = tableData.findIndex(item => item.id == id);
-        if (materialIndex > -1) {
-            tableData[materialIndex].nama_material = nama;
-            tableData[materialIndex].kode_material = kode;
-            tableData[materialIndex].total_stok = stok;
-            filterData(); // Re-render table to reflect changes
-        }
-    
-        const myModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
-        myModal.hide();
-    
-        Swal.fire('Berhasil Disimpan!', 'Perubahan data material berhasil disimpan.', 'success');
-    });
-
-
-    // Dummy data for searchable tujuan transaksi
-    const tujuanTransaksiData = ['SPBE Sukamaju', 'SPBE Makmur', 'SPBE Sentosa', 'SPBE Jaya', 'SPBE Maju Jaya'];
-    const tujuanTransaksiInput = document.getElementById('tujuan-transaksi-search');
-    const tujuanTransaksilist = document.getElementById('tujuan-transaksi-list');
-
-    tujuanTransaksiInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        tujuanTransaksilist.innerHTML = '';
-        tujuanTransaksilist.style.display = 'block';
-
-        if (query.length > 0) {
-            const filteredTujuan = tujuanTransaksiData.filter(tujuan =>
-                tujuan.toLowerCase().includes(query)
-            );
-
-            if (filteredTujuan.length > 0) {
-                filteredTujuan.forEach(tujuan => {
-                    const li = document.createElement('li');
-                    li.classList.add('list-group-item', 'list-group-item-action');
-                    li.textContent = tujuan;
-                    li.addEventListener('click', () => {
-                        tujuanTransaksiInput.value = tujuan;
-                        tujuanTransaksilist.style.display = 'none';
-                    });
-                    tujuanTransaksilist.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.classList.add('list-group-item');
-                li.textContent = 'Tidak ada hasil.';
-                tujuanTransaksilist.appendChild(li);
-            }
-        } else {
-            tujuanTransaksilist.style.display = 'none';
-        }
-    });
-
-    // Hide list when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!tujuanTransaksiInput.contains(e.target) && !tujuanTransaksilist.contains(e.target)) {
-            tujuanTransaksilist.style.display = 'none';
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('searchInput').addEventListener('input', filterData);
-        filterData();
     });
 </script>
+
+{{-- script transaksi --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Ambil data facilities dari Controller
+        const facilities = @json($facilities);
+
+        // 🔹 Template Searchbar
+        function createSearchInputHTML() {
+            return `
+                <div class="position-relative w-100">
+                    <input type="text" class="form-control" id="facility-search" placeholder="Cari Facility...">
+                    <input type="hidden" id="facility-id-hidden">
+                    <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                </div>
+            `;
+        }
+
+        const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
+
+        // 🔹 Fungsi untuk update form sesuai jenis transaksi
+        function updateFormUI(type) {
+            const asalContainer = document.getElementById('asal-container');
+            const tujuanContainer = document.getElementById('tujuan-container');
+
+            if (type === 'penyaluran') { 
+                asalContainer.innerHTML = readonlyInputHTML;
+                tujuanContainer.innerHTML = createSearchInputHTML();
+                initSearchbar(); // aktifkan searchbar
+            } else { 
+                asalContainer.innerHTML = createSearchInputHTML();
+                tujuanContainer.innerHTML = readonlyInputHTML;
+                initSearchbar(); // aktifkan searchbar
+            }
+        }
+
+        // 🔹 Fungsi Searchbar Autocomplete
+        function initSearchbar() {
+            const searchInput = document.getElementById("facility-search");
+            const hiddenInput = document.getElementById("facility-id-hidden");
+            const suggestionsBox = document.getElementById("facility-suggestions");
+
+            if (!searchInput) return;
+
+            searchInput.addEventListener("input", function() {
+                const query = this.value.toLowerCase();
+                suggestionsBox.innerHTML = "";
+
+                if (!query) {
+                    suggestionsBox.style.display = "none";
+                    return;
+                }
+
+                const results = facilities.filter(facility => facility.name.toLowerCase().includes(query));
+
+                if (results.length > 0) {
+                    results.forEach(facility => {
+                        const item = document.createElement("button");
+                        item.type = "button";
+                        item.className = "list-group-item list-group-item-action";
+                        item.textContent = facility.name;
+                        item.dataset.id = facility.id;
+
+                        item.addEventListener("click", function() {
+                            searchInput.value = facility.name;
+                            hiddenInput.value = facility.id;
+                            suggestionsBox.style.display = "none";
+                        });
+
+                        suggestionsBox.appendChild(item);
+                    });
+                    suggestionsBox.style.display = "block";
+                } else {
+                    suggestionsBox.style.display = "none";
+                }
+            });
+        }
+
+        // 🔹 Radio button listener
+        document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                updateFormUI(event.target.value);
+            });
+        });
+
+        // 🔹 Saat klik tombol kirim
+        document.querySelectorAll('.kirim-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
+                document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
+                document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
+                document.getElementById('modal-stok-akhir-display').textContent = row.cells[6].innerText;
+                document.getElementById('kode-material-selected').value = row.cells[2].innerText;
+                document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+
+                document.getElementById('jenis-penyaluran').checked = true;
+                updateFormUI('penyaluran');
+            });
+        });
+
+        // 🔹 Submit button
+        document.getElementById('submitKirim').addEventListener('click', function() {
+            const selectedFacilityId = document.getElementById('facility-id-hidden')?.value;
+
+            if (!selectedFacilityId) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
+                return;
+            }
+
+            const formData = {
+                _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
+                item_id_pusat: document.getElementById('item-id-pusat').value,
+                kode_material: document.getElementById('kode-material-selected').value,
+                facility_id_selected: selectedFacilityId,
+                jenis_transaksi: document.querySelector('input[name="jenisTransaksi"]:checked').value,
+                jumlah: document.getElementById('jumlah-stok').value,
+                tanggal_transaksi: document.getElementById('tanggal-transaksi').value,
+                no_surat_persetujuan: document.getElementById('no-surat-persetujuan').value,
+                no_ba_serah_terima: document.getElementById('no-ba-serah-terima').value,
+            };
+
+            fetch('{{ route('pusat.transfer') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': formData._token
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start">${errorMessages}</ul>`
+                    });
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: error.message
+                });
+            });
+        });
+    });
+</script>
+
+{{-- modal export excel --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi modal Bootstrap
+        const exportModalElement = document.getElementById('exportExcelModal');
+        const exportModal = new bootstrap.Modal(exportModalElement);
+
+        // Cari tombol untuk membuka modal
+        const openExportModalBtn = document.getElementById('openExportModalBtn');
+        // Cari tombol konfirmasi export di dalam modal
+        const confirmExportBtn = document.getElementById('confirmExportBtn');
+
+        // Tambahkan event listener saat tombol untuk membuka modal di-klik
+        if (openExportModalBtn) {
+            openExportModalBtn.addEventListener('click', function() {
+                // Tampilkan modal
+                exportModal.show();
+            });
+        }
+
+        // Tambahkan event listener untuk tombol "Export" di dalam modal
+        if (confirmExportBtn) {
+            confirmExportBtn.addEventListener('click', function() {
+                // 1. Ambil nilai dari input tanggal
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+
+                // 2. Siapkan URL dasar dari route Laravel
+                const baseUrl = "{{ route('pusat.export') }}";
+
+                // 3. Buat URLSearchParams untuk menambahkan parameter tanggal
+                const params = new URLSearchParams();
+                if (startDate) {
+                    params.append('start_date', startDate);
+                }
+                if (endDate) {
+                    params.append('end_date', endDate);
+                }
+
+                // 4. Gabungkan URL dasar dengan parameter
+                const exportUrl = `${baseUrl}?${params.toString()}`;
+
+                // 5. Sembunyikan modal
+                exportModal.hide();
+
+                // 6. Arahkan browser ke URL export untuk memulai download
+                window.location.href = exportUrl;
+            });
+        }
+    });
+</script>
+
 @endpush
 
-{{-- CSS untuk halaman transaksi (Tidak Diubah) --}}
+{{-- CSS Lengkap --}}
 <style>
     /* General styles for welcome card */
     .welcome-card {
@@ -565,7 +666,7 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         overflow: hidden;
         position: relative;
-        padding: 1.5rem !important; /* Adjusted padding to p-4 equivalent */
+        padding: 1.5rem !important;
     }
 
     .welcome-card-icon {
@@ -585,311 +686,24 @@
         opacity: 0.2;
         pointer-events: none;
     }
-
-    /* Desktop styles for filters and search */
-    @media (min-width: 768px) {
-        /* Apply these styles from 'md' breakpoint and up */
-        .desktop-filter-row-top {
-            justify-content: space-between !important;
-            /* Distribute items with space between */
-            align-items: flex-end;
-            /* Align items to the bottom */
-            margin-bottom: 0.5rem;
-            /* Add some space below this row */
-        }
-
-        .branch-selection-text-desktop {
-            margin-bottom: 0.5rem;
-            /* Standard margin for text above buttons */
-            white-space: nowrap;
-            /* Prevent text wrapping */
-        }
-
-        .btn-branch-custom {
-            padding: 0.4rem 0.6rem;
-            /* Slightly smaller padding for buttons */
-            font-size: 0.78rem;
-            /* Slightly smaller font size */
-        }
-
-        .date-filter-desktop-container {
-            /* This container holds "Dari" date input and "Sampai" date input */
-            /* We need to measure its total width */
-            display: flex;
-            /* Ensure it's a flex container */
-            align-items: center;
-            /* Align items vertically */
-            gap: 0.5rem;
-            /* Standard gap */
-            flex-wrap: nowrap;
-            /* Keep all elements in one line */
-            width: auto;
-            /* Allow content to define width */
-            flex-shrink: 0;
-            margin-left: auto;
-            /* Push to the right */
-        }
-
-        .date-input {
-            width: 120px;
-            /* Specific width for date inputs on desktop */
-            height: 40px;
-            /* Adjusted height for date inputs */
-            min-width: unset;
-            /* Remove min-width inherited from mobile */
-        }
-
-        .date-range-picker label {
-            /* Reusing existing class, targetting labels inside it */
-            white-space: nowrap;
-            /* Prevent label wrapping */
-            flex-shrink: 0;
-            /* Prevent label from shrinking */
-        }
-
-        /* Search input specific styles for desktop alignment */
-        .search-input-desktop-aligned {
-            /* This class will ensure the search bar width matches the date filters */
-            height: 40px;
-            /* Adjusted height for desktop search input */
-            max-width: 310px;
-            /* Set a max-width to control its overall size */
-            /* Instead of fixed width, we will dynamically set it via JS or use a calculated max-width */
-            /* Using 'auto' and 'margin-left: auto' with its parent's 'justify-content: flex-end' for positioning */
-        }
-
-        .search-input-desktop-aligned .form-control,
-        .search-input-aligned .input-group-text {
-            height: 40px;
-            /* Match the new height */
-        }
-
-        /* Order of columns for desktop */
-        .order-md-1 {
-            order: 1;
-        }
-
-        .order-md-2 {
-            order: 2;
-        }
-
-        .order-md-3 {
-            order: 3;
-        }
-
-        /* Ensuring columns adjust correctly for flex layout */
-        .desktop-filter-row-top>div {
-            flex-grow: 0;
-            flex-shrink: 0;
-        }
-
-        .col-12.mt-3.order-3.order-md-3 {
-            /* The row containing only the search input */
-            display: flex;
-            /* Make it a flex container */
-            justify-content: flex-end;
-            /* Push content (search bar) to the right */
-            width: 100%;
-            /* Ensure it takes full width of the row */
-        }
+    .date-input {
+        width: auto;
+        flex-grow: 1;
     }
 
     /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
     @media (max-width: 767.98px) {
-        /* --- Welcome Section Title Adjustment for Mobile --- */
-        .welcome-card {
-            padding: 1rem !important; /* Reduce padding for mobile */
-        }
-
-        .welcome-card .card-body {
-            flex-direction: column; /* Stack items vertically */
-            align-items: center; /* Center items horizontally */
-        }
-
-        .welcome-card .card-body > div {
-            width: 100%; /* Take full width */
-            text-align: center; /* Center text within these divs */
-        }
-
-        .welcome-card-icon {
-            margin-bottom: 0.5rem; /* Space below icon on mobile */
-            margin-top: 0.5rem; /* Space above icon on mobile */
-        }
-
-        #summary-title, #summary-text {
-            text-align: center !important;
-        }
-        #summary-title {
-            font-size: 1.25rem !important;
-        }
-        #summary-text {
-            font-size: 0.8rem !important;
-        }
-        /* End Welcome Section */
-
-
-        /* --- Table Branch Name Title Adjustment for Mobile --- */
-        #table-branch-name {
-            text-align: center !important;
-            font-size: 1.25rem !important; /* Adjust as needed, e.g., 1rem or 0.9rem */
-            margin-bottom: 1rem !important; /* Add some space below the title */
-        }
-
-
-        .export-excel-btn {
-            height: 38px !important;
-            /* Make button smaller */
-            font-size: 0.8rem;
-            /* Smaller font size */
-            padding: 0.5rem 1rem;
-            /* Adjust padding */
-            margin-top: 1rem;
-            /* Adjust padding */
-        }
-
-        .export-excel-btn .fas {
-            margin-right: 0.5rem;
-            /* Adjust icon spacing */
-        }
-
-        .branch-selection-text {
-            text-align: center !important;
-            /* Center the text */
-            margin-bottom: 0.5rem !important;
-            /* Reduce bottom margin */
-        }
-
-        .branch-selection-text-desktop {
-            display: none;
-            /* Hide desktop specific text on mobile */
-        }
-
-        .branch-buttons {
-            justify-content: center !important;
-            /* Center buttons */
-            gap: 0.25rem;
-            /* Reduce gap between buttons */
-            margin-bottom: 1rem;
-            /* Add margin below buttons for mobile */
-        }
-
-        .btn-branch-custom {
-            padding: 0.3rem 0.6rem;
-            /* Smaller padding for buttons */
-            font-size: 0.75rem;
-            /* Smaller font size for buttons */
-            flex-grow: 1;
-            /* Allow buttons to grow in mobile to fill space */
-            min-width: unset;
-            /* Remove min-width to allow more flexibility */
-        }
-
-        /* Adjust button width for smaller screens if they are too wide */
-        .branch-buttons button {
-            flex: 1 1 auto;
-            /* Allow buttons to wrap and occupy available space */
-            margin: 2px;
-            /* Small margin for visual separation */
-        }
-
         .date-range-picker {
             flex-direction: column;
-            /* Stack date pickers vertically */
-            align-items: center;
-            /* Center items in column */
-            width: 100%;
-            /* Full width */
-            gap: 0.5rem !important;
-            /* Gap between stacked items */
+            align-items: stretch !important;
         }
-
-        .date-filter-desktop-container {
-            flex-direction: column !important;
-            width: 100% !important;
-            align-items: center !important;
-            margin-top: 0.5rem !important;
-            margin-left: 0 !important;
-        }
-
-        .date-input {
-            width: 100% !important;
-            /* Full width for date inputs */
-            height: 38px !important;
-            /* Smaller height for date inputs */
-        }
-
-        .date-range-picker label {
+        .date-range-picker .form-control {
             margin-right: 0 !important;
-            /* Remove right margin */
-            margin-left: 0 !important;
-            /* Remove left margin */
+            margin-bottom: 0.5rem;
         }
-
-        /* --- Specific changes for Search Input Group in Mobile --- */
-        .search-input-group {
-            width: 100% !important;
-            /* Full width for the whole group */
-            height: 38px !important;
-            /* Smaller height for the whole group */
-            margin-top: 0.5rem;
-            /* Add some top margin when stacked below date pickers */
-        }
-
-        .search-input-group .form-control {
-            height: 38px !important;
-            /* Ensure input field matches group height */
-            font-size: 0.85rem !important;
-            /* Match font size */
-            padding-right: 0.5rem;
-            /* Adjust padding to make space for icon */
-        }
-
-        .search-input-group .input-group-text {
-            height: 38px !important;
-            /* Match height of input */
-            padding: 0.4rem 0.8rem;
-            /* Adjust padding */
-            font-size: 0.85rem !important;
-            /* Match font size */
-        }
-
-        /* --- End of Mobile Specific changes for Search Input Group --- */
-
-
-        /* Adjust padding for card-header in mobile to give more space */
-        .card-header {
-            padding: 1rem !important;
-        }
-
-        /* Make table header text smaller in mobile */
-        #table-material-1 thead th {
-            font-size: 0.65rem !important;
-            /* Smaller text for table headers */
-        }
-
-        /* Make table body text smaller in mobile */
-        #table-material-1 tbody td {
-            font-size: 0.75rem !important;
-            /* Smaller text for table body */
-        }
-
-        /* Adjust padding for table cells */
-        #table-material-1 tbody td,
-        #table-material-1 thead th {
-            padding: 0.5rem 0.5rem !important;
-        }
-
-        /* Ensure default order for mobile when using order-md-* */
-        .order-1 {
-            order: 1;
-        }
-
-        .order-2 {
-            order: 2;
-        }
-
-        .order-3 {
-            order: 3;
+        .date-range-picker label {
+            margin-bottom: 0.25rem;
+            align-self: flex-start;
         }
     }
 </style>

@@ -1,130 +1,155 @@
 @push('styles')
 <style>
-    /* Custom styles for burger button positioning on mobile */
+    /* === CSS tetap sama persis dari kamu, tidak diubah === */
     .invisible {
         visibility: hidden;
     }
     .dropdown.show .dropdown-menu {
         visibility: visible !important;
     }
-
-    /* General Navbar layout */
     .navbar-main .container-fluid {
         display: flex;
-        justify-content: space-between; /* Pushes left and right sections apart */
+        justify-content: space-between;
         align-items: center;
         width: 100%;
-        /* Set very minimal horizontal padding directly on container-fluid */
-        padding-left: 0.5rem !important; /* Adjusted from 0.75rem to 0.5rem */
-        padding-right: 0.5rem !important; /* Adjusted from 0.75rem to 0.5rem */
-        box-sizing: border-box; /* Ensures padding is included in width */
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        box-sizing: border-box;
     }
-
-    /* Group for Burger and User Icon on the right */
     .navbar-right-icons {
         display: flex;
         align-items: center;
-        gap: 1rem; /* Still no gap between them */
-        /* Ensure no extra padding/margin from this group */
+        gap: 1rem;
         padding: 0 !important;
         margin: 0 !important;
     }
-
-    /* Specific adjustment for the burger button within the right-icons group */
     .navbar-right-icons .nav-item.d-xl-none {
-        /* No specific padding-right here, let the overall container-fluid padding handle spacing */
-        padding: 0 !important; /* Remove all padding from this list item */
-        margin: 0 !important; /* Remove all margin from this list item */
-    }
-
-    /* Ensure breadcrumb text doesn't wrap excessively on smaller screens */
-    .navbar-main .breadcrumb {
-        flex-shrink: 1; /* Allow breadcrumb to shrink */
-        min-width: 0; /* Allow content to overflow if needed, or truncate */
-        /* Ensure no extra padding/margin from breadcrumb */
         padding: 0 !important;
         margin: 0 !important;
-        margin-left: 0.5rem !important; /* Keep a minimal margin if needed, otherwise set to 0 */
+    }
+    .navbar-main .breadcrumb {
+        flex-shrink: 1;
+        min-width: 0;
+        padding: 0 !important;
+        margin: 0 !important;
+        margin-left: 0.5rem !important;
     }
     .navbar-main .breadcrumb li {
-        white-space: nowrap; /* Prevent individual breadcrumb items from wrapping */
+        white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis; /* Add ellipsis if text is too long */
+        text-overflow: ellipsis;
     }
     .navbar-main .breadcrumb h6 {
-        white-space: nowrap; /* Prevent title from wrapping */
+        white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis; /* Add ellipsis if text is too long */
+        text-overflow: ellipsis;
     }
-
-    /* Mobile specific adjustments */
-    @media (max-width: 991.98px) { /* Applies to screens smaller than large (xl-none) */
+    @media (max-width: 991.98px) {
         .navbar-main .breadcrumb {
-            margin-right: 0.5rem !important; /* Keep a minimal margin between breadcrumb and right icons group */
+            margin-right: 0.5rem !important;
         }
-        /* Hide "Nama User" text on small screens to save space */
         .navbar-nav .d-sm-inline {
             display: none !important;
         }
-        /* User icon itself needs no extra spacing when text is hidden */
         .navbar-nav .nav-link {
-            padding-right: 0 !important; /* Remove any default padding from user icon link */
-            padding-left: 0 !important; /* Remove any default padding from user icon link */
+            padding-right: 0 !important;
+            padding-left: 0 !important;
         }
         .navbar-nav .nav-item {
-            padding-right: 0 !important; /* Ensure the li itself for user dropdown has no extra padding */
+            padding-right: 0 !important;
         }
     }
-
-    /* Desktop specific adjustments (if any are needed to override mobile) */
     @media (min-width: 992px) {
-        /* On desktop, burger button is hidden by d-xl-none, so no specific styling needed for its placement */
         .navbar-main .container-fluid {
-            padding-left: 1rem !important; /* Reset to more standard padding for desktop */
-            padding-right: 1rem !important; /* Reset to more standard padding for desktop */
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }
         .navbar-main .breadcrumb {
-            margin: 0; /* Reset all margins */
-            padding: 0; /* Reset all paddings */
+            margin: 0;
+            padding: 0;
         }
         .navbar-nav .d-sm-inline {
-            display: inline !important; /* Ensure "Nama User" text is visible on larger screens */
+            display: inline !important;
         }
         .navbar-right-icons {
-            gap: 0; /* Ensure no gap on desktop */
-            padding: 0; /* Reset padding for desktop */
-            margin: 0; /* Reset margin for desktop */
-        }
-        .navbar-right-icons .nav-item.d-xl-none {
-            padding: 0; /* Reset for desktop as it's hidden */
+            gap: 0;
+            padding: 0;
             margin: 0;
         }
-         .navbar-nav .nav-link {
-            padding: 0.5rem 0.5rem !important; /* Standard padding for nav links on desktop */
+        .navbar-right-icons .nav-item.d-xl-none {
+            padding: 0;
+            margin: 0;
+        }
+        .navbar-nav .nav-link {
+            padding: 0.5rem 0.5rem !important;
         }
         .navbar-nav .nav-item {
-            padding-left: 0.75rem !important; /* Bootstrap default nav-item spacing */
+            padding-left: 0.75rem !important;
         }
     }
 </style>
+@endpush
 
-<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl"
+     id="navbarBlur" data-scroll="false">
     <div class="container-fluid py-1 px-3">
 
-        <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0">
-                    <li class="breadcrumb-item text-sm"><span class="opacity-5 text-white">Menu</span></li>
-                    <li class="breadcrumb-item text-sm">
-                        <a class="text-white" href="#">Nama Menu</a>
-                    </li>
-                </ol>
-                <h6 class="font-weight-bolder text-white mb-0">Nama Menu</h6>
-            </nav>
-        </div>
+        @php
+            $menuMap = [
+                'dashboard'         => ['label' => 'Dashboard',              'url' => '/dashboard'],
+                'pusat'             => ['label' => 'Data P.Layang (Pusat)',  'url' => '/pusat'],
+                'pusat/create'      => ['label' => 'Tambah Data Material',   'url' => '/pusat/create'],
+                'transaksi'         => ['label' => 'Data Transaksi',         'url' => '/transaksi'],
+                'transaksi/tambah'  => ['label' => 'Tambah SPBE/BPT',        'url' => '/transaksi/tambah'],
+                'upp-material'      => ['label' => 'UPP Material',           'url' => '/upp-material'],
+                'aktivitas'         => ['label' => 'Aktivitas Harian',       'url' => '/aktivitas'],
+                'pengguna'          => ['label' => 'Manajemen User',         'url' => '/pengguna'],
+            ];
+
+            $path = trim(request()->path(), '/');
+            $breadcrumbs = [['label' => 'Menu']];
+
+            if (isset($menuMap[$path])) {
+                $breadcrumbs[] = $menuMap[$path];
+            } elseif (request()->routeIs('materials.index')) {
+                $facility = request()->route('facility'); 
+                $breadcrumbs[] = $menuMap['transaksi'];
+                $breadcrumbs[] = ['label' => 'Daftar Stok Material - ' . ($facility->nama ?? 'SPBE/BPT'), 'url' => null];
+            } elseif ($path === 'aktivitas-transaksi') {
+                $breadcrumbs[] = $menuMap['aktivitas'];
+                $breadcrumbs[] = ['label' => 'Riwayat Penerimaan dan Penyaluran Material', 'url' => null];
+            } elseif ($path === 'profil') {
+                $breadcrumbs[] = $menuMap['pengguna']; // Manajemen User
+                $breadcrumbs[] = ['label' => 'Edit Profil', 'url' => null];
+            } else {
+                $breadcrumbs[] = ['label' => 'Menu', 'url' => null];
+            }
+        @endphp
+
+
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0">
+                @foreach ($breadcrumbs as $key => $crumb)
+                    @if ($key === count($breadcrumbs) - 1 || empty($crumb['url']))
+                        {{-- terakhir atau tanpa url → plain text --}}
+                        <li class="breadcrumb-item text-sm text-white">{{ $crumb['label'] }}</li>
+                    @else
+                        {{-- ada url dan bukan terakhir → link --}}
+                        <li class="breadcrumb-item text-sm">
+                            <a class="text-white" href="{{ $crumb['url'] }}">{{ $crumb['label'] }}</a>
+                        </li>
+                    @endif
+                @endforeach
+            </ol>
+            <h6 class="font-weight-bolder text-white mb-0">
+                {{ $pageTitle ?? ($breadcrumbs[count($breadcrumbs)-1]['label'] ?? 'Menu') }}
+            </h6>
+        </nav>
+
 
         <div class="navbar-right-icons">
-            {{-- Sidenav Burger Button - Visible only on extra large screens and below --}}
+            {{-- Burger --}}
             <li class="nav-item d-xl-none d-flex align-items-center list-unstyled">
                 <a href="javascript:;" class="nav-link text-white p-0" id="iconNavbarSidenav">
                     <div class="sidenav-toggler-inner">
@@ -135,26 +160,25 @@
                 </a>
             </li>
 
-            {{-- Cek apakah pengguna sudah login --}}
+            {{-- User --}}
             @auth
             <ul class="navbar-nav d-flex align-items-center">
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link text-white d-flex align-items-center" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a href="#" class="nav-link text-white d-flex align-items-center"
+                       id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-user-circle me-2" style="font-size: 1.4rem;"></i>
-                        {{-- Tampilkan nama user yang sedang login --}}
                         <span class="d-none d-sm-inline">{{ Auth::user()->name }}</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end mt-2 invisible" aria-labelledby="userDropdown" id="userDropdownMenu">
+                    <ul class="dropdown-menu dropdown-menu-end mt-2 invisible"
+                        aria-labelledby="userDropdown" id="userDropdownMenu">
                         <li>
                             <a class="dropdown-item" href="/profil"><i class="fas fa-user me-2"></i> Profile</a>
                         </li>
                         <li>
-                            {{-- Link Logout yang memicu submit form --}}
-                            <a class="dropdown-item text-danger" href="{{ route('logout') }}" 
+                            <a class="dropdown-item text-danger" href="{{ route('logout') }}"
                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a>
-                            {{-- Form logout tersembunyi --}}
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                 @csrf
                             </form>
@@ -163,7 +187,6 @@
                 </li>
             </ul>
             @endauth
-            
         </div>
     </div>
 </nav>
@@ -171,7 +194,6 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Skrip untuk mengatasi flicker pada dropdown, sudah benar
         const dropdown = document.querySelector('.dropdown');
         const dropdownMenu = document.getElementById('userDropdownMenu');
 
@@ -181,7 +203,5 @@
             });
         }
     });
-
-    // Fungsi logout() yang lama sudah tidak diperlukan lagi
 </script>
 @endpush
