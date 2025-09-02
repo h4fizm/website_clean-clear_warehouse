@@ -25,12 +25,14 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
      */
     public function headings(): array
     {
+        // UBAH INI: Tambahkan kolom "Total Sales"
         return [
             'Kode Material',
             'Nama Material',
             'Stok Awal',
             'Total Penerimaan',
             'Total Penyaluran',
+            'Total Sales', // <-- KOLOM BARU
             'Stok Akhir',
             'Update Terakhir'
         ];
@@ -41,16 +43,18 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
      */
     public function map($item): array
     {
-        // Hitung stok akhir secara manual karena subquery tidak bisa langsung di-map
-        $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total;
+        // UBAH INI: Sesuaikan perhitungan stok akhir dengan menyertakan sales
+        $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
 
+        // UBAH INI: Tambahkan data sales_total ke baris Excel
         return [
             $item->kode_material,
             $item->nama_material,
             $item->stok_awal,
             $item->penerimaan_total,
             $item->penyaluran_total,
-            $stokAkhir, // Gunakan hasil kalkulasi
+            $item->sales_total, // <-- DATA BARU
+            $stokAkhir, // Gunakan hasil kalkulasi baru
             Carbon::parse($item->updated_at)->format('d-m-Y H:i:s'),
         ];
     }
@@ -76,7 +80,7 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
             });
         });
 
-        // Filter tanggal
+        // Filter tanggal (sudah benar, tidak perlu diubah)
         $query->when($filters['start_date'] || $filters['end_date'], function ($q) use ($filters) {
             $q->where(function ($sub) use ($filters) {
                 $sub->whereHas('transactions', function ($subQ) use ($filters) {
@@ -97,26 +101,38 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
             });
         });
 
-        // Subquery kalkulasi
+        // UBAH INI: Tambahkan subquery untuk `sales_total`
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::query()
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
                 ->whereColumn('source_item.kode_material', 'items.kode_material')
                 ->whereColumn('item_transactions.region_to', 'items.region_id')
-                ->when(isset($filters['start_date']) && $filters['start_date'], function ($subQ, $date) {
+                ->when($filters['start_date'], function ($subQ, $date) {
                     $subQ->whereDate('item_transactions.created_at', '>=', $date);
                 })
-                ->when(isset($filters['end_date']) && $filters['end_date'], function ($subQ, $date) {
+                ->when($filters['end_date'], function ($subQ, $date) {
                     $subQ->whereDate('item_transactions.created_at', '<=', $date);
                 })
                 ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
-                ->when(isset($filters['start_date']) && $filters['start_date'], function ($subQ, $date) {
+                ->where('jenis_transaksi', 'transfer') // Penyaluran adalah transfer keluar
+                ->when($filters['start_date'], function ($subQ, $date) {
                     $subQ->whereDate('created_at', '>=', $date);
                 })
-                ->when(isset($filters['end_date']) && $filters['end_date'], function ($subQ, $date) {
+                ->when($filters['end_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '<=', $date);
+                }),
+
+            // TAMBAHKAN INI: Subquery untuk menghitung total sales
+            'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+                ->where('jenis_transaksi', 'sales')
+                ->when($filters['start_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($subQ, $date) {
                     $subQ->whereDate('created_at', '<=', $date);
                 }),
         ]);
