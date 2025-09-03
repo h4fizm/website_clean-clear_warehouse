@@ -131,112 +131,151 @@ class PusatController extends Controller
         }
 
         try {
+            // Using DB::transaction ensures that if any part fails, all database changes will be rolled back.
             $response = DB::transaction(function () use ($request) {
                 $jenis_transaksi = $request->jenis_transaksi;
                 $jumlah = (int) $request->jumlah;
+                $tanggal_transaksi = Carbon::parse($request->tanggal_transaksi);
 
-                if ($jenis_transaksi == 'penyaluran') {
-                    $itemFrom = Item::findOrFail($request->item_id_pusat);
-                    if ($itemFrom->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi!']);
-                    }
+                // Find the central item and lock it for the duration of the transaction to prevent race conditions.
+                $itemPusat = Item::where('id', $request->item_id_pusat)->lockForUpdate()->firstOrFail();
 
-                    $stokAwalAsal = $itemFrom->stok_akhir;
-
-                    // DIUBAH: Gunakan decrement untuk memastikan stok berkurang
-                    $itemFrom->decrement('stok_akhir', $jumlah);
-
-                    // Buat item di facility tujuan jika belum ada
-                    Item::firstOrCreate(
-                        ['facility_id' => $request->facility_id_selected, 'kode_material' => $itemFrom->kode_material],
-                        ['nama_material' => $itemFrom->nama_material, 'stok_awal' => 0, 'stok_akhir' => 0]
-                    );
-
-                    ItemTransaction::create([
-                        'item_id' => $itemFrom->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'transfer',
-                        'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAwalAsal - $jumlah, // Dihitung hanya untuk log
-                        'region_from' => $itemFrom->region_id,
-                        'facility_to' => $request->facility_id_selected,
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => Carbon::parse($request->tanggal_transaksi),
-                        'updated_at' => Carbon::parse($request->tanggal_transaksi),
-                    ]);
-
-                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
-
-                } elseif ($jenis_transaksi == 'penerimaan') {
-                    // Logika penerimaan sudah benar dengan increment dan decrement
-                    $itemFrom = Item::where('facility_id', $request->facility_id_selected)->where('kode_material', $request->kode_material)->firstOrFail();
-                    if ($itemFrom->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => 'Stok di SPBE/BPT asal tidak ada atau tidak mencukupi!']);
-                    }
-
-                    $itemToPusat = Item::whereNull('facility_id')->where('kode_material', $request->kode_material)->firstOrFail();
-                    $stokAwalAsal = $itemFrom->stok_akhir;
-
-                    ItemTransaction::create([
-                        'item_id' => $itemFrom->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'transfer',
-                        'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAwalAsal - $jumlah,
-                        'facility_from' => $request->facility_id_selected,
-                        'region_to' => $itemToPusat->region_id,
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => Carbon::parse($request->tanggal_transaksi),
-                        'updated_at' => Carbon::parse($request->tanggal_transaksi),
-                    ]);
-
-                    $itemFrom->decrement('stok_akhir', $jumlah);
-                    $itemToPusat->increment('stok_akhir', $jumlah);
-
-                    return ['success' => true, 'message' => 'Penerimaan material berhasil dicatat!'];
-
-                } elseif ($jenis_transaksi == 'sales') {
-                    $itemPusat = Item::findOrFail($request->item_id_pusat);
+                // ===============================================
+                // CASE 1: SALES TRANSACTION
+                // Logic is completely isolated.
+                // ===============================================
+                if ($jenis_transaksi == 'sales') {
                     if ($itemPusat->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => 'Stok di P.Layang tidak mencukupi untuk sales!']);
+                        throw ValidationException::withMessages([
+                            'jumlah' => 'Stok di gudang pusat tidak mencukupi untuk sales!'
+                        ]);
                     }
 
-                    // Catat stok saat ini untuk disimpan di log
                     $stokAwalAsal = $itemPusat->stok_akhir;
-
-                    // DIUBAH: Langsung kurangi stok di database menggunakan decrement
                     $itemPusat->decrement('stok_akhir', $jumlah);
 
-                    // Buat log transaksi setelah stok berhasil dikurangi
                     ItemTransaction::create([
                         'item_id' => $itemPusat->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'sales',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAwalAsal - $jumlah, // Dihitung hanya untuk log
+                        'stok_akhir_asal' => $itemPusat->stok_akhir, // Use the new, updated stock
                         'region_from' => $itemPusat->region_id,
                         'tujuan_sales' => $request->tujuan_sales,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
                         'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => Carbon::parse($request->tanggal_transaksi),
-                        'updated_at' => Carbon::parse($request->tanggal_transaksi),
+                        'created_at' => $tanggal_transaksi,
+                        'updated_at' => $tanggal_transaksi,
                     ]);
 
                     return ['success' => true, 'message' => 'Transaksi sales berhasil dicatat!'];
                 }
+
+                // ===============================================
+                // CASE 2: PENYALURAN (DISTRIBUTION/TRANSFER OUT)
+                // Logic is completely isolated.
+                // ===============================================
+                elseif ($jenis_transaksi == 'penyaluran') {
+                    if ($itemPusat->stok_akhir < $jumlah) {
+                        throw ValidationException::withMessages([
+                            'jumlah' => 'Stok di gudang pusat tidak mencukupi untuk penyaluran!'
+                        ]);
+                    }
+
+                    // Find or create the destination item.
+                    $itemTujuan = Item::firstOrCreate(
+                        ['facility_id' => $request->facility_id_selected, 'kode_material' => $itemPusat->kode_material],
+                        ['nama_material' => $itemPusat->nama_material, 'stok_awal' => 0, 'stok_akhir' => 0]
+                    );
+
+                    // Re-fetch and lock the destination item to handle its stock safely.
+                    $itemTujuan = Item::where('id', $itemTujuan->id)->lockForUpdate()->first();
+
+                    $stokAwalAsal = $itemPusat->stok_akhir;
+                    $stokAwalTujuan = $itemTujuan->stok_akhir;
+
+                    // Update stocks in both locations
+                    $itemPusat->decrement('stok_akhir', $jumlah);
+                    $itemTujuan->increment('stok_akhir', $jumlah);
+
+                    ItemTransaction::create([
+                        'item_id' => $itemPusat->id,
+                        'user_id' => Auth::id(),
+                        'jenis_transaksi' => 'transfer',
+                        'jumlah' => $jumlah,
+                        'stok_awal_asal' => $stokAwalAsal,
+                        'stok_akhir_asal' => $itemPusat->stok_akhir,
+                        'stok_awal_tujuan' => $stokAwalTujuan,
+                        'stok_akhir_tujuan' => $itemTujuan->stok_akhir,
+                        'region_from' => $itemPusat->region_id,
+                        'facility_to' => $request->facility_id_selected,
+                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
+                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
+                        'created_at' => $tanggal_transaksi,
+                        'updated_at' => $tanggal_transaksi,
+                    ]);
+
+                    return ['success' => true, 'message' => 'Transfer material berhasil dicatat!'];
+                }
+
+                // ===============================================
+                // CASE 3: PENERIMAAN (RECEPTION/TRANSFER IN)
+                // Logic is completely isolated.
+                // ===============================================
+                elseif ($jenis_transaksi == 'penerimaan') {
+                    // Find the source item and lock it.
+                    $itemFrom = Item::where('facility_id', $request->facility_id_selected)
+                        ->where('kode_material', $request->kode_material)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if ($itemFrom->stok_akhir < $jumlah) {
+                        throw ValidationException::withMessages([
+                            'jumlah' => 'Stok di fasilitas asal tidak mencukupi untuk pengiriman!'
+                        ]);
+                    }
+
+                    $stokAwalAsal = $itemFrom->stok_akhir;
+                    $stokAwalTujuan = $itemPusat->stok_akhir;
+
+                    // Update stocks in both locations
+                    $itemFrom->decrement('stok_akhir', $jumlah);
+                    $itemPusat->increment('stok_akhir', $jumlah);
+
+                    ItemTransaction::create([
+                        'item_id' => $itemFrom->id,
+                        'user_id' => Auth::id(),
+                        'jenis_transaksi' => 'transfer',
+                        'jumlah' => $jumlah,
+                        'stok_awal_asal' => $stokAwalAsal,
+                        'stok_akhir_asal' => $itemFrom->stok_akhir,
+                        'stok_awal_tujuan' => $stokAwalTujuan,
+                        'stok_akhir_tujuan' => $itemPusat->stok_akhir,
+                        'facility_from' => $request->facility_id_selected,
+                        'region_to' => $itemPusat->region_id,
+                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
+                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
+                        'created_at' => $tanggal_transaksi,
+                        'updated_at' => $tanggal_transaksi,
+                    ]);
+
+                    return ['success' => true, 'message' => 'Penerimaan material berhasil dicatat!'];
+                }
             });
+
             return response()->json($response);
+
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            // Return a generic error message to the user for security.
+            \Log::error('Transfer Error: ' . $e->getMessage()); // Log the detailed error for debugging.
+            return response()->json(['message' => 'Terjadi kesalahan pada server saat memproses transaksi.'], 500);
         }
     }
+
+
 
     public function create()
     {
@@ -270,8 +309,18 @@ class PusatController extends Controller
     public function update(Request $request, Item $item)
     {
         $validator = Validator::make($request->all(), [
-            'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
-            'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')->ignore($item->id)],
+            'nama_material' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+            ],
+            'kode_material' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('items')->where('facility_id', $item->facility_id)->ignore($item->id),
+            ],
             'stok_awal' => 'required|integer|min:0',
         ]);
 
@@ -282,38 +331,45 @@ class PusatController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
+        // Simpan kode material lama untuk sinkronisasi
         $oldKode = $item->kode_material;
 
-        // DIUBAH: Hitung total penerimaan, penyaluran, dan sales secara terpisah dan akurat
+        // Hitung ulang total penerimaan dan penyaluran
         $totalPenerimaan = ItemTransaction::whereHas('item', function ($query) use ($item) {
             $query->where('kode_material', $item->kode_material);
-        })->where('region_to', $item->region_id)->sum('jumlah');
+        })
+            ->where('region_to', $item->region_id)
+            ->sum('jumlah');
 
-        $totalPenyaluran = $item->transactions()->where('jenis_transaksi', 'transfer')->sum('jumlah');
-        $totalSales = $item->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
+        $totalPenyaluran = $item->transactions()
+            ->where('jenis_transaksi', 'transfer')
+            ->sum('jumlah');
 
         $stokAwalBaru = $request->stok_awal;
 
-        // DIUBAH: Gunakan formula baru yang sudah benar
-        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales;
+        // ✅ Formula baru: tidak mengurangi stok karena sales
+        // ✅ versi baru (tanpa minus sales, karena sales sudah decrement di transfer)
+        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran;
 
+
+        // Update stok awal & akhir
         $item->update([
-            'nama_material' => $request->nama_material,
-            'kode_material' => $request->kode_material,
             'stok_awal' => $stokAwalBaru,
             'stok_akhir' => $stokAkhirBaru,
         ]);
 
-        // Sinkronisasi nama dan kode material ke cabang tetap berjalan
-        Item::whereNotNull('facility_id')
-            ->where('kode_material', $oldKode)
+        // Sinkronisasi nama & kode material ke semua lokasi
+        Item::where('kode_material', $oldKode)
             ->update([
-                'nama_material' => $item->nama_material,
-                'kode_material' => $item->kode_material,
+                'nama_material' => $request->input('nama_material'),
+                'kode_material' => $request->input('kode_material'),
             ]);
 
-        return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
+        return redirect()
+            ->route('materials.index', $item->facility_id)
+            ->with('success', 'Data material berhasil diperbarui!');
     }
+
 
     public function destroy(Item $item)
     {
