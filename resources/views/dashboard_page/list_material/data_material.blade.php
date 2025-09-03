@@ -311,34 +311,34 @@
 </script>
 
 {{-- Script Transaksi --}}
+{{-- Script Transaksi --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const locations = @json($locations);
         const currentFacility = @json($facility);
         const transaksiModal = document.getElementById('transaksiMaterialModal');
-        const radioButtons = document.querySelectorAll('input[name="jenis_transaksi"]');
+        const form = document.getElementById('transaksiMaterialForm');
 
-        // 🔹 Template readonly input
+        // ✅ DIKEMBALIKAN: Template input dengan hidden value untuk asal/tujuan
         const readonlyInputHTML = (loc, nameAttr) => `
-        <input type="text" class="form-control" value="${loc.name}" readonly>
-        <input type="hidden" name="${nameAttr}" value="${loc.id}">
+            <input type="text" class="form-control" value="${loc.name}" readonly>
+            <input type="hidden" name="${nameAttr}" value="${loc.id}">
         `;
 
-
-        // 🔹 Template search input
+        // ✅ DIKEMBALIKAN: Template untuk search bar lokasi
         function createSearchInputHTML(nameAttr) {
             return `
                 <div class="position-relative w-100">
                     <input type="text" class="form-control facility-search" placeholder="Cari Lokasi..." autocomplete="off">
                     <input type="hidden" name="${nameAttr}">
                     <div class="list-group position-absolute w-100 shadow-sm facility-suggestions" 
-                        style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                         style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             `;
         }
-
-        // 🔹 Fungsi aktifkan searchbar
-        function initSearchbar(container, otherLocations, nameAttr) {
+        
+        // ✅ DIKEMBALIKAN: Fungsi untuk mengaktifkan search bar
+        function initSearchbar(container, availableLocations, nameAttr) {
             const searchInput = container.querySelector(".facility-search");
             const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
             const suggestionsBox = container.querySelector(".facility-suggestions");
@@ -346,14 +346,11 @@
             searchInput.addEventListener("input", function() {
                 const query = this.value.toLowerCase();
                 suggestionsBox.innerHTML = "";
-
                 if (!query) {
                     suggestionsBox.style.display = "none";
                     return;
                 }
-
-                const results = otherLocations.filter(loc => loc.name.toLowerCase().includes(query));
-
+                const results = availableLocations.filter(loc => loc.name.toLowerCase().includes(query));
                 if (results.length > 0) {
                     results.forEach(loc => {
                         const item = document.createElement("button");
@@ -361,13 +358,11 @@
                         item.className = "list-group-item list-group-item-action";
                         item.textContent = loc.name;
                         item.dataset.id = loc.id;
-
                         item.addEventListener("click", function() {
                             searchInput.value = loc.name;
                             hiddenInput.value = loc.id;
                             suggestionsBox.style.display = "none";
                         });
-
                         suggestionsBox.appendChild(item);
                     });
                     suggestionsBox.style.display = "block";
@@ -377,7 +372,7 @@
             });
         }
 
-        // BARU: Template untuk dropdown sales
+        // 🔹 Template dropdown sales (tidak berubah)
         function createSalesDropdownHTML(nameAttr) {
             return `
                 <select class="form-select" name="${nameAttr}">
@@ -390,31 +385,40 @@
             `;
         }
 
-        // DIUBAH: Fungsi utama update form diperbarui
+        // ✅ FUNGSI UTAMA DIPERBARUI untuk menggunakan search bar
         function updateFormUI() {
             const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
+            const asalLabel = document.querySelector('label[for="asal-container"]');
+            const tujuanLabel = document.querySelector('label[for="tujuan-container"]');
             const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
 
             if (selectedType === 'penyaluran') {
+                asalLabel.textContent = "Asal Penyaluran";
+                tujuanLabel.textContent = "Tujuan Penyaluran";
                 asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
                 tujuanContainer.innerHTML = createSearchInputHTML("tujuan_id");
                 initSearchbar(tujuanContainer, otherLocations, "tujuan_id");
             } else if (selectedType === 'penerimaan') {
+                asalLabel.textContent = "Asal Penerimaan";
+                tujuanLabel.textContent = "Tujuan Penerimaan";
                 asalContainer.innerHTML = createSearchInputHTML("asal_id");
-                tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
                 initSearchbar(asalContainer, otherLocations, "asal_id");
-            } else if (selectedType === 'sales') { // KONDISI BARU
+                tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
+            } else if (selectedType === 'sales') {
+                asalLabel.textContent = "Asal Transaksi";
+                tujuanLabel.textContent = "Tujuan Sales";
                 asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
                 tujuanContainer.innerHTML = createSalesDropdownHTML("tujuan_sales");
             }
         }
 
-        // Saat modal dibuka
-        transaksiModal.addEventListener('show.bs.modal', function (event) {
+        // ✅ Saat modal dibuka, simpan juga KODE MATERIAL
+        transaksiModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
-            document.getElementById('transaksiMaterialForm').reset();
+            form.reset();
+            form.dataset.kodeMaterial = button.getAttribute('data-kode-material'); // Simpan kode material
 
             // Default ke penyaluran
             document.getElementById('jenis-penyaluran').checked = true;
@@ -427,45 +431,63 @@
             document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
         });
 
-        // Event radio
-        radioButtons.forEach(radio => {
+        // Event listener untuk radio button
+        document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', updateFormUI);
         });
 
-        // Submit
+        // ✅ Saat submit, data kini lebih dinamis
         document.getElementById('submitTransaksi').addEventListener('click', function() {
-            const form = document.getElementById('transaksiMaterialForm');
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            // Tambahkan kode_material dari data yang disimpan saat modal dibuka
+            data.kode_material = form.dataset.kodeMaterial;
 
             fetch('{{ route("materials.transaction") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': data._token,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    Swal.fire({ icon: 'success', title: 'Berhasil!', text: result.message, timer: 2500, showConfirmButton: false })
-                    .then(() => {
-                        bootstrap.Modal.getInstance(transaksiModal).hide();
-                        window.location.reload();
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': data._token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: result.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            bootstrap.Modal.getInstance(transaksiModal).hide();
+                            window.location.reload();
+                        });
+                    } else if (result.errors) {
+                        let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Validasi',
+                            html: `<ul class="text-start mb-0 ps-3">${errorMessages}</ul>`
+                        });
+                    } else {
+                        throw new Error(result.message || 'Terjadi kesalahan.');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops... Terjadi Kesalahan',
+                        text: error.message
                     });
-                } else if (result.errors) {
-                    let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
-                    Swal.fire({ icon: 'error', title: 'Gagal Validasi', html: `<ul class="text-start mb-0 ps-3">${errorMessages}</ul>` });
-                } else {
-                    throw new Error(result.message || 'Terjadi kesalahan.');
-                }
-            })
-            .catch(error => {
-                Swal.fire({ icon: 'error', title: 'Oops... Terjadi Kesalahan', text: error.message });
-            });
+                });
         });
     });
 </script>
+
+
+
 @endpush

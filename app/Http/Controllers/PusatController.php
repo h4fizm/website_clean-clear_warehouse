@@ -149,19 +149,17 @@ class PusatController extends Controller
                     }
 
                     $stokAwalAsal = $itemPusat->stok_akhir;
-                    $stokAkhirAsal = $stokAwalAsal - $jumlah; // <-- PERBAIKAN KUNCI
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah;
 
-                    // Update stok di tabel items
                     $itemPusat->decrement('stok_akhir', $jumlah);
 
-                    // Buat log transaksi dengan data yang sudah dihitung manual
                     ItemTransaction::create([
                         'item_id' => $itemPusat->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'sales',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
+                        'stok_akhir_asal' => $stokAkhirAsal,
                         'region_from' => $itemPusat->region_id,
                         'tujuan_sales' => $request->tujuan_sales,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -192,8 +190,6 @@ class PusatController extends Controller
 
                     $stokAwalAsal = $itemPusat->stok_akhir;
                     $stokAwalTujuan = $itemTujuan->stok_akhir;
-
-                    // PERBAIKAN: Hitung manual stok akhir untuk asal dan tujuan
                     $stokAkhirAsal = $stokAwalAsal - $jumlah;
                     $stokAkhirTujuan = $stokAwalTujuan + $jumlah;
 
@@ -206,9 +202,9 @@ class PusatController extends Controller
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
+                        'stok_akhir_asal' => $stokAkhirAsal,
                         'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $stokAkhirTujuan, // <-- Gunakan hasil perhitungan
+                        'stok_akhir_tujuan' => $stokAkhirTujuan,
                         'region_from' => $itemPusat->region_id,
                         'facility_to' => $request->facility_id_selected,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -237,8 +233,6 @@ class PusatController extends Controller
 
                     $stokAwalAsal = $itemFrom->stok_akhir;
                     $stokAwalTujuan = $itemPusat->stok_akhir;
-
-                    // PERBAIKAN: Hitung manual stok akhir untuk asal dan tujuan
                     $stokAkhirAsal = $stokAwalAsal - $jumlah;
                     $stokAkhirTujuan = $stokAwalTujuan + $jumlah;
 
@@ -251,9 +245,9 @@ class PusatController extends Controller
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
+                        'stok_akhir_asal' => $stokAkhirAsal,
                         'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $stokAkhirTujuan, // <-- Gunakan hasil perhitungan
+                        'stok_akhir_tujuan' => $stokAkhirTujuan,
                         'facility_from' => $request->facility_id_selected,
                         'region_to' => $itemPusat->region_id,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -331,42 +325,44 @@ class PusatController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
-        // Simpan kode material lama untuk sinkronisasi
         $oldKode = $item->kode_material;
 
-        // Hitung ulang total penerimaan dan penyaluran
         $totalPenerimaan = ItemTransaction::whereHas('item', function ($query) use ($item) {
             $query->where('kode_material', $item->kode_material);
         })
             ->where('region_to', $item->region_id)
             ->sum('jumlah');
 
-        $totalPenyaluran = $item->transactions()
+        // ✅ DIPERBAIKI: Kueri dibuat lebih spesifik untuk hanya menghitung transfer KELUAR dari pusat
+        $totalPenyaluran = ItemTransaction::where('item_id', $item->id)
             ->where('jenis_transaksi', 'transfer')
+            ->whereNotNull('region_from') // Memastikan transaksi ini berasal dari region (pusat)
+            ->sum('jumlah');
+
+        // BARU: Hitung total sales untuk item ini
+        $totalSales = $item->transactions()
+            ->where('jenis_transaksi', 'sales')
             ->sum('jumlah');
 
         $stokAwalBaru = $request->stok_awal;
 
-        // ✅ Formula baru: tidak mengurangi stok karena sales
-        // ✅ versi baru (tanpa minus sales, karena sales sudah decrement di transfer)
-        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran;
+        // DIPERBAIKI: Formula sekarang mengurangi sales untuk kalkulasi yang akurat
+        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales;
 
-
-        // Update stok awal & akhir
         $item->update([
             'stok_awal' => $stokAwalBaru,
             'stok_akhir' => $stokAkhirBaru,
         ]);
 
-        // Sinkronisasi nama & kode material ke semua lokasi
         Item::where('kode_material', $oldKode)
             ->update([
                 'nama_material' => $request->input('nama_material'),
                 'kode_material' => $request->input('kode_material'),
             ]);
 
+        // PERBAIKAN: Redirect ke pusat.index, bukan materials.index
         return redirect()
-            ->route('materials.index', $item->facility_id)
+            ->route('pusat.index')
             ->with('success', 'Data material berhasil diperbarui!');
     }
 
@@ -401,3 +397,4 @@ class PusatController extends Controller
         return Excel::download(new PusatDataExport($filters), $filename);
     }
 }
+
