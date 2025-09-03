@@ -17,7 +17,6 @@ use Carbon\Carbon;
 
 class PusatController extends Controller
 {
-    // Fungsi index() Anda sudah benar, tidak perlu diubah.
     public function index(Request $request)
     {
         $filters = [
@@ -91,8 +90,19 @@ class PusatController extends Controller
                 }),
         ]);
 
-        $query->withMax('transactions as latest_transaction_date', 'created_at');
-        $items = $query->latest('updated_at')->paginate(10)->withQueryString();
+        // 📌 Order by latest activity (updated_at ATAU transaksi terakhir)
+        $query->orderByDesc(DB::raw("
+            GREATEST(
+                COALESCE(items.updated_at, '1970-01-01'),
+                COALESCE((
+                    SELECT MAX(created_at) 
+                    FROM item_transactions 
+                    WHERE item_transactions.item_id = items.id
+                ), '1970-01-01')
+            )
+        "));
+
+        $items = $query->paginate(10)->withQueryString();
         $facilities = Facility::orderBy('name')->get();
 
         return view('dashboard_page.menu.data_pusat', [
@@ -101,6 +111,7 @@ class PusatController extends Controller
             'facilities' => $facilities,
         ]);
     }
+
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
