@@ -72,6 +72,8 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
+                                {{-- TAMBAHKAN INI --}}
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
@@ -88,6 +90,8 @@
                                     <td class="text-center"><span class="badge bg-gradient-secondary text-white text-xs">{{ number_format($item->stok_awal) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-primary text-white text-xs">{{ number_format($item->penerimaan_total) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-info text-white text-xs">{{ number_format($item->penyaluran_total) }} pcs</span></td>
+                                    {{-- TAMBAHKAN INI (Gunakan ?? 0 untuk mencegah error jika data belum ada) --}}
+                                    <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($item->sales_total ?? 0) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">{{ number_format($item->stok_akhir) }} pcs</span></td>
                                     <td class="text-center">
                                         <p class="text-xs text-secondary font-weight-bold mb-0">
@@ -117,7 +121,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
+                                <tr><td colspan="10" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -200,6 +204,7 @@
                     @csrf
                     <input type="hidden" id="modal-item-id" name="item_id">
 
+                    {{-- File: resources/views/materials/index.blade.php (di dalam #transaksiMaterialModal) --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
@@ -207,10 +212,17 @@
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
                                 <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check me-4"> {{-- DIUBAH: Tambah class me-4 --}}
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
                                 <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
+                            
+                            {{-- TAMBAHKAN INI --}}
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
+                                <label class="form-check-label" for="jenis-sales">Sales</label>
+                            </div>
+
                         </div>
                     </div>
 
@@ -365,7 +377,20 @@
             });
         }
 
-        // 🔹 Fungsi utama update form
+        // BARU: Template untuk dropdown sales
+        function createSalesDropdownHTML(nameAttr) {
+            return `
+                <select class="form-select" name="${nameAttr}">
+                    <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
+                    <option value="Vendor UPP">Vendor UPP</option>
+                    <option value="Sales Agen">Sales Agen</option>
+                    <option value="Sales BPT">Sales BPT</option>
+                    <option value="Sales SPBE">Sales SPBE</option>
+                </select>
+            `;
+        }
+
+        // DIUBAH: Fungsi utama update form diperbarui
         function updateFormUI() {
             const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             const asalContainer = document.getElementById('asal-container');
@@ -376,12 +401,14 @@
                 asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
                 tujuanContainer.innerHTML = createSearchInputHTML("tujuan_id");
                 initSearchbar(tujuanContainer, otherLocations, "tujuan_id");
-            } else {
+            } else if (selectedType === 'penerimaan') {
                 asalContainer.innerHTML = createSearchInputHTML("asal_id");
                 tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
                 initSearchbar(asalContainer, otherLocations, "asal_id");
+            } else if (selectedType === 'sales') { // KONDISI BARU
+                asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
+                tujuanContainer.innerHTML = createSalesDropdownHTML("tujuan_sales");
             }
-
         }
 
         // Saat modal dibuka

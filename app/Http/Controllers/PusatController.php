@@ -131,18 +131,15 @@ class PusatController extends Controller
         }
 
         try {
-            // Using DB::transaction ensures that if any part fails, all database changes will be rolled back.
             $response = DB::transaction(function () use ($request) {
                 $jenis_transaksi = $request->jenis_transaksi;
                 $jumlah = (int) $request->jumlah;
                 $tanggal_transaksi = Carbon::parse($request->tanggal_transaksi);
 
-                // Find the central item and lock it for the duration of the transaction to prevent race conditions.
                 $itemPusat = Item::where('id', $request->item_id_pusat)->lockForUpdate()->firstOrFail();
 
                 // ===============================================
                 // CASE 1: SALES TRANSACTION
-                // Logic is completely isolated.
                 // ===============================================
                 if ($jenis_transaksi == 'sales') {
                     if ($itemPusat->stok_akhir < $jumlah) {
@@ -152,15 +149,19 @@ class PusatController extends Controller
                     }
 
                     $stokAwalAsal = $itemPusat->stok_akhir;
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah; // <-- PERBAIKAN KUNCI
+
+                    // Update stok di tabel items
                     $itemPusat->decrement('stok_akhir', $jumlah);
 
+                    // Buat log transaksi dengan data yang sudah dihitung manual
                     ItemTransaction::create([
                         'item_id' => $itemPusat->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'sales',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $itemPusat->stok_akhir, // Use the new, updated stock
+                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
                         'region_from' => $itemPusat->region_id,
                         'tujuan_sales' => $request->tujuan_sales,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -174,7 +175,6 @@ class PusatController extends Controller
 
                 // ===============================================
                 // CASE 2: PENYALURAN (DISTRIBUTION/TRANSFER OUT)
-                // Logic is completely isolated.
                 // ===============================================
                 elseif ($jenis_transaksi == 'penyaluran') {
                     if ($itemPusat->stok_akhir < $jumlah) {
@@ -183,19 +183,20 @@ class PusatController extends Controller
                         ]);
                     }
 
-                    // Find or create the destination item.
                     $itemTujuan = Item::firstOrCreate(
                         ['facility_id' => $request->facility_id_selected, 'kode_material' => $itemPusat->kode_material],
                         ['nama_material' => $itemPusat->nama_material, 'stok_awal' => 0, 'stok_akhir' => 0]
                     );
 
-                    // Re-fetch and lock the destination item to handle its stock safely.
                     $itemTujuan = Item::where('id', $itemTujuan->id)->lockForUpdate()->first();
 
                     $stokAwalAsal = $itemPusat->stok_akhir;
                     $stokAwalTujuan = $itemTujuan->stok_akhir;
 
-                    // Update stocks in both locations
+                    // PERBAIKAN: Hitung manual stok akhir untuk asal dan tujuan
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah;
+                    $stokAkhirTujuan = $stokAwalTujuan + $jumlah;
+
                     $itemPusat->decrement('stok_akhir', $jumlah);
                     $itemTujuan->increment('stok_akhir', $jumlah);
 
@@ -205,9 +206,9 @@ class PusatController extends Controller
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $itemPusat->stok_akhir,
+                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
                         'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $itemTujuan->stok_akhir,
+                        'stok_akhir_tujuan' => $stokAkhirTujuan, // <-- Gunakan hasil perhitungan
                         'region_from' => $itemPusat->region_id,
                         'facility_to' => $request->facility_id_selected,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -221,10 +222,8 @@ class PusatController extends Controller
 
                 // ===============================================
                 // CASE 3: PENERIMAAN (RECEPTION/TRANSFER IN)
-                // Logic is completely isolated.
                 // ===============================================
                 elseif ($jenis_transaksi == 'penerimaan') {
-                    // Find the source item and lock it.
                     $itemFrom = Item::where('facility_id', $request->facility_id_selected)
                         ->where('kode_material', $request->kode_material)
                         ->lockForUpdate()
@@ -239,7 +238,10 @@ class PusatController extends Controller
                     $stokAwalAsal = $itemFrom->stok_akhir;
                     $stokAwalTujuan = $itemPusat->stok_akhir;
 
-                    // Update stocks in both locations
+                    // PERBAIKAN: Hitung manual stok akhir untuk asal dan tujuan
+                    $stokAkhirAsal = $stokAwalAsal - $jumlah;
+                    $stokAkhirTujuan = $stokAwalTujuan + $jumlah;
+
                     $itemFrom->decrement('stok_akhir', $jumlah);
                     $itemPusat->increment('stok_akhir', $jumlah);
 
@@ -249,9 +251,9 @@ class PusatController extends Controller
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $itemFrom->stok_akhir,
+                        'stok_akhir_asal' => $stokAkhirAsal, // <-- Gunakan hasil perhitungan
                         'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $itemPusat->stok_akhir,
+                        'stok_akhir_tujuan' => $stokAkhirTujuan, // <-- Gunakan hasil perhitungan
                         'facility_from' => $request->facility_id_selected,
                         'region_to' => $itemPusat->region_id,
                         'no_surat_persetujuan' => $request->no_surat_persetujuan,
@@ -269,12 +271,10 @@ class PusatController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            // Return a generic error message to the user for security.
-            \Log::error('Transfer Error: ' . $e->getMessage()); // Log the detailed error for debugging.
+            \Log::error('Transfer Error: ' . $e->getMessage());
             return response()->json(['message' => 'Terjadi kesalahan pada server saat memproses transaksi.'], 500);
         }
     }
-
 
 
     public function create()
