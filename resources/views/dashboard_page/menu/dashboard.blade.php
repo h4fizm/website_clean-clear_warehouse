@@ -268,29 +268,33 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
+        // 🔹 Data awal dari backend
         const allMaterialNames = @json($materialList);
         const initialStockData = @json($initialStockData);
         const defaultMaterialName = @json($defaultMaterialName);
 
+        // 🔹 Elemen DOM utama
         const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
         const stockSearchInput = document.getElementById('search-stock-material');
         const stockTitle = document.getElementById('stock-title');
         const materialSuggestionsContainer = document.getElementById('material-suggestions');
 
-        // 🔹 Elemen dropdown bulan & tahun
+        // 🔹 Dropdown bulan & tahun
         const monthSelect = document.getElementById('month-select');
         const yearSelect = document.getElementById('year-select');
 
-        // [DIKEMBALIKAN] JavaScript untuk Modal Export Excel
+        // 🔹 Modal Export Excel
         const openExportModalBtn = document.getElementById('openExportModalBtn');
         const exportExcelModalEl = document.getElementById('exportExcelModal');
         const confirmExportBtn = document.getElementById('confirmExportBtn');
         const exportExcelModal = new bootstrap.Modal(exportExcelModalEl);
 
+        // 📌 Buka modal export
         openExportModalBtn.addEventListener('click', function() {
             exportExcelModal.show();
         });
 
+        // 📌 Jalankan export Excel (fungsi export backend sudah berjalan)
         confirmExportBtn.addEventListener('click', function() {
             const startDate = document.getElementById('exportStartDate').value;
             const endDate = document.getElementById('exportEndDate').value;
@@ -300,20 +304,20 @@
                 return;
             }
 
-            console.log(`Fungsi export dipanggil untuk rentang: ${startDate} sampai ${endDate}`);
-            Swal.fire('Info', 'Fungsi export backend belum diimplementasikan.', 'info');
-            
-            exportExcelModal.hide();
+            window.location.href = `/export-excel?start_date=${startDate}&end_date=${endDate}`;
         });
 
+        // 📌 Format angka dengan pemisah ribuan
         function formatNumber(value) {
             return (value ?? 0).toLocaleString('id-ID');
         }
 
+        // 📌 Konversi nomor bulan → nama bulan
         function getMonthName(month) {
             return new Date(2000, month - 1, 1).toLocaleString('id-ID', { month: 'long' });
         }
 
+        // 📌 Render isi tabel stok material
         function renderStockTable(data) {
             stockTableBody.innerHTML = '';
             const materialName = data?.stock?.[0]?.material_name;
@@ -321,6 +325,7 @@
             const year = yearSelect.value;
             const bulanNama = getMonthName(parseInt(month));
 
+            // Set judul tabel
             if (materialName) {
                 stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${year}`;
                 stockSearchInput.value = materialName;
@@ -328,6 +333,7 @@
                 stockTitle.innerText = `Stok ${bulanNama} ${year}`;
             }
             
+            // Render data stok
             if (data && data.stock && data.stock.length > 0) {
                 const stockData = data.stock;
                 stockData.forEach((item, index) => {
@@ -350,6 +356,7 @@
                 stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
             }
 
+            // Render kapasitas material
             if (materialName) {
                 const capacity = data.capacity;
                 const capacityDisplay = (capacity === null || capacity === undefined) ? '-' : capacity.toLocaleString('id-ID');
@@ -372,7 +379,7 @@
             }
         }
 
-        // 🔹 fetchStockData dengan parameter bulan & tahun
+        // 📌 Ambil data stok berdasarkan material + bulan + tahun
         async function fetchStockData(materialName) {
             stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>';
             try {
@@ -389,7 +396,8 @@
                 stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">${error.message}</td></tr>`;
             }
         }
-        
+
+        // 📌 Event form kapasitas (edit & submit)
         function setupCapacityFormEvents(materialName) {
             const capacityInput = document.getElementById('capacity-input');
             const editCapacityBtn = document.getElementById('edit-capacity-btn');
@@ -446,6 +454,7 @@
             });
         }
 
+        // 📌 Tampilkan suggestion nama material di search box
         function showSuggestions(searchTerm) {
             const filteredNames = allMaterialNames.filter(name =>
                 name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -471,15 +480,17 @@
             }
         }
 
+        // 📌 Tutup suggestion kalau klik di luar
         document.addEventListener('click', (e) => {
             if (!stockSearchInput.contains(e.target) && !materialSuggestionsContainer.contains(e.target)) {
                 materialSuggestionsContainer.style.display = 'none';
             }
         });
         
+        // 📌 Event input search
         stockSearchInput.addEventListener('keyup', function() { showSuggestions(this.value); });
 
-        // 🔹 Event listener untuk filter bulan & tahun
+        // 📌 Event filter bulan & tahun
         monthSelect.addEventListener('change', function () {
             if (stockSearchInput.value) {
                 fetchStockData(stockSearchInput.value);
@@ -492,7 +503,7 @@
             }
         });
 
-        // 🔹 Inisialisasi awal
+        // 📌 Inisialisasi awal
         if (defaultMaterialName && initialStockData.stock) {
             renderStockTable(initialStockData);
         } else {
@@ -502,6 +513,7 @@
         }
     });
 </script>
+
 @endpush
 
 

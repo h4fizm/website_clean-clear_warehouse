@@ -60,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
     // --- [TAMBAHKAN INI] API untuk MENYIMPAN kapasitas ---
     Route::post('/api/stock-capacity', [DashboardController::class, 'updateCapacityApi'])->name('api.capacity.update');
 
+    // ALL MATERIAL EXPORT EXCEL
+    Route::get('/export-excel', [DashboardController::class, 'exportExcel'])->name('dashboard.exportExcel');
+
     // Laman Data P.Layang (Pusat)
     Route::get('/pusat', [PusatController::class, 'index'])
         ->name('pusat.index')

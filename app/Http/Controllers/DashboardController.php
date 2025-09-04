@@ -7,7 +7,9 @@ use App\Models\Item;
 use App\Models\ItemTransaction;
 use App\Models\MaterialCapacity;
 use App\Models\Region;
+use App\Exports\AllMaterialStockExport;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -167,6 +169,16 @@ class DashboardController extends Controller
 
         $data = $this->getFormattedStockData($materialBaseName, $month, $year);
         return response()->json($data);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $filters = [
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+        ];
+
+        return Excel::download(new AllMaterialStockExport($filters), 'Total Stok Material.xlsx');
     }
 
 }
