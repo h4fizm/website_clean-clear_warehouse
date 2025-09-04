@@ -54,6 +54,12 @@ Route::middleware(['auth'])->group(function () {
     // --- Halaman Utama Setelah Login ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // --- API untuk data stok ---
+    Route::get('/api/stock-data/{materialBaseName}', [DashboardController::class, 'getStockDataApi'])->name('api.stock.data');
+
+    // --- [TAMBAHKAN INI] API untuk MENYIMPAN kapasitas ---
+    Route::post('/api/stock-capacity', [DashboardController::class, 'updateCapacityApi'])->name('api.capacity.update');
+
     // Laman Data P.Layang (Pusat)
     Route::get('/pusat', [PusatController::class, 'index'])
         ->name('pusat.index')

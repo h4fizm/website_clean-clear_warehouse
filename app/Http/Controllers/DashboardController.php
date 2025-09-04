@@ -5,21 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Facility;
 use App\Models\Item;
 use App\Models\ItemTransaction;
+use App\Models\MaterialCapacity;
+use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan halaman dashboard utama dengan data yang dinamis.
-     */
     public function index(Request $request)
     {
-        // 1. Mengambil data user yang sedang login untuk Welcome Card
+        // Bagian 1 & 2: Kode Anda yang sudah ada tidak diubah
         $user = Auth::user();
         $roleName = $user->getRoleNames()->first() ?? 'User';
 
-        // 2. Menghitung data untuk Statistik Cards
         $totalSpbe = Facility::where('type', 'SPBE')->count();
         $totalBpt = Facility::where('type', 'BPT')->count();
         $totalPenerimaan = ItemTransaction::count();
@@ -34,34 +34,127 @@ class DashboardController extends Controller
             ['title' => 'UPP Material', 'value' => $totalUpp, 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
         ];
 
-        // 3. Ambil semua data material (pusat + semua region) + pencarian
         $query = Item::query()
-            ->selectRaw('
-                            nama_material,
-                            kode_material,
-                            SUM(stok_awal) as total_stok_awal
-                        ')
+            ->selectRaw('nama_material, kode_material, SUM(stok_awal) as total_stok_awal')
             ->groupBy('nama_material', 'kode_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
-                $searchTerm = $request->search_material;
-                $q->where(function ($sub) use ($searchTerm) {
-                    $sub->where('nama_material', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('kode_material', 'like', '%' . $searchTerm . '%');
-                });
+                $q->where('nama_material', 'like', '%' . $request->search_material . '%')
+                    ->orWhere('kode_material', 'like', '%' . $request->search_material . '%');
             })
             ->orderBy('nama_material');
-
-        // Paginate hasil
         $items = $query->paginate(5)->appends($request->only('search_material'));
 
+        // Bagian 3: Logika untuk Tabel Stok Material Interaktif
+        $materialList = $this->getUniqueMaterialBaseNames();
+        $defaultMaterialName = $materialList->first() ?? null;
+        $initialStockData = $defaultMaterialName ? $this->getFormattedStockData($defaultMaterialName) : [];
 
-
-        // Kirim semua data ke view
+        // Bagian 4: Mengirim SEMUA DATA ke view
         return view('dashboard_page.menu.dashboard', [
             'user' => $user,
             'roleName' => $roleName,
             'cards' => $cards,
             'items' => $items,
+            'materialList' => $materialList,
+            'initialStockData' => $initialStockData,
+            'defaultMaterialName' => $defaultMaterialName,
         ]);
     }
+
+    public function getStockDataApi($materialBaseName)
+    {
+        $data = $this->getFormattedStockData($materialBaseName);
+        return response()->json($data);
+    }
+
+    public function updateCapacityApi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'material_name' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        MaterialCapacity::updateOrCreate(
+            ['material_base_name' => $request->material_name],
+            ['capacity' => $request->capacity]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Kapasitas berhasil diperbarui.']);
+    }
+
+    private function getUniqueMaterialBaseNames()
+    {
+        return Item::select('nama_material')->distinct()->pluck('nama_material')
+            ->map(function ($name) {
+                return trim(explode('-', $name)[0]);
+            })
+            ->unique()->sort()->values();
+    }
+
+    /**
+     * [FUNGSI DIPERBARUI]
+     * Menggunakan Eloquent dan menyederhanakan output.
+     */
+    private function getFormattedStockData($materialBaseName)
+    {
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+        $pusatRegionId = $pusatRegion ? $pusatRegion->id : null;
+
+        $items = Item::where('nama_material', 'like', $materialBaseName . '%')->get();
+
+        $pusatItems = $items->where('region_id', $pusatRegionId)->whereNull('facility_id');
+        $fasilitasItems = $items->whereNotNull('facility_id');
+
+        $calculateStock = function ($collection) {
+            $stock = ['baik' => 0, 'rusak' => 0, 'retur' => 0, 'musnah' => 0];
+            foreach ($collection as $item) {
+                $currentStock = $item->stok_akhir;
+                if (str_contains($item->nama_material, 'Baik'))
+                    $stock['baik'] += $currentStock;
+                if (str_contains($item->nama_material, 'Rusak'))
+                    $stock['rusak'] += $currentStock;
+                if (str_contains($item->nama_material, 'Retur'))
+                    $stock['retur'] += $currentStock;
+                if (str_contains($item->nama_material, 'Musnah'))
+                    $stock['musnah'] += $currentStock;
+            }
+            return $stock;
+        };
+
+        $pusatStock = $calculateStock($pusatItems);
+        $fasilitasStock = $calculateStock($fasilitasItems);
+
+        $data = [
+            [
+                'material_name' => $materialBaseName,
+                'gudang' => 'Gudang Region',
+                'baik' => $pusatStock['baik'],
+                'rusak' => $pusatStock['rusak'],
+                'retur' => $pusatStock['retur'],
+                'musnah' => $pusatStock['musnah'],
+                'layak_edar' => $pusatStock['baik'],
+            ],
+            [
+                'material_name' => $materialBaseName,
+                'gudang' => 'SPBE/BPT (Global)',
+                'baik' => $fasilitasStock['baik'],
+                'rusak' => $fasilitasStock['rusak'],
+                'retur' => $fasilitasStock['retur'],
+                'musnah' => $fasilitasStock['musnah'],
+                'layak_edar' => $fasilitasStock['baik'],
+            ],
+        ];
+
+        $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)->value('capacity');
+
+        return [
+            'stock' => $data,
+            'capacity' => $capacity ?? 0
+        ];
+    }
 }
+
