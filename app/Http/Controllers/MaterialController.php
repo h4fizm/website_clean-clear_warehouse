@@ -54,7 +54,7 @@ class MaterialController extends Controller
             });
         });
 
-        // [PENAMBAHAN] Logika subquery disamakan dengan PusatController
+        // Logika subquery disamakan dengan PusatController
         $itemsQuery->addSelect([
             'penerimaan_total' => ItemTransaction::query()
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
@@ -69,14 +69,13 @@ class MaterialController extends Controller
                 ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
-                ->where('jenis_transaksi', 'transfer') // Penyaluran hanya yang jenisnya transfer
+                ->where('jenis_transaksi', 'transfer')
                 ->when($filters['start_date'], function ($query, $date) {
                     $query->whereDate('created_at', '>=', $date);
                 })
                 ->when($filters['end_date'], function ($query, $date) {
                     $query->whereDate('created_at', '<=', $date);
                 }),
-            // ✅ PENAMBAHAN BARU: Menghitung total sales dari item di fasilitas ini
             'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'sales')
@@ -88,17 +87,21 @@ class MaterialController extends Controller
                 }),
         ]);
 
-        // Pengurutan berdasarkan aktivitas terakhir
+        // ✅ [PERBAIKAN] Pengurutan berdasarkan aktivitas terakhir yang relevan
         $itemsQuery->orderByDesc(DB::raw("
-            GREATEST(
-                COALESCE(items.updated_at, '1970-01-01'),
-                COALESCE((
-                    SELECT MAX(created_at) 
-                    FROM item_transactions 
-                    WHERE item_transactions.item_id = items.id OR item_transactions.facility_to = items.facility_id
-                ), '1970-01-01')
-            )
-        "));
+        GREATEST(
+            COALESCE(items.updated_at, '1970-01-01'),
+            COALESCE((
+                SELECT MAX(it.created_at)
+                FROM item_transactions AS it
+                LEFT JOIN items AS source_item ON it.item_id = source_item.id
+                WHERE
+                    it.item_id = items.id
+                    OR
+                    (it.facility_to = items.facility_id AND source_item.kode_material = items.kode_material)
+            ), '1970-01-01')
+        )
+    "));
 
         $items = $itemsQuery->paginate(10)->withQueryString();
         $allFacilities = Facility::orderBy('name')->get(['id', 'name']);

@@ -154,21 +154,59 @@
     </div>
 </div>
 
-{{-- ✅ Tabel Stok Material Dikembalikan Seperti Semula --}}
+{{-- ✅ Tabel Stok Material --}}
 <div class="row mt-4">
     <div class="col-12">
         <div class="card h-100">
             <div class="card-header p-3 pb-0">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">STOCK MATERIAL REGION SUMBAGSEL</h6>
-                    <div class="input-group input-group-sm" style="width: 250px;">
-                        <input type="text" id="search-stock-material" class="form-control" placeholder="Cari Nama Material..." aria-label="Search Material">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                {{-- Baris 1: Judul & Tombol Export --}}
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">STOCK MATERIAL REGION</h6>
+                    <div class="col-12 col-md-auto">
+                        <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
+                              style="cursor: pointer; font-size: 0.875rem; font-weight: bold; white-space: nowrap;">
+                            <i class="fas fa-file-excel me-2"></i> Export Excel
+                        </span>
                     </div>
                 </div>
-                <div id="material-suggestions" class="list-group position-absolute w-100 mt-1" style="z-index: 1000; display: none;"></div>
-                <p class="text-center text-dark mb-3 fw-bold fs-5" id="stock-title">Stok Agustus 2025</p>
+
+                {{-- Baris 2: Judul Utama --}}
+                <p class="text-center text-dark mb-2 fw-bold fs-5" id="stock-title">Memuat data...</p>
+
+                {{-- Baris 3: Filter Bulan/Tahun (kiri) & Search Bar (kanan) --}}
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    
+                    {{-- Pilihan Bulan & Tahun --}}
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                        <select id="month-select" class="form-select form-select-sm me-2" style="width: auto;">
+                            @for ($m = 1; $m <= 12; $m++)
+                                <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+
+                        <select id="year-select" class="form-select form-select-sm" style="width: auto;">
+                            @for ($y = now()->year; $y >= now()->year - 5; $y--)
+                                <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>
+                                    {{ $y }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    {{-- Search Bar --}}
+                    <div class="position-relative">
+                        <div class="input-group input-group-sm" style="width: 300px;">
+                            <input type="text" id="search-stock-material" class="form-control" placeholder="Cari Nama Material..." aria-label="Search Material">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <div id="material-suggestions" class="list-group position-absolute"
+                             style="width: 300px; top: 100%; z-index: 1000; display: none;"></div>
+                    </div>
+                </div>
             </div>
+
             <div class="card-body p-2" style="padding-top: 0 !important;">
                 <div class="table-responsive">
                     <table class="table align-items-center mb-0" id="table-stock-material-custom">
@@ -180,11 +218,11 @@
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Baik</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Rusak</th>
                                 <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Afkir</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Layak Edar (Baru + Baik)</th>
+                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Layak Edar (Baru+Baik)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- Data dan baris kapasitas akan diisi oleh JavaScript --}}
+                            {{-- Data akan diisi oleh JavaScript --}}
                         </tbody>
                     </table>
                 </div>
@@ -193,37 +231,30 @@
     </div>
 </div>
 
-{{-- Tabel UPP Material (dikosongkan) --}}
-<div class="row mt-4" id="upp-material-section">
-    <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header p-3 pb-0">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">DAFTAR UPP MATERIAL</h6>
+{{-- [DIKEMBALIKAN] Modal untuk Export Excel --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data ke Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-secondary">Pilih rentang tanggal untuk data yang ingin Anda export.</p>
+                <div class="mb-3">
+                    <label for="exportStartDate" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="exportEndDate" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="exportEndDate">
                 </div>
             </div>
-            <div class="card-body p-2" style="padding-top: 0 !important;">
-                <div class="table-responsive">
-                    <table class="table align-items-center mb-0">
-                        <thead>
-                            <tr class="bg-warning text-white">
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">No.</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Kode Material</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Nama BPT</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Status</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Kabupaten</th>
-                                <th class="text-uppercase text-white text-xxs font-weight-bolder opacity-7 text-center">Tanggal Pengajuan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">Data UPP Material belum tersedia.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                    <i class="fas fa-file-excel me-2"></i> Export
+                </button>
             </div>
         </div>
     </div>
@@ -231,165 +262,261 @@
 
 @endsection
 
+{{-- custom js --}}
 @push('scripts')
-{{-- ✅ SCRIPT UNTUK TABEL STOK MATERIAL DIKEMBALIKAN --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Data Dummy (hanya 1 item sesuai permintaan)
-    const allMaterialStockData = {
-        'Tabung LPG 3 Kg': [
-            { material_name: 'Tabung LPG 3 Kg', gudang: 'Gudang Region Sumbagsel', baru: 840, baik: 0, rusak: 0, afkir: 28416, layak_edar: 840 },
-            { material_name: 'Tabung LPG 3 Kg', gudang: 'SPBE/BPT Region Sumbagsel', baru: 33157, baik: 5533, rusak: 36515, afkir: 70813, layak_edar: 38690 }
-        ]
-    };
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const materialCapacityData = {
-        'Tabung LPG 3 Kg': 50000,
-    };
+        // 🔹 Data awal dari backend
+        const allMaterialNames = @json($materialList);
+        const initialStockData = @json($initialStockData);
+        const defaultMaterialName = @json($defaultMaterialName);
 
-    const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
-    const stockSearchInput = document.getElementById('search-stock-material');
-    const stockTitle = document.getElementById('stock-title');
-    const materialSuggestionsContainer = document.getElementById('material-suggestions');
+        // 🔹 Elemen DOM utama
+        const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
+        const stockSearchInput = document.getElementById('search-stock-material');
+        const stockTitle = document.getElementById('stock-title');
+        const materialSuggestionsContainer = document.getElementById('material-suggestions');
 
-    document.addEventListener('click', function(e) {
-        if (!stockSearchInput.contains(e.target) && !materialSuggestionsContainer.contains(e.target)) {
-            materialSuggestionsContainer.style.display = 'none';
+        // 🔹 Dropdown bulan & tahun
+        const monthSelect = document.getElementById('month-select');
+        const yearSelect = document.getElementById('year-select');
+
+        // 🔹 Modal Export Excel
+        const openExportModalBtn = document.getElementById('openExportModalBtn');
+        const exportExcelModalEl = document.getElementById('exportExcelModal');
+        const confirmExportBtn = document.getElementById('confirmExportBtn');
+        const exportExcelModal = new bootstrap.Modal(exportExcelModalEl);
+
+        // 📌 Buka modal export
+        openExportModalBtn.addEventListener('click', function() {
+            exportExcelModal.show();
+        });
+
+        // 📌 Jalankan export Excel (fungsi export backend sudah berjalan)
+        confirmExportBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+
+            if (!startDate || !endDate) {
+                Swal.fire('Peringatan!', 'Silakan pilih rentang tanggal terlebih dahulu.', 'warning');
+                return;
+            }
+
+            window.location.href = `/export-excel?start_date=${startDate}&end_date=${endDate}`;
+        });
+
+        // 📌 Format angka dengan pemisah ribuan
+        function formatNumber(value) {
+            return (value ?? 0).toLocaleString('id-ID');
         }
-    });
 
-    function renderStockTable(materialName) {
-        const data = allMaterialStockData[materialName];
-        stockTableBody.innerHTML = '';
-        
-        if (materialName) {
-            stockTitle.innerText = `Stok ${materialName} Agustus 2025`;
-            stockSearchInput.value = materialName;
-        } else {
-            const today = new Date();
-            const month = today.toLocaleString('id-ID', { month: 'long' });
-            const year = today.getFullYear();
-            stockTitle.innerText = `Stok ${month} ${year}`;
+        // 📌 Konversi nomor bulan → nama bulan
+        function getMonthName(month) {
+            return new Date(2000, month - 1, 1).toLocaleString('id-ID', { month: 'long' });
         }
 
-        if (data && data.length > 0) {
-            data.forEach((item, index) => {
-                const row = `
-                    <tr>
-                        ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${data.length}" style="width: 25%;">
-                            <h6 class="text-sm font-weight-bold mb-0">${item.material_name}</h6>
-                        </td>` : ''}
-                        <td class="text-secondary text-center text-xs">
-                            <span class="text-xs font-weight-bold">${item.gudang}</span>
+        // 📌 Render isi tabel stok material
+        function renderStockTable(data) {
+            stockTableBody.innerHTML = '';
+            const materialName = data?.stock?.[0]?.material_name;
+            const month = monthSelect.value;
+            const year = yearSelect.value;
+            const bulanNama = getMonthName(parseInt(month));
+
+            // Set judul tabel
+            if (materialName) {
+                stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${year}`;
+                stockSearchInput.value = materialName;
+            } else {
+                stockTitle.innerText = `Stok ${bulanNama} ${year}`;
+            }
+            
+            // Render data stok
+            if (data && data.stock && data.stock.length > 0) {
+                const stockData = data.stock;
+                stockData.forEach((item, index) => {
+                    const rowHtml = `
+                        <tr>
+                            ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${stockData.length}">
+                                <h6 class="text-sm font-weight-bold mb-0">${item.material_name}</h6>
+                            </td>` : ''}
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${item.gudang}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.baru)}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.baik)}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.rusak)}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.afkir)}</span></td>
+                            <td class="text-secondary text-center text-xs"><h6 class="text-sm font-weight-bolder mb-0">${formatNumber(item.layak_edar)}</h6></td>
+                        </tr>
+                    `;
+                    stockTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                });
+            } else {
+                stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
+            }
+
+            // Render kapasitas material
+            if (materialName) {
+                const capacity = data.capacity;
+                const capacityDisplay = (capacity === null || capacity === undefined) ? '-' : capacity.toLocaleString('id-ID');
+                const capacityRowHtml = `
+                    <tr class="bg-gray-200">
+                        <td colspan="2" class="p-2 align-middle">
+                            <p class="text-sm font-weight-bold mb-0">Kapasitas Daya Tampung ${materialName} :</p>
                         </td>
-                        <td class="text-secondary text-center text-xs">
-                            <span class="text-xs font-weight-bold">${item.baru.toLocaleString('id-ID')}</span>
-                        </td>
-                        <td class="text-secondary text-center text-xs">
-                            <span class="text-xs font-weight-bold">${item.baik.toLocaleString('id-ID')}</span>
-                        </td>
-                        <td class="text-secondary text-center text-xs">
-                            <span class="text-xs font-weight-bold">${item.rusak.toLocaleString('id-ID')}</span>
-                        </td>
-                        <td class="text-secondary text-center text-xs">
-                            <span class="text-xs font-weight-bold">${item.afkir.toLocaleString('id-ID')}</span>
-                        </td>
-                        <td class="text-secondary text-center text-xs">
-                            <h6 class="text-sm font-weight-bolder mb-0">${item.layak_edar.toLocaleString('id-ID')}</h6>
+                        <td colspan="5" class="p-2 text-end">
+                            <form id="capacity-form" class="d-flex align-items-center justify-content-end" onsubmit="return false;">
+                                <input type="text" id="capacity-input" class="form-control form-control-sm me-2 text-end" value="${capacityDisplay}" style="width: 150px;" disabled>
+                                <button type="button" id="edit-capacity-btn" class="btn btn-sm btn-info me-2 text-white"><i class="fas fa-edit"></i> Edit</button>
+                                <button type="submit" id="submit-capacity-btn" class="btn btn-sm btn-primary" style="display: none;"><i class="fas fa-save"></i> Submit</button>
+                            </form>
                         </td>
                     </tr>
                 `;
-                stockTableBody.insertAdjacentHTML('beforeend', row);
-            });
-        } else {
-             stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
+                stockTableBody.insertAdjacentHTML('beforeend', capacityRowHtml);
+                setupCapacityFormEvents(materialName);
+            }
         }
 
-        if (materialName && materialCapacityData[materialName]) {
-            const capacityRowHtml = `
-                <tr class="bg-gray-200">
-                    <td colspan="2" class="p-2 align-middle">
-                        <p class="text-sm font-weight-bold mb-0">Kapasitas Daya Tampung ${materialName} :</p>
-                    </td>
-                    <td colspan="5" class="p-2 text-end">
-                        <form id="capacity-form" class="d-flex align-items-center justify-content-end" onsubmit="return false;">
-                            <input type="number" id="capacity-input" class="form-control form-control-sm me-2 text-end" value="${materialCapacityData[materialName]}" style="width: 150px;" disabled>
-                            <button type="button" id="edit-capacity-btn" class="btn btn-sm btn-info me-2 text-white">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button type="submit" id="submit-capacity-btn" class="btn btn-sm btn-primary" disabled>
-                                <i class="fas fa-save"></i> Submit
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            `;
-            stockTableBody.insertAdjacentHTML('beforeend', capacityRowHtml);
-            
+        // 📌 Ambil data stok berdasarkan material + bulan + tahun
+        async function fetchStockData(materialName) {
+            stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>';
+            try {
+                const month = monthSelect.value;
+                const year = yearSelect.value;
+
+                const response = await fetch(`/api/stock-data/${encodeURIComponent(materialName)}?month=${month}&year=${year}`);
+                if (!response.ok) throw new Error('Gagal mengambil data.');
+                const data = await response.json();
+
+                renderStockTable(data);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        // 📌 Event form kapasitas (edit & submit)
+        function setupCapacityFormEvents(materialName) {
             const capacityInput = document.getElementById('capacity-input');
             const editCapacityBtn = document.getElementById('edit-capacity-btn');
             const submitCapacityBtn = document.getElementById('submit-capacity-btn');
-
-            if (editCapacityBtn) {
-                editCapacityBtn.addEventListener('click', function() {
-                    capacityInput.disabled = false;
-                    editCapacityBtn.disabled = true;
-                    submitCapacityBtn.disabled = false;
-                });
-            }
-
-            if (submitCapacityBtn) {
-                submitCapacityBtn.addEventListener('click', function() {
-                    const newCapacity = parseInt(capacityInput.value);
-                    if (isNaN(newCapacity) || newCapacity < 0) {
-                        Swal.fire('Error!', 'Kapasitas harus berupa angka positif.', 'error');
-                        return;
-                    }
-                    materialCapacityData[materialName] = newCapacity;
-                    renderStockTable(materialName);
-                    Swal.fire('Berhasil!', 'Kapasitas daya tampung berhasil diperbarui.', 'success');
-                });
-            }
-        }
-    }
-
-    function showSuggestions(searchTerm) {
-        const allMaterialNames = Object.keys(allMaterialStockData);
-        const filteredNames = allMaterialNames.filter(name =>
-            name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-
-        materialSuggestionsContainer.innerHTML = '';
-
-        if (searchTerm !== '' && filteredNames.length > 0) {
-            materialSuggestionsContainer.style.display = 'block';
-            filteredNames.forEach(name => {
-                const item = document.createElement('a');
-                item.href = '#';
-                item.classList.add('list-group-item', 'list-group-item-action');
-                item.textContent = name;
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    renderStockTable(name);
-                    materialSuggestionsContainer.style.display = 'none';
-                });
-                materialSuggestionsContainer.appendChild(item);
+            
+            editCapacityBtn.addEventListener('click', function() {
+                capacityInput.disabled = false;
+                if (capacityInput.value === '-') {
+                    capacityInput.value = '';
+                }
+                capacityInput.focus();
+                editCapacityBtn.style.display = 'none';
+                submitCapacityBtn.style.display = 'inline-block';
             });
-        } else {
-            materialSuggestionsContainer.style.display = 'none';
+
+            submitCapacityBtn.addEventListener('click', async function() {
+                submitCapacityBtn.disabled = true;
+                submitCapacityBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfToken) {
+                    Swal.fire('Error Kritis!', 'CSRF Token tidak ditemukan.', 'error');
+                    submitCapacityBtn.disabled = false;
+                    submitCapacityBtn.innerHTML = '<i class="fas fa-save"></i> Submit';
+                    return;
+                }
+                const rawValue = capacityInput.value.replace(/\./g, '');
+                let newCapacity = (rawValue.trim() === '-' || rawValue.trim() === '') ? 0 : parseInt(rawValue, 10);
+                if (isNaN(newCapacity) || newCapacity < 0) {
+                    Swal.fire('Error!', 'Kapasitas harus berupa angka positif atau tanda "-".', 'error');
+                    submitCapacityBtn.disabled = false;
+                    submitCapacityBtn.innerHTML = '<i class="fas fa-save"></i> Submit';
+                    return;
+                }
+                try {
+                    const response = await fetch('/api/stock-capacity', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
+                        },
+                        body: JSON.stringify({ material_name: materialName, capacity: newCapacity })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message || 'Gagal memperbarui kapasitas.');
+                    Swal.fire('Berhasil!', result.message, 'success');
+                    fetchStockData(materialName);
+                } catch (error) {
+                    console.error('Submit error:', error);
+                    Swal.fire('Error!', error.message, 'error');
+                } finally {
+                    submitCapacityBtn.disabled = false;
+                    submitCapacityBtn.innerHTML = '<i class="fas fa-save"></i> Submit';
+                }
+            });
         }
-    }
-    
-    stockSearchInput.addEventListener('keyup', function() {
-        showSuggestions(this.value);
-        if (this.value === '') {
-           renderStockTable(null);
+
+        // 📌 Tampilkan suggestion nama material di search box
+        function showSuggestions(searchTerm) {
+            const filteredNames = allMaterialNames.filter(name =>
+                name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            materialSuggestionsContainer.innerHTML = '';
+
+            if (searchTerm && filteredNames.length > 0) {
+                materialSuggestionsContainer.style.display = 'block';
+                filteredNames.forEach(name => {
+                    const item = document.createElement('a');
+                    item.href = '#';
+                    item.classList.add('list-group-item', 'list-group-item-action');
+                    item.textContent = name;
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        fetchStockData(name);
+                        materialSuggestionsContainer.style.display = 'none';
+                    });
+                    materialSuggestionsContainer.appendChild(item);
+                });
+            } else {
+                materialSuggestionsContainer.style.display = 'none';
+            }
+        }
+
+        // 📌 Tutup suggestion kalau klik di luar
+        document.addEventListener('click', (e) => {
+            if (!stockSearchInput.contains(e.target) && !materialSuggestionsContainer.contains(e.target)) {
+                materialSuggestionsContainer.style.display = 'none';
+            }
+        });
+        
+        // 📌 Event input search
+        stockSearchInput.addEventListener('keyup', function() { showSuggestions(this.value); });
+
+        // 📌 Event filter bulan & tahun
+        monthSelect.addEventListener('change', function () {
+            if (stockSearchInput.value) {
+                fetchStockData(stockSearchInput.value);
+            }
+        });
+
+        yearSelect.addEventListener('change', function () {
+            if (stockSearchInput.value) {
+                fetchStockData(stockSearchInput.value);
+            }
+        });
+
+        // 📌 Inisialisasi awal
+        if (defaultMaterialName && initialStockData.stock) {
+            renderStockTable(initialStockData);
+        } else {
+            const bulanNama = getMonthName(parseInt(monthSelect.value));
+            stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Belum ada material yang dapat ditampilkan.</td></tr>';
+            stockTitle.innerText = `Stok ${bulanNama} ${yearSelect.value}`;
         }
     });
-    
-    // Inisialisasi: Tampilkan tabel kosong saat pertama kali dimuat
-    renderStockTable(null);
-});
 </script>
+
 @endpush
+
+
+
+
+

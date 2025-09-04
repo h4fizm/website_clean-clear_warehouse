@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RegionSeeder::class);
         $this->call(FacilitySeeder::class);
         $this->call(ItemSeeder::class);
+        $this->call(MaterialCapacitySeeder::class);
     }
 
 
