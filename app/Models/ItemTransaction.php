@@ -11,15 +11,16 @@ class ItemTransaction extends Model
 
     protected $fillable = [
         'item_id',
-        'user_id', // <-- Tambahkan ini
+        'user_id',
         'facility_from',
         'facility_to',
         'region_from',
         'region_to',
         'jumlah',
-        'stok_awal_asal',   // <-- TAMBAHKAN INI
-        'stok_akhir_asal',  // <-- TAMBAHKAN INI
+        'stok_awal_asal',
+        'stok_akhir_asal',
         'jenis_transaksi',
+        'tujuan_sales', // BARU: Tambahkan ini agar sesuai dengan database
         'no_surat_persetujuan',
         'no_ba_serah_terima',
     ];
@@ -65,4 +66,12 @@ class ItemTransaction extends Model
     {
         return $this->belongsTo(Region::class, 'region_to');
     }
+
+    // Relasi ke Sales (User yang menerima penyaluran)
+    public function sales()
+    {
+        return $this->belongsTo(User::class, 'tujuan_sales');
+        // kolom "tujuan_sales" sesuai dengan fillable Anda
+    }
+
 }

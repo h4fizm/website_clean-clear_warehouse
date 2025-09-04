@@ -12,11 +12,13 @@ return new class extends Migration {
     {
         Schema::create('items', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('facility_id')->nullable(); // jika item dimiliki facility
-            $table->unsignedBigInteger('region_id')->nullable();   // jika item dimiliki region (contoh: P. Layang)
+            $table->unsignedBigInteger('facility_id')->nullable();
+            $table->unsignedBigInteger('region_id')->nullable();
             $table->string('nama_material', 150);
             $table->string('kode_material', 50);
             $table->integer('stok_awal')->default(0);
+            $table->integer('stok_akhir')->default(0); // BARU: Tambahkan kolom ini
+
             $table->timestamps();
 
             $table->foreign('facility_id')->references('id')->on('facilities')->onDelete('cascade');

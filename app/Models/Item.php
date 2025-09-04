@@ -20,6 +20,7 @@ class Item extends Model
         'nama_material',
         'kode_material',
         'stok_awal',
+        'stok_akhir', // PASTIKAN BARIS INI ADA
     ];
 
     /*
@@ -27,6 +28,7 @@ class Item extends Model
     | RELATIONSHIPS
     |--------------------------------------------------------------------------
     */
+
 
     /**
      * Relasi ke Facility (jika item dimiliki SPBE/BPT).
@@ -84,50 +86,39 @@ class Item extends Model
     | ACCESSORS & HELPERS
     |--------------------------------------------------------------------------
     */
-
-    /**
-     * [DIPERBAIKI] Hitung stok akhir berdasarkan transaksi 'transfer'.
-     * Accessor ini sekarang cerdas: ia akan menggunakan data dari controller jika ada,
-     * atau menghitung manual jika dipanggil langsung.
-     */
     public function getStokAkhirAttribute()
     {
-        // Cek apakah total sudah dihitung oleh controller (lewat withSum).
-        // Ini adalah cara paling efisien untuk halaman daftar/index.
-        if (array_key_exists('penerimaan_total', $this->attributes) && array_key_exists('penyaluran_total', $this->attributes)) {
-            // Gunakan nilai yang sudah di-load dari controller
+        if (
+            array_key_exists('penerimaan_total', $this->attributes) &&
+            array_key_exists('penyaluran_total', $this->attributes) &&
+            array_key_exists('sales_total', $this->attributes)
+        ) {
+            // Gunakan nilai dari controller (lebih efisien)
             $penerimaan = (int) $this->penerimaan_total;
             $penyaluran = (int) $this->penyaluran_total;
+            $sales = (int) $this->sales_total;
         } else {
-            // Jika tidak, hitung manual (fallback, lebih lambat tapi tetap akurat).
-            // Ini berguna jika Anda memanggil $item->stok_akhir di tempat lain.
-
-            // Hitung total barang keluar (penyaluran)
+            // Hitung manual kalau tidak ada preload dari controller
             $penyaluran = $this->outgoingTransfers()->sum('jumlah');
 
-            // =================== LOGIKA PENERIMAAN DIPERBAIKI ===================
+            // Penerimaan (logika lama tetap dipakai)
             $penerimaan = 0;
             if (is_null($this->facility_id)) {
-                // Untuk item PUSAT: cari transaksi yang tujuannya adalah region pusat ini
-                // DAN kode materialnya cocok.
                 $penerimaan = ItemTransaction::where('region_to', $this->region_id)
-                    ->whereNull('facility_to') // <-- Tambahan penting: pastikan tujuannya adalah PUSAT, bukan facility
-                    ->whereHas('item', function ($query) {
-                        $query->where('kode_material', $this->kode_material);
-                    })
+                    ->whereNull('facility_to')
+                    ->whereHas('item', fn($q) => $q->where('kode_material', $this->kode_material))
                     ->sum('jumlah');
             } else {
-                // Untuk item FACILITY: cari transaksi yang tujuannya adalah facility ini
-                // DAN kode materialnya cocok.
                 $penerimaan = ItemTransaction::where('facility_to', $this->facility_id)
-                    ->whereHas('item', function ($query) {
-                        $query->where('kode_material', $this->kode_material);
-                    })
+                    ->whereHas('item', fn($q) => $q->where('kode_material', $this->kode_material))
                     ->sum('jumlah');
             }
-            // =================================================================
+
+            // Tambahkan sales
+            $sales = $this->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
         }
 
-        return $this->stok_awal + $penerimaan - $penyaluran;
+        return $this->stok_awal + $penerimaan - $penyaluran - $sales;
     }
+
 }

@@ -39,10 +39,9 @@
             </div>
             
             <div class="card-body px-0 pt-0 pb-5">
-                {{-- Ganti bagian form Anda dengan ini --}}
                 <form action="{{ route('aktivitas.transaksi') }}" method="GET">
                     <div class="d-flex flex-wrap gap-3 mb-3 px-3 align-items-center justify-content-between">
-                        {{-- Kolom Kiri: Search & Filter Lokasi --}}
+                        {{-- Kolom Kiri: Search --}}
                         <div class="d-flex flex-wrap gap-3">
                             <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Material, Kode, Lokasi, User..." value="{{ $search ?? '' }}" style="width: 300px; height: 38px;">
                         </div>
@@ -81,53 +80,33 @@
                         </thead>
                         <tbody>
                             @forelse ($transactions as $transaction)
+                                @if (!$transaction->item) @continue @endif
+
                                 @php
-                                    if (!$transaction->item) continue;
-
-                                    $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
-                                    $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
-
-                                    // =================== LOGIKA BADGE BARU ===================
+                                    // =================== LOGIKA TAMPILAN BARU ===================
+                                    $asal = 'N/A';
+                                    $tujuan = 'N/A';
                                     $activityAsal = null;
                                     $activityTujuan = null;
+                                    
+                                    // CASE 1: Jika transaksi adalah SALES
+                                    if ($transaction->jenis_transaksi == 'sales') {
+                                        $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
+                                        $tujuan = $transaction->tujuan_sales; // Mengambil dari kolom tujuan_sales
 
-                                   // Jika transaksi berasal dari Region (pusat)
-                                    if ($transaction->region_from) {
-                                        $activityAsal = [
-                                            'text'  => 'Penyaluran',
-                                            'color' => 'bg-gradient-danger',
-                                            'icon'  => 'fa-arrow-up'
-                                        ];
+                                        // Aktivitasnya adalah penyaluran (keluar) yang berjenis sales
+                                        $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
+                                        $activityTujuan = ['text' => 'Transaksi Sales', 'color' => 'bg-gradient-warning', 'icon' => 'fa-dollar-sign'];
+                                    
+                                    // CASE 2: Jika transaksi adalah TRANSFER (Penyaluran/Penerimaan)
+                                    } else {
+                                        $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
+                                        $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
+
+                                        // Aktivitasnya adalah transfer biasa (Penyaluran -> Penerimaan)
+                                        $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
+                                        $activityTujuan = ['text' => 'Penerimaan', 'color' => 'bg-gradient-success', 'icon' => 'fa-arrow-down'];
                                     }
-
-                                    // Jika transaksi berasal dari Facility (SPBE/BPT)
-                                    if ($transaction->facility_from) {
-                                        $activityAsal = [
-                                            'text'  => 'Penyaluran',
-                                            'color' => 'bg-gradient-danger',
-                                            'icon'  => 'fa-arrow-up'
-                                        ];
-                                    }
-
-                                    // Jika transaksi menuju ke Region (pusat)
-                                    if ($transaction->region_to) {
-                                        $activityTujuan = [
-                                            'text'  => 'Penerimaan',
-                                            'color' => 'bg-gradient-success',
-                                            'icon'  => 'fa-arrow-down'
-                                        ];
-                                    }
-
-                                    // Jika transaksi menuju ke Facility (SPBE/BPT)
-                                    if ($transaction->facility_to) {
-                                        $activityTujuan = [
-                                            'text'  => 'Penerimaan',
-                                            'color' => 'bg-gradient-success',
-                                            'icon'  => 'fa-arrow-down'
-                                        ];
-                                    }
-
-                                    // =========================================================
                                 @endphp
                                 <tr>
                                     <td class="text-center">

@@ -13,26 +13,29 @@ return new class extends Migration {
         Schema::create('item_transactions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('item_id');
-
-            // --- TAMBAHKAN KOLOM USER_ID DI SINI ---
             $table->unsignedBigInteger('user_id')->nullable();
 
+            // Kolom Asal & Tujuan
             $table->unsignedBigInteger('facility_from')->nullable();
             $table->unsignedBigInteger('facility_to')->nullable();
             $table->unsignedBigInteger('region_from')->nullable();
             $table->unsignedBigInteger('region_to')->nullable();
+            $table->string('tujuan_sales')->nullable(); // DIUBAH: Method ->after() dihapus
+
+            // Kolom Kuantitas & Jenis Transaksi
             $table->integer('jumlah');
-            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer']);
+            $table->integer('stok_awal_asal')->nullable()->comment('Stok asal SEBELUM transaksi');
+            $table->integer('stok_akhir_asal')->nullable()->comment('Stok asal SETELAH transaksi');
+            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales']);
+
+            // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
             $table->timestamps();
 
-            // Definisikan semua foreign key
+            // Definisi Foreign Keys
             $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
-
-            // --- TAMBAHKAN FOREIGN KEY UNTUK USER_ID DI SINI ---
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
-
             $table->foreign('facility_from')->references('id')->on('facilities')->onDelete('set null');
             $table->foreign('facility_to')->references('id')->on('facilities')->onDelete('set null');
             $table->foreign('region_from')->references('id')->on('regions')->onDelete('set null');
@@ -40,6 +43,9 @@ return new class extends Migration {
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('item_transactions');
