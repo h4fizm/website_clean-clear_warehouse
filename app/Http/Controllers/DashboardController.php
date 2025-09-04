@@ -61,12 +61,6 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function getStockDataApi($materialBaseName)
-    {
-        $data = $this->getFormattedStockData($materialBaseName);
-        return response()->json($data);
-    }
-
     public function updateCapacityApi(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -99,17 +93,23 @@ class DashboardController extends Controller
      * [FUNGSI DIPERBARUI]
      * Menggunakan Eloquent dan menyederhanakan output.
      */
-    private function getFormattedStockData($materialBaseName)
+    private function getFormattedStockData($materialBaseName, $month = null, $year = null)
     {
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
         $pusatRegionId = $pusatRegion ? $pusatRegion->id : null;
 
-        $items = Item::where('nama_material', 'like', $materialBaseName . '%')->get();
+        // Default ke bulan & tahun berjalan
+        $month = $month ?? now()->month;
+        $year = $year ?? now()->year;
+
+        $items = Item::where('nama_material', 'like', $materialBaseName . '%')
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->get();
 
         $pusatItems = $items->where('region_id', $pusatRegionId)->whereNull('facility_id');
         $fasilitasItems = $items->whereNotNull('facility_id');
 
-        // [MODIFIKASI] Closure disesuaikan dengan kategori baru: Baru, Baik, Rusak, Afkir
         $calculateStock = function ($collection) {
             $stock = ['baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0];
             foreach ($collection as $item) {
@@ -129,7 +129,6 @@ class DashboardController extends Controller
         $pusatStock = $calculateStock($pusatItems);
         $fasilitasStock = $calculateStock($fasilitasItems);
 
-        // [MODIFIKASI] Struktur data disesuaikan dengan kategori & logika layak edar baru
         $data = [
             [
                 'material_name' => $materialBaseName,
@@ -138,16 +137,16 @@ class DashboardController extends Controller
                 'baik' => $pusatStock['baik'],
                 'rusak' => $pusatStock['rusak'],
                 'afkir' => $pusatStock['afkir'],
-                'layak_edar' => $pusatStock['baru'] + $pusatStock['baik'], // Stok Baru + Stok Baik
+                'layak_edar' => $pusatStock['baru'] + $pusatStock['baik'],
             ],
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'SPBE/BPT (Global)',
-                'baik' => $fasilitasStock['baik'],
                 'baru' => $fasilitasStock['baru'],
+                'baik' => $fasilitasStock['baik'],
                 'rusak' => $fasilitasStock['rusak'],
                 'afkir' => $fasilitasStock['afkir'],
-                'layak_edar' => $fasilitasStock['baru'] + $fasilitasStock['baik'], // Stok Baru + Stok Baik
+                'layak_edar' => $fasilitasStock['baru'] + $fasilitasStock['baik'],
             ],
         ];
 
@@ -155,7 +154,19 @@ class DashboardController extends Controller
 
         return [
             'stock' => $data,
-            'capacity' => $capacity ?? 0
+            'capacity' => $capacity ?? 0,
+            'month' => $month,
+            'year' => $year,
         ];
     }
+
+    public function getStockDataApi($materialBaseName, Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year');
+
+        $data = $this->getFormattedStockData($materialBaseName, $month, $year);
+        return response()->json($data);
+    }
+
 }
