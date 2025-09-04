@@ -12,39 +12,38 @@ class ItemSeeder extends Seeder
     public function run(): void
     {
         // 1. Mengambil Region & Facility berdasarkan data PASTI dari seeder Anda
-        // Digunakan firstOrFail() agar seeder gagal jika Region/Facility belum di-seed.
-        // Ini memastikan urutan seeder benar.
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
         $sumselRegion = Region::where('name_region', 'SA Sumsel')->firstOrFail();
-        $spbeSumsel = Facility::where('kode_plant', 'SSL001')->firstOrFail(); // Mengambil SPBE Sumsel
+        $spbeSumsel = Facility::where('kode_plant', 'SSL001')->firstOrFail();
 
-        // 2. DEFINISIKAN DATA STOK
+        // 2. [MODIFIKASI] DEFINISIKAN DATA STOK DENGAN KATEGORI BARU
+        // Kategori lama: Baik, Rusak, Retur, Musnah
+        // Kategori baru: Baru, Baik, Rusak, Afkir
         $materials = [
             'LPG 3 Kg' => [
+                ['condition' => 'Baru', 'code' => 'LPG3K-BARU', 'stock' => 150, 'location' => 'pusat'],
                 ['condition' => 'Baik', 'code' => 'LPG3K-BAIK', 'stock' => 200, 'location' => 'pusat'],
-                ['condition' => 'Rusak', 'code' => 'LPG3K-RUSAK', 'stock' => 300, 'location' => 'pusat'],
-                ['condition' => 'Retur', 'code' => 'LPG3K-RETUR', 'stock' => 400, 'location' => 'fasilitas'],
-                ['condition' => 'Musnah', 'code' => 'LPG3K-MUSNAH', 'stock' => 100, 'location' => 'fasilitas'],
+                ['condition' => 'Rusak', 'code' => 'LPG3K-RUSAK', 'stock' => 50, 'location' => 'fasilitas'],
+                ['condition' => 'Afkir', 'code' => 'LPG3K-AFKIR', 'stock' => 25, 'location' => 'fasilitas'],
             ],
             'LPG 12 Kg' => [
-                ['condition' => 'Baik', 'code' => 'LPG12K-BAIK', 'stock' => 500, 'location' => 'pusat'],
-                ['condition' => 'Rusak', 'code' => 'LPG12K-RUSAK', 'stock' => 250, 'location' => 'fasilitas'],
-                ['condition' => 'Retur', 'code' => 'LPG12K-RETUR', 'stock' => 150, 'location' => 'pusat'],
-                ['condition' => 'Musnah', 'code' => 'LPG12K-MUSNAH', 'stock' => 100, 'location' => 'fasilitas'],
+                ['condition' => 'Baru', 'code' => 'LPG12K-BARU', 'stock' => 300, 'location' => 'pusat'],
+                ['condition' => 'Baik', 'code' => 'LPG12K-BAIK', 'stock' => 450, 'location' => 'fasilitas'],
+                ['condition' => 'Rusak', 'code' => 'LPG12K-RUSAK', 'stock' => 120, 'location' => 'pusat'],
+                ['condition' => 'Afkir', 'code' => 'LPG12K-AFKIR', 'stock' => 80, 'location' => 'fasilitas'],
             ],
             'Bright Gas 5.5 Kg' => [
-                ['condition' => 'Baik', 'code' => 'BG55K-BAIK', 'stock' => 700, 'location' => 'pusat'],
-                ['condition' => 'Rusak', 'code' => 'BG55K-RUSAK', 'stock' => 100, 'location' => 'pusat'],
-                ['condition' => 'Retur', 'code' => 'BG55K-RETUR', 'stock' => 100, 'location' => 'fasilitas'],
-                ['condition' => 'Musnah', 'code' => 'BG55K-MUSNAH', 'stock' => 100, 'location' => 'fasilitas'],
+                ['condition' => 'Baru', 'code' => 'BG55K-BARU', 'stock' => 500, 'location' => 'pusat'],
+                ['condition' => 'Baik', 'code' => 'BG55K-BAIK', 'stock' => 600, 'location' => 'pusat'],
+                ['condition' => 'Rusak', 'code' => 'BG55K-RUSAK', 'stock' => 75, 'location' => 'fasilitas'],
+                ['condition' => 'Afkir', 'code' => 'BG55K-AFKIR', 'stock' => 30, 'location' => 'fasilitas'],
             ],
         ];
 
-        // 3. LOOPING DAN BUAT ITEM SESUAI LOKASI
+        // 3. LOOPING DAN BUAT ITEM SESUAI LOKASI (Tidak ada perubahan di sini)
         foreach ($materials as $baseName => $variations) {
             foreach ($variations as $item) {
                 Item::create([
-                    // Menggunakan ID dari data yang sudah pasti ada
                     'region_id' => $item['location'] === 'pusat' ? $pusatRegion->id : $sumselRegion->id,
                     'facility_id' => $item['location'] === 'fasilitas' ? $spbeSumsel->id : null,
                     'nama_material' => $baseName . ' - ' . $item['condition'],

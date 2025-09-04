@@ -109,18 +109,19 @@ class DashboardController extends Controller
         $pusatItems = $items->where('region_id', $pusatRegionId)->whereNull('facility_id');
         $fasilitasItems = $items->whereNotNull('facility_id');
 
+        // [MODIFIKASI] Closure disesuaikan dengan kategori baru: Baru, Baik, Rusak, Afkir
         $calculateStock = function ($collection) {
-            $stock = ['baik' => 0, 'rusak' => 0, 'retur' => 0, 'musnah' => 0];
+            $stock = ['baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0];
             foreach ($collection as $item) {
                 $currentStock = $item->stok_akhir;
+                if (str_contains($item->nama_material, 'Baru'))
+                    $stock['baru'] += $currentStock;
                 if (str_contains($item->nama_material, 'Baik'))
                     $stock['baik'] += $currentStock;
                 if (str_contains($item->nama_material, 'Rusak'))
                     $stock['rusak'] += $currentStock;
-                if (str_contains($item->nama_material, 'Retur'))
-                    $stock['retur'] += $currentStock;
-                if (str_contains($item->nama_material, 'Musnah'))
-                    $stock['musnah'] += $currentStock;
+                if (str_contains($item->nama_material, 'Afkir'))
+                    $stock['afkir'] += $currentStock;
             }
             return $stock;
         };
@@ -128,24 +129,25 @@ class DashboardController extends Controller
         $pusatStock = $calculateStock($pusatItems);
         $fasilitasStock = $calculateStock($fasilitasItems);
 
+        // [MODIFIKASI] Struktur data disesuaikan dengan kategori & logika layak edar baru
         $data = [
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'Gudang Region',
+                'baru' => $pusatStock['baru'],
                 'baik' => $pusatStock['baik'],
                 'rusak' => $pusatStock['rusak'],
-                'retur' => $pusatStock['retur'],
-                'musnah' => $pusatStock['musnah'],
-                'layak_edar' => $pusatStock['baik'],
+                'afkir' => $pusatStock['afkir'],
+                'layak_edar' => $pusatStock['baru'] + $pusatStock['baik'], // Stok Baru + Stok Baik
             ],
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'SPBE/BPT (Global)',
                 'baik' => $fasilitasStock['baik'],
+                'baru' => $fasilitasStock['baru'],
                 'rusak' => $fasilitasStock['rusak'],
-                'retur' => $fasilitasStock['retur'],
-                'musnah' => $fasilitasStock['musnah'],
-                'layak_edar' => $fasilitasStock['baik'],
+                'afkir' => $fasilitasStock['afkir'],
+                'layak_edar' => $fasilitasStock['baru'] + $fasilitasStock['baik'], // Stok Baru + Stok Baik
             ],
         ];
 
@@ -157,4 +159,3 @@ class DashboardController extends Controller
         ];
     }
 }
-
