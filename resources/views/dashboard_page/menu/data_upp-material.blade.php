@@ -211,7 +211,7 @@
                 tgl_buat: '2025-07-15', 
                 no_surat: 'UPP-202507-003', 
                 tahapan: 'Pemusnahan', 
-                status: 'Selesai', 
+                status: 'Done', 
                 tgl_update: '2025-07-18', 
                 keterangan: 'Pemusnahan Aspal Curah telah selesai dilaksanakan.',
                 materials: [
@@ -236,7 +236,7 @@
                 tgl_buat: '2025-06-20', 
                 no_surat: 'UPP-202506-001', 
                 tahapan: 'Pemusnahan', 
-                status: 'Selesai', 
+                status: 'Done', 
                 tgl_update: '2025-06-25', 
                 keterangan: 'Pemusnahan Pertamina Dex dan Minyak Tanah telah selesai.',
                 materials: [
@@ -262,7 +262,7 @@
                 tgl_buat: '2025-08-08', 
                 no_surat: 'UPP-202508-003', 
                 tahapan: 'Pemusnahan', 
-                status: 'Selesai', 
+                status: 'Done', 
                 tgl_update: '2025-08-10', 
                 keterangan: 'Pemusnahan Bitumen telah selesai.',
                 materials: [
@@ -288,7 +288,7 @@
                 tgl_buat: '2025-07-01', 
                 no_surat: 'UPP-202507-001', 
                 tahapan: 'Pemusnahan', 
-                status: 'Selesai', 
+                status: 'Done', 
                 tgl_update: '2025-07-03', 
                 keterangan: 'Pemusnahan Pelumas Meditran telah selesai.',
                 materials: [
@@ -378,7 +378,7 @@
             } else {
                 noData.style.display = 'none';
                 paginated.forEach((item, index) => {
-                    const statusText = item.status.toLowerCase() === 'selesai' ? 'Selesai' : 'Proses';
+                    const statusText = item.status.toLowerCase() === 'done' ? 'Done' : 'Proses';
                     const statusColor = item.status.toLowerCase() === 'proses' ? 'bg-gradient-warning' : 'bg-gradient-success';
                     const statusBadge = `<span class="badge ${statusColor} text-white text-xs font-weight-bold status-badge" style="cursor: pointer;" data-id="${item.id}" data-status="${item.status}">${statusText}</span>`;
                     
@@ -469,7 +469,8 @@
                     e.preventDefault();
                     currentPage = i;
                     renderTable();
-                });
+                }
+            );
                 ul.appendChild(li);
             }
 
@@ -536,7 +537,7 @@
                 // Konfigurasi inputOptions untuk SweetAlert dengan input radio
                 const inputOptions = {
                     'Proses': `<span class="font-weight-bolder text-warning">PROSES</span>`,
-                    'Selesai': `<span class="font-weight-bolder text-success">SELESAI</span>`
+                    'Done': `<span class="font-weight-bolder text-success">DONE</span>`
                 };
                 
                 Swal.fire({
@@ -564,13 +565,17 @@
                         
                         if (itemToUpdate) {
                             itemToUpdate.status = newStatus;
-                            if (newStatus === 'Selesai') {
+                            if (newStatus === 'Done') {
                                 itemToUpdate.tahapan = 'Pemusnahan';
                             } else {
                                 itemToUpdate.tahapan = 'Pengajuan';
                             }
-                            itemToUpdate.tgl_update = new Date().toISOString().slice(0, 10);
-                            
+                            // Menggunakan format tanggal sesuai permintaan yang telah disimpan
+                            const now = new Date();
+                            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                            const formattedDate = new Intl.DateTimeFormat('id-ID', dateOptions).format(now);
+                            itemToUpdate.tgl_update = formattedDate;
+
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Berhasil!',
@@ -615,7 +620,7 @@
                     
                     // Show/hide "Lakukan Pemusnahan" button based on the status
                     const pemusnahanBtn = document.getElementById('lakukan-pemusnahan-btn');
-                    if (item.status.toLowerCase() === 'selesai') {
+                    if (item.status.toLowerCase() === 'done') {
                         pemusnahanBtn.style.display = 'none';
                     } else {
                         pemusnahanBtn.style.display = 'block';
@@ -628,7 +633,7 @@
         document.getElementById('lakukan-pemusnahan-btn').addEventListener('click', function() {
             Swal.fire({
                 title: 'Apakah Anda Yakin?',
-                text: "Status UPP akan berubah menjadi 'Selesai' dan stok material akan disesuaikan!",
+                text: "Status UPP akan berubah menjadi 'Done' dan stok material akan disesuaikan!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -642,9 +647,13 @@
                     const itemToUpdate = dataDummy.find(item => item.no_surat === uppNoSurat);
                     
                     if (itemToUpdate) {
-                        itemToUpdate.status = 'Selesai';
+                        itemToUpdate.status = 'Done';
                         itemToUpdate.tahapan = 'Pemusnahan';
-                        itemToUpdate.tgl_update = new Date().toISOString().slice(0, 10);
+                        // Menggunakan format tanggal sesuai permintaan yang telah disimpan
+                        const now = new Date();
+                        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                        const formattedDate = new Intl.DateTimeFormat('id-ID', dateOptions).format(now);
+                        itemToUpdate.tgl_update = formattedDate;
                         // Di sini Anda akan menambahkan logika untuk mengurangi stok material dari database
                     }
 
