@@ -12,35 +12,56 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0 align-items-center ms-auto">
                     {{-- Tombol Tambah UPP --}}
-                    <a href="{{ url('/upp-material/tambah') }}" class="btn btn-sm bg-gradient-primary mt-1 mb-0" id="tambah-upp-btn">
+                    <a href="{{ url('/upp-material/tambah') }}" class="px-3 py-2 bg-primary text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;" id="tambah-upp-btn">
                         <i class="fas fa-plus me-2"></i>Tambah UPP
                     </a>
                     {{-- Tombol Export Excel --}}
-                    <button class="btn btn-sm bg-gradient-success mt-1 mb-0" id="export-excel-btn">
-                        <i class="fas fa-file-excel me-2"></i>Export Excel
-                    </button>
+                    <span class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;" id="export-excel-btn" data-bs-toggle="modal" data-bs-target="#exportExcelModal">
+                        <i class="fas fa-file-excel me-2"></i> Export Excel
+                    </span>
                 </div>
             </div>
             
             <div class="card-body px-0 pt-0 pb-2">
                 <div class="d-flex justify-content-between align-items-center px-4 py-2 flex-wrap">
-                    {{-- Search Bar --}}
-                    <div class="d-flex flex-wrap gap-2">
-                        <div class="input-group input-group-sm" style="width: 250px;">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Cari No.Surat...">
+                    <div class="row mb-3 align-items-center w-100">
+                        {{-- Input Search --}}
+                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" 
+                                    class="form-control" 
+                                    placeholder="Cari No.Surat...">
+                            </div>
+                        </div>
+
+                        {{-- Date Range + Filter Button --}}
+                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
+                            {{-- Start Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                                <input type="date" id="startDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;">
+                            </div>
+
+                            {{-- End Date --}}
+                            <div class="d-flex align-items-center me-2 mb-3">
+                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                                <input type="date" id="endDate" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;">
+                            </div>
+
+                            {{-- Button Filter --}}
+                            <div class="align-self-end">
+                                <button id="filter-btn" class="btn btn-primary btn-sm px-3">Filter</button>
+                            </div>
                         </div>
                     </div>
-                    {{-- Date Picker and Filter Button on the right --}}
-                    <div class="d-flex align-items-end gap-3 ms-auto">
-                        <label for="start-date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Dari :</label>
-                        <input type="date" id="start-date" class="form-control form-control-sm" style="width: 150px;">
-                        <label for="end-date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Sampai :</label>
-                        <input type="date" id="end-date" class="form-control form-control-sm" style="width: 150px;">
-                        <button id="filter-btn" class="btn btn-sm btn-primary mb-0">Filter</button>
-                    </div>
                 </div>
-
+                
+                {{-- Table contents --}}
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-upp-material">
                         <thead>
@@ -64,7 +85,7 @@
                 </div>
 
                 {{-- Pagination --}}
-                <div class="mt-3 px-3 d-flex justify-content-center">
+                <div class="mt-4 mb-3 px-3 d-flex justify-content-center">
                     <nav aria-label="Page navigation example">
                         <ul class="pagination pagination-sm mb-0" id="pagination-upp-material">
                             {{-- Pagination links will be rendered here --}}
@@ -76,30 +97,73 @@
     </div>
 </div>
 
-{{-- MODAL PREVIEW TIDAK SAYA UBAH KARENA SUDAH SESUAI DENGAN PERMINTAAN SEBELUMNYA --}}
+{{-- MODAL PREVIEW BARU --}}
 <div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-labelledby="previewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="previewModalLabel">Detail Keterangan UPP Material</h5>
+                <h5 class="modal-title" id="previewModalLabel">Detail UPP Material <span id="modal-upp-surat"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="edit-keterangan-form">
-                    <input type="hidden" id="modal-material-id">
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">Nama Material:</label>
-                        <p id="modal-material-name" class="form-control-plaintext"></p>
+                <div class="mb-3">
+                    <h6 class="font-weight-bold text-uppercase text-secondary text-xxs font-weight-bolder">Daftar Material:</h6>
+                    <div class="table-responsive rounded shadow-sm">
+                        <table class="table table-bordered table-striped align-items-center mb-0" style="min-width: 100%;">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Material</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stok Saat Ini</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stok Diambil</th>
+                                </tr>
+                            </thead>
+                            <tbody id="material-list-table">
+                                {{-- Material details will be rendered here --}}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="mb-3">
-                        <label for="modal-keterangan" class="form-label font-weight-bold">Keterangan:</label>
-                        <textarea class="form-control" id="modal-keterangan" rows="5"></textarea>
-                    </div>
-                </form>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <h6 class="font-weight-bold text-uppercase text-secondary text-xxs font-weight-bolder">Keterangan:</h6>
+                    <p id="modal-keterangan" class="form-control-plaintext text-sm text-muted p-2 border rounded" style="background-color: #f8f9fa;"></p>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" id="save-keterangan-btn">Simpan Perubahan</button>
+                <button type="button" class="btn btn-danger" id="lakukan-pemusnahan-btn">
+                    <i class="fas fa-times me-2"></i> Lakukan Pemusnahan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal untuk Export Excel --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data ke Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-secondary">Pilih rentang tanggal untuk data yang ingin Anda export.</p>
+                <div class="mb-3">
+                    <label for="exportStartDate" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="exportEndDate" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="exportEndDate">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                    <i class="fas fa-file-excel me-2"></i> Export
+                </button>
             </div>
         </div>
     </div>
@@ -109,9 +173,10 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --- Data Dummy Baru Sesuai Kolom Baru (Total 11) dan Diurutkan ---
+        // --- Data Dummy Utama dengan Detail Material ---
         const dataDummy = [
             {
                 id: 1, 
@@ -120,7 +185,12 @@
                 tahapan: 'Pengajuan', 
                 status: 'Proses', 
                 tgl_update: '2025-08-05', 
-                keterangan: 'Usulan pemusnahan material Gas LPG 3 Kg dan Bright Gas 12 Kg.'
+                keterangan: 'Usulan pemusnahan material Gas LPG 3 Kg dan Bright Gas 12 Kg.',
+                materials: [
+                    { nama: 'Gas LPG 3 Kg', kode: 'LPG001', stok_saat_ini: 150, stok_diambil: 50 },
+                    { nama: 'Bright Gas 12 Kg', kode: 'BRG002', stok_saat_ini: 80, stok_diambil: 30 },
+                    { nama: 'Gas LPG 12 Kg', kode: 'LPG003', stok_saat_ini: 65, stok_diambil: 15 }
+                ]
             },
             {
                 id: 2, 
@@ -129,16 +199,24 @@
                 tahapan: 'Verifikasi', 
                 status: 'Proses', 
                 tgl_update: '2025-07-28', 
-                keterangan: 'Menunggu persetujuan tim verifikasi untuk pemusnahan Pelumas Fastron.'
+                keterangan: 'Menunggu persetujuan tim verifikasi untuk pemusnahan Pelumas Fastron.',
+                materials: [
+                    { nama: 'Pelumas Fastron Gold', kode: 'PFS001', stok_saat_ini: 250, stok_diambil: 100 },
+                    { nama: 'Pelumas Fastron Diesel', kode: 'PFS002', stok_saat_ini: 180, stok_diambil: 50 },
+                    { nama: 'Pelumas Fastron Eco Green', kode: 'PFS003', stok_saat_ini: 210, stok_diambil: 70 }
+                ]
             },
             {
                 id: 3, 
                 tgl_buat: '2025-07-15', 
                 no_surat: 'UPP-202507-003', 
                 tahapan: 'Pemusnahan', 
-                status: 'Done', 
+                status: 'Selesai', 
                 tgl_update: '2025-07-18', 
-                keterangan: 'Pemusnahan Aspal Curah telah selesai dilaksanakan.'
+                keterangan: 'Pemusnahan Aspal Curah telah selesai dilaksanakan.',
+                materials: [
+                    { nama: 'Aspal Curah', kode: 'ASP001', stok_saat_ini: 0, stok_diambil: 500 }
+                ]
             },
             {
                 id: 4, 
@@ -147,16 +225,24 @@
                 tahapan: 'Pengajuan', 
                 status: 'Proses', 
                 tgl_update: '2025-07-11', 
-                keterangan: 'Usulan pemusnahan Avtur dan Pertalite.'
+                keterangan: 'Usulan pemusnahan Avtur dan Pertalite.',
+                materials: [
+                    { nama: 'Avtur', kode: 'AVT001', stok_saat_ini: 5000, stok_diambil: 1000 },
+                    { nama: 'Pertalite', kode: 'PRT001', stok_saat_ini: 8000, stok_diambil: 2500 }
+                ]
             },
             {
                 id: 5, 
                 tgl_buat: '2025-06-20', 
                 no_surat: 'UPP-202506-001', 
                 tahapan: 'Pemusnahan', 
-                status: 'Done', 
+                status: 'Selesai', 
                 tgl_update: '2025-06-25', 
-                keterangan: 'Pemusnahan Pertamina Dex dan Minyak Tanah telah selesai.'
+                keterangan: 'Pemusnahan Pertamina Dex dan Minyak Tanah telah selesai.',
+                materials: [
+                    { nama: 'Pertamina Dex', kode: 'PDX001', stok_saat_ini: 0, stok_diambil: 300 },
+                    { nama: 'Minyak Tanah', kode: 'MTA001', stok_saat_ini: 0, stok_diambil: 200 }
+                ]
             },
             {
                 id: 6, 
@@ -165,16 +251,23 @@
                 tahapan: 'Verifikasi', 
                 status: 'Proses', 
                 tgl_update: '2025-08-11', 
-                keterangan: 'Usulan pemusnahan material Asphalt Pen 60/70.'
+                keterangan: 'Usulan pemusnahan material Asphalt Pen 60/70.',
+                materials: [
+                    { nama: 'Asphalt Pen 60/70', kode: 'ASPH67', stok_saat_ini: 900, stok_diambil: 150 },
+                    { nama: 'Asphalt Pen 80/100', kode: 'ASPH80', stok_saat_ini: 750, stok_diambil: 100 }
+                ]
             },
             {
                 id: 7, 
                 tgl_buat: '2025-08-08', 
                 no_surat: 'UPP-202508-003', 
                 tahapan: 'Pemusnahan', 
-                status: 'Done', 
+                status: 'Selesai', 
                 tgl_update: '2025-08-10', 
-                keterangan: 'Pemusnahan Bitumen telah selesai.'
+                keterangan: 'Pemusnahan Bitumen telah selesai.',
+                materials: [
+                    { nama: 'Bitumen', kode: 'BITU01', stok_saat_ini: 0, stok_diambil: 200 }
+                ]
             },
             {
                 id: 8, 
@@ -183,16 +276,25 @@
                 tahapan: 'Pengajuan', 
                 status: 'Proses', 
                 tgl_update: '2025-08-12', 
-                keterangan: 'Usulan pemusnahan Elpiji Industri.'
+                keterangan: 'Usulan pemusnahan Elpiji Industri.',
+                materials: [
+                    { nama: 'Elpiji Industri 50 Kg', kode: 'ELI050', stok_saat_ini: 100, stok_diambil: 20 },
+                    { nama: 'Elpiji Industri 12 Kg', kode: 'ELI012', stok_saat_ini: 150, stok_diambil: 50 },
+                    { nama: 'Elpiji Industri 3 Kg', kode: 'ELI003', stok_saat_ini: 200, stok_diambil: 80 }
+                ]
             },
             {
                 id: 9, 
                 tgl_buat: '2025-07-01', 
                 no_surat: 'UPP-202507-001', 
                 tahapan: 'Pemusnahan', 
-                status: 'Done', 
+                status: 'Selesai', 
                 tgl_update: '2025-07-03', 
-                keterangan: 'Pemusnahan Pelumas Meditran telah selesai.'
+                keterangan: 'Pemusnahan Pelumas Meditran telah selesai.',
+                materials: [
+                    { nama: 'Pelumas Meditran', kode: 'PMT001', stok_saat_ini: 0, stok_diambil: 80 },
+                    { nama: 'Pelumas Meditran SX', kode: 'PMT002', stok_saat_ini: 0, stok_diambil: 45 }
+                ]
             },
             {
                 id: 10, 
@@ -201,9 +303,11 @@
                 tahapan: 'Pengajuan', 
                 status: 'Proses', 
                 tgl_update: '2025-08-11', 
-                keterangan: 'Usulan pemusnahan Solar Industri.'
+                keterangan: 'Usulan pemusnahan Solar Industri.',
+                materials: [
+                    { nama: 'Solar Industri', kode: 'SIL001', stok_saat_ini: 1500, stok_diambil: 500 }
+                ]
             },
-            // Tambahan data dummy baru
             {
                 id: 11,
                 tgl_buat: '2025-08-15',
@@ -211,7 +315,12 @@
                 tahapan: 'Pengajuan',
                 status: 'Proses',
                 tgl_update: '2025-08-15',
-                keterangan: 'Dokumen pengajuan untuk material baru.'
+                keterangan: 'Dokumen pengajuan untuk material baru.',
+                materials: [
+                    { nama: 'Oli Mesin', kode: 'OLM001', stok_saat_ini: 300, stok_diambil: 120 },
+                    { nama: 'Oli Transmisi', kode: 'OLT002', stok_saat_ini: 250, stok_diambil: 80 },
+                    { nama: 'BBM Pertamax', kode: 'BBM001', stok_saat_ini: 5000, stok_diambil: 100 }
+                ]
             }
         ];
 
@@ -244,8 +353,8 @@
         const itemsPerPage = 10;
         const maxPagesToShow = 5;
 
-        function filterData() {
-            return dataDummy.filter(item => {
+        function filterData(dataToFilter = dataDummy) {
+            return dataToFilter.filter(item => {
                 const matchSearch = searchQuery ?
                     item.no_surat.toLowerCase().includes(searchQuery.toLowerCase()) : true;
                 
@@ -269,14 +378,14 @@
             } else {
                 noData.style.display = 'none';
                 paginated.forEach((item, index) => {
+                    const statusText = item.status.toLowerCase() === 'selesai' ? 'Selesai' : 'Proses';
                     const statusColor = item.status.toLowerCase() === 'proses' ? 'bg-gradient-warning' : 'bg-gradient-success';
-                    const statusBadge = `<span class="badge ${statusColor} text-white text-xs font-weight-bold">${item.status}</span>`;
+                    const statusBadge = `<span class="badge ${statusColor} text-white text-xs font-weight-bold status-badge" style="cursor: pointer;" data-id="${item.id}" data-status="${item.status}">${statusText}</span>`;
                     
-                    // Badge Preview
-                    const previewBadge = `<span class="badge bg-gradient-info text-white text-xs preview-keterangan-btn" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#previewModal" data-id="${item.id}"><i class="fas fa-eye me-1"></i> Preview</span>`;
-
-                    // Badge Lakukan Pemusnahan yang baru ditambahkan
-                    const pemusnahanBadge = `<span class="badge bg-gradient-danger text-white text-xs ms-1" style="cursor:pointer;">Lakukan Pemusnahan</span>`;
+                    // Badge Preview dengan ikon mata
+                    const previewBadge = `<span class="badge bg-gradient-info text-white text-xs preview-keterangan-btn" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#previewModal" data-id="${item.id}">
+                                            <i class="fas fa-eye me-1"></i> Preview
+                                          </span>`;
 
                     tbody.innerHTML += `
                         <tr>
@@ -298,9 +407,8 @@
                             <td class="text-center">
                                 <p class="text-xs text-secondary mb-0">${formatTanggal(item.tgl_update)}</p>
                             </td>
-                            <td class="align-middle text-center d-flex justify-content-center">
+                            <td class="align-middle text-center">
                                 ${previewBadge}
-                                ${pemusnahanBadge}
                             </td>
                         </tr>
                     `;
@@ -393,15 +501,15 @@
         }
 
         // --- Event Listeners ---
-        document.getElementById('search-input').addEventListener('input', function () {
+        document.getElementById('searchInput').addEventListener('input', function () {
             searchQuery = this.value;
             currentPage = 1;
             renderTable();
         });
 
         document.getElementById('filter-btn').addEventListener('click', function() {
-            const startDateInput = document.getElementById('start-date').value;
-            const endDateInput = document.getElementById('end-date').value;
+            const startDateInput = document.getElementById('startDate').value;
+            const endDateInput = document.getElementById('endDate').value;
             
             startDate = startDateInput ? new Date(startDateInput) : null;
             endDate = endDateInput ? new Date(endDateInput) : null;
@@ -417,7 +525,66 @@
             currentPage = 1;
             renderTable();
         });
-        
+
+        // Event listener for Status badge click
+        document.getElementById('table-upp-material').addEventListener('click', function(event) {
+            const badge = event.target.closest('.status-badge');
+            if (badge) {
+                const id = parseInt(badge.getAttribute('data-id'));
+                const currentStatus = badge.getAttribute('data-status');
+
+                // Konfigurasi inputOptions untuk SweetAlert dengan input radio
+                const inputOptions = {
+                    'Proses': `<span class="font-weight-bolder text-warning">PROSES</span>`,
+                    'Selesai': `<span class="font-weight-bolder text-success">SELESAI</span>`
+                };
+                
+                Swal.fire({
+                    title: '<h5 class="font-weight-bolder text-uppercase">Ubah Status UPP</h5>',
+                    html: `
+                        <p class="text-muted text-center font-weight-bolder">Pilih status baru untuk UPP ini :</p>
+                    `,
+                    icon: 'warning',
+                    input: 'radio',
+                    inputOptions: inputOptions,
+                    inputValue: currentStatus,
+                    showCancelButton: true,
+                    confirmButtonText: 'Simpan',
+                    preConfirm: (newStatus) => {
+                        if (!newStatus) {
+                            Swal.showValidationMessage('Anda harus memilih salah satu status.');
+                            return false;
+                        }
+                        return newStatus;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const newStatus = result.value;
+                        const itemToUpdate = dataDummy.find(item => item.id === id);
+                        
+                        if (itemToUpdate) {
+                            itemToUpdate.status = newStatus;
+                            if (newStatus === 'Selesai') {
+                                itemToUpdate.tahapan = 'Pemusnahan';
+                            } else {
+                                itemToUpdate.tahapan = 'Pengajuan';
+                            }
+                            itemToUpdate.tgl_update = new Date().toISOString().slice(0, 10);
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: `Status berhasil diperbarui menjadi '${newStatus}'.`,
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            renderTable();
+                        }
+                    }
+                });
+            }
+        });
+
         // Event listener for Preview button using event delegation
         document.getElementById('table-upp-material').addEventListener('click', function(event) {
             if (event.target.closest('.preview-keterangan-btn')) {
@@ -426,38 +593,145 @@
                 const item = dataDummy.find(item => item.id === id);
 
                 if (item) {
-                    document.getElementById('modal-material-id').value = item.id;
-                    document.getElementById('modal-material-name').innerText = `No. Surat: ${item.no_surat}`;
-                    document.getElementById('modal-keterangan').value = item.keterangan;
+                    document.getElementById('modal-upp-surat').innerText = `(${item.no_surat})`;
+                    document.getElementById('modal-keterangan').innerText = item.keterangan;
+                    
+                    const materialTableBody = document.getElementById('material-list-table');
+                    materialTableBody.innerHTML = '';
+                    if (item.materials && item.materials.length > 0) {
+                        item.materials.forEach(material => {
+                            materialTableBody.innerHTML += `
+                                <tr>
+                                    <td class="text-xs text-secondary mb-0">${material.nama}</td>
+                                    <td class="text-xs text-secondary mb-0">${material.kode}</td>
+                                    <td class="text-xs text-secondary mb-0">${material.stok_saat_ini}</td>
+                                    <td class="text-xs text-secondary mb-0">${material.stok_diambil}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        materialTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Tidak ada data material.</td></tr>`;
+                    }
+                    
+                    // Show/hide "Lakukan Pemusnahan" button based on the status
+                    const pemusnahanBtn = document.getElementById('lakukan-pemusnahan-btn');
+                    if (item.status.toLowerCase() === 'selesai') {
+                        pemusnahanBtn.style.display = 'none';
+                    } else {
+                        pemusnahanBtn.style.display = 'block';
+                    }
                 }
             }
         });
 
-        // Event listener for Save button in the modal
-        document.getElementById('save-keterangan-btn').addEventListener('click', function() {
-            const materialId = parseInt(document.getElementById('modal-material-id').value);
-            const newKeterangan = document.getElementById('modal-keterangan').value;
+        // Event listener for the "Lakukan Pemusnahan" button in the modal
+        document.getElementById('lakukan-pemusnahan-btn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Apakah Anda Yakin?',
+                text: "Status UPP akan berubah menjadi 'Selesai' dan stok material akan disesuaikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Lakukan Pemusnahan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Logic untuk melakukan pemusnahan (update data dummy)
+                    const uppNoSurat = document.getElementById('modal-upp-surat').innerText.replace(/[()]/g, '');
+                    const itemToUpdate = dataDummy.find(item => item.no_surat === uppNoSurat);
+                    
+                    if (itemToUpdate) {
+                        itemToUpdate.status = 'Selesai';
+                        itemToUpdate.tahapan = 'Pemusnahan';
+                        itemToUpdate.tgl_update = new Date().toISOString().slice(0, 10);
+                        // Di sini Anda akan menambahkan logika untuk mengurangi stok material dari database
+                    }
 
-            // Find the item and update the data
-            const itemToUpdate = dataDummy.find(item => item.id === materialId);
-            if (itemToUpdate) {
-                itemToUpdate.keterangan = newKeterangan;
+                    // Tutup modal preview
+                    const myModalEl = document.getElementById('previewModal');
+                    const modal = bootstrap.Modal.getInstance(myModalEl);
+                    modal.hide();
+
+                    // Tampilkan notifikasi sukses
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Proses pemusnahan berhasil dilakukan.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+
+                    renderTable(); // Muat ulang tabel untuk menampilkan perubahan
+                }
+            });
+        });
+
+        // Event listener for the new "Export" button in the modal
+        document.getElementById('confirmExportBtn').addEventListener('click', function() {
+            const exportStartDateInput = document.getElementById('exportStartDate').value;
+            const exportEndDateInput = document.getElementById('exportEndDate').value;
+
+            const exportStartDate = exportStartDateInput ? new Date(exportStartDateInput) : null;
+            const exportEndDate = exportEndDateInput ? new Date(exportEndDateInput) : null;
+            
+            if (exportStartDate && exportEndDate && exportStartDate > exportEndDate) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Export',
+                    text: 'Tanggal mulai tidak boleh lebih besar dari tanggal selesai.',
+                });
+                return;
             }
+            
+            // Filter data for export based on the selected date range
+            const filteredDataForExport = dataDummy.filter(item => {
+                const itemDate = parseDateString(item.tgl_buat);
+                return (!exportStartDate || (itemDate && itemDate >= exportStartDate)) && (!exportEndDate || (itemDate && itemDate <= exportEndDate));
+            });
 
-            // Close the modal
-            const myModalEl = document.getElementById('previewModal');
+            if (filteredDataForExport.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data Kosong',
+                    text: 'Tidak ada data yang dapat diekspor pada rentang tanggal tersebut.',
+                });
+                return;
+            }
+            
+            // Format data for Excel
+            const exportData = filteredDataForExport.map(item => ({
+                'No. Surat': item.no_surat,
+                'Tahapan': item.tahapan,
+                'Status': item.status,
+                'Tanggal Buat': formatTanggal(item.tgl_buat),
+                'Tanggal Update Terakhir': formatTanggal(item.tgl_update),
+                'Keterangan': item.keterangan
+            }));
+
+            // Create and download the Excel file
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Data UPP Material');
+
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
+            const filename = `Data_UPP_Material_${dateStr}.xlsx`;
+            
+            XLSX.writeFile(workbook, filename);
+
+            // Close the modal and show a success message
+            const myModalEl = document.getElementById('exportExcelModal');
             const modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
 
-            // Show success notification
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: 'Keterangan berhasil diperbarui.',
+                text: 'Data berhasil diekspor ke Excel.',
                 showConfirmButton: false,
                 timer: 1500
             });
-            renderTable(); // Re-render table to reflect changes
         });
 
         // Initial render
