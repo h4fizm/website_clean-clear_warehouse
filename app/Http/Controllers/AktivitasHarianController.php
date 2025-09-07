@@ -12,7 +12,7 @@ class AktivitasHarianController extends Controller
 {
     public function index()
     {
-        return view('dashboard_page.menu.aktivitas_harian');
+        return view('dashboard_page.aktivitas_harian.data_transaksi');
     }
 
     public function logTransaksi(Request $request)

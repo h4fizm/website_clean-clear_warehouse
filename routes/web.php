@@ -148,11 +148,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
-    // Route untuk halaman menu utama aktivitas
-    Route::get('/aktivitas', [AktivitasHarianController::class, 'index'])
-        ->name('aktivitas.index') // Menambahkan nama route
-        ->middleware('can:manage aktivitas harian'); // Middleware di sini
-
     // ===== TAMBAHKAN ROUTE DI BAWAH INI =====
     Route::get('/aktivitas/transaksi/export', [AktivitasHarianController::class, 'exportTransaksiExcel'])
         ->name('aktivitas.transaksi.export')
@@ -170,21 +165,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/upp-material', function () {
         return view('dashboard_page.menu.data_upp-material');
     });
-
     // --- Route Spesifik Lainnya ---
-    Route::get('/material', function () {
-        return view('dashboard_page.spbe-bpt_material.data_material');
-    });
     Route::get('/keterangan-pemusnahan', function () {
         return view('dashboard_page.upp_material.keterangan_pemusnahan');
     });
-
-    // --- Aktivitas UPP ---
-    Route::get('/aktivitas-upp', function () {
-        return view('dashboard_page.aktivitas_harian.data_upp');
-    });
-    Route::get('/preview-upp', function () {
-        return view('dashboard_page.aktivitas_harian.preview_upp');
-    });
-
 });
