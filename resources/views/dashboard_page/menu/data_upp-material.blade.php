@@ -172,8 +172,9 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- Data Dummy Utama dengan Detail Material ---
@@ -324,10 +325,8 @@
             }
         ];
 
-        // Urutkan data berdasarkan tanggal buat secara menurun (terbaru ke terlama)
         dataDummy.sort((a, b) => new Date(b.tgl_buat) - new Date(a.tgl_buat));
 
-        // --- Helper Functions ---
         const hariIndonesia = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         const bulanIndonesia = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
@@ -382,10 +381,9 @@
                     const statusColor = item.status.toLowerCase() === 'proses' ? 'bg-gradient-warning' : 'bg-gradient-success';
                     const statusBadge = `<span class="badge ${statusColor} text-white text-xs font-weight-bold status-badge" style="cursor: pointer;" data-id="${item.id}" data-status="${item.status}">${statusText}</span>`;
                     
-                    // Badge Preview dengan ikon mata
                     const previewBadge = `<span class="badge bg-gradient-info text-white text-xs preview-keterangan-btn" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#previewModal" data-id="${item.id}">
-                                            <i class="fas fa-eye me-1"></i> Preview
-                                          </span>`;
+                                             <i class="fas fa-eye me-1"></i> Preview
+                                           </span>`;
 
                     tbody.innerHTML += `
                         <tr>
@@ -469,8 +467,7 @@
                     e.preventDefault();
                     currentPage = i;
                     renderTable();
-                }
-            );
+                });
                 ul.appendChild(li);
             }
 
@@ -501,7 +498,6 @@
             ul.appendChild(lastPageItem);
         }
 
-        // --- Event Listeners ---
         document.getElementById('searchInput').addEventListener('input', function () {
             searchQuery = this.value;
             currentPage = 1;
@@ -527,14 +523,12 @@
             renderTable();
         });
 
-        // Event listener for Status badge click
         document.getElementById('table-upp-material').addEventListener('click', function(event) {
             const badge = event.target.closest('.status-badge');
             if (badge) {
                 const id = parseInt(badge.getAttribute('data-id'));
                 const currentStatus = badge.getAttribute('data-status');
 
-                // Konfigurasi inputOptions untuk SweetAlert dengan input radio
                 const inputOptions = {
                     'Proses': `<span class="font-weight-bolder text-warning">PROSES</span>`,
                     'Done': `<span class="font-weight-bolder text-success">DONE</span>`
@@ -570,7 +564,6 @@
                             } else {
                                 itemToUpdate.tahapan = 'Pengajuan';
                             }
-                            // Menggunakan format tanggal sesuai permintaan yang telah disimpan
                             const now = new Date();
                             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                             const formattedDate = new Intl.DateTimeFormat('id-ID', dateOptions).format(now);
@@ -590,7 +583,6 @@
             }
         });
 
-        // Event listener for Preview button using event delegation
         document.getElementById('table-upp-material').addEventListener('click', function(event) {
             if (event.target.closest('.preview-keterangan-btn')) {
                 const button = event.target.closest('.preview-keterangan-btn');
@@ -618,65 +610,24 @@
                         materialTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Tidak ada data material.</td></tr>`;
                     }
                     
-                    // Show/hide "Lakukan Pemusnahan" button based on the status
                     const pemusnahanBtn = document.getElementById('lakukan-pemusnahan-btn');
                     if (item.status.toLowerCase() === 'done') {
                         pemusnahanBtn.style.display = 'none';
                     } else {
                         pemusnahanBtn.style.display = 'block';
+                        // Menambahkan data ID ke tombol "Lakukan Pemusnahan"
+                        pemusnahanBtn.setAttribute('data-id', item.id);
                     }
                 }
             }
         });
 
-        // Event listener for the "Lakukan Pemusnahan" button in the modal
+        // Modifikasi Event listener untuk tombol "Lakukan Pemusnahan" di modal
         document.getElementById('lakukan-pemusnahan-btn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Apakah Anda Yakin?',
-                text: "Status UPP akan berubah menjadi 'Done' dan stok material akan disesuaikan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Lakukan Pemusnahan!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Logic untuk melakukan pemusnahan (update data dummy)
-                    const uppNoSurat = document.getElementById('modal-upp-surat').innerText.replace(/[()]/g, '');
-                    const itemToUpdate = dataDummy.find(item => item.no_surat === uppNoSurat);
-                    
-                    if (itemToUpdate) {
-                        itemToUpdate.status = 'Done';
-                        itemToUpdate.tahapan = 'Pemusnahan';
-                        // Menggunakan format tanggal sesuai permintaan yang telah disimpan
-                        const now = new Date();
-                        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                        const formattedDate = new Intl.DateTimeFormat('id-ID', dateOptions).format(now);
-                        itemToUpdate.tgl_update = formattedDate;
-                        // Di sini Anda akan menambahkan logika untuk mengurangi stok material dari database
-                    }
-
-                    // Tutup modal preview
-                    const myModalEl = document.getElementById('previewModal');
-                    const modal = bootstrap.Modal.getInstance(myModalEl);
-                    modal.hide();
-
-                    // Tampilkan notifikasi sukses
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Proses pemusnahan berhasil dilakukan.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-
-                    renderTable(); // Muat ulang tabel untuk menampilkan perubahan
-                }
-            });
+            const id = this.getAttribute('data-id'); // Mengambil ID dari tombol
+            window.location.href = `/upp-material/preview?id=${id}`;
         });
 
-        // Event listener for the new "Export" button in the modal
         document.getElementById('confirmExportBtn').addEventListener('click', function() {
             const exportStartDateInput = document.getElementById('exportStartDate').value;
             const exportEndDateInput = document.getElementById('exportEndDate').value;
@@ -693,7 +644,6 @@
                 return;
             }
             
-            // Filter data for export based on the selected date range
             const filteredDataForExport = dataDummy.filter(item => {
                 const itemDate = parseDateString(item.tgl_buat);
                 return (!exportStartDate || (itemDate && itemDate >= exportStartDate)) && (!exportEndDate || (itemDate && itemDate <= exportEndDate));
@@ -708,7 +658,6 @@
                 return;
             }
             
-            // Format data for Excel
             const exportData = filteredDataForExport.map(item => ({
                 'No. Surat': item.no_surat,
                 'Tahapan': item.tahapan,
@@ -718,7 +667,6 @@
                 'Keterangan': item.keterangan
             }));
 
-            // Create and download the Excel file
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Data UPP Material');
@@ -729,7 +677,6 @@
             
             XLSX.writeFile(workbook, filename);
 
-            // Close the modal and show a success message
             const myModalEl = document.getElementById('exportExcelModal');
             const modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
@@ -743,7 +690,6 @@
             });
         });
 
-        // Initial render
         renderTable();
     });
 </script>

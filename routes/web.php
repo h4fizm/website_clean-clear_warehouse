@@ -166,6 +166,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/upp-material/tambah', function () {
         return view('dashboard_page.upp_material.tambah_upp');
     });
+    Route::get('/upp-material/preview', function () {
+        return view('dashboard_page.upp_material.preview_upp');
+    });
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
