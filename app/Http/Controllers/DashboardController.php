@@ -18,22 +18,25 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // Bagian 1 & 2: Kode Anda yang sudah ada tidak diubah
         $user = Auth::user();
         $roleName = $user->getRoleNames()->first() ?? 'User';
 
         $totalSpbe = Facility::where('type', 'SPBE')->count();
         $totalBpt = Facility::where('type', 'BPT')->count();
-        $totalPenerimaan = ItemTransaction::count();
-        $totalPenyaluran = $totalPenerimaan;
-        $totalUpp = 0;
+        $totalPenerimaan = ItemTransaction::where('jenis_transaksi', 'penerimaan')->sum('jumlah');
+        $totalPenyaluran = ItemTransaction::where('jenis_transaksi', 'penyaluran')->sum('jumlah');
+
+        // Perbarui perhitungan UPP dengan mencari transaksi pemusnahan yang disetujui
+        $totalUpp = ItemTransaction::where('jenis_transaksi', 'pemusnahan')
+            ->whereNotNull('no_surat_persetujuan')
+            ->count();
 
         $cards = [
             ['title' => 'Total SPBE', 'value' => number_format($totalSpbe), 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => number_format($totalBpt), 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
             ['title' => 'Transaksi Penerimaan', 'value' => number_format($totalPenerimaan), 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
             ['title' => 'Transaksi Penyaluran', 'value' => number_format($totalPenyaluran), 'icon' => 'fas fa-arrow-up', 'bg' => 'danger', 'link' => '#'],
-            ['title' => 'UPP Material', 'value' => $totalUpp, 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
+            ['title' => 'UPP Material', 'value' => number_format($totalUpp), 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
         ];
 
         $query = Item::query()
@@ -46,12 +49,10 @@ class DashboardController extends Controller
             ->orderBy('nama_material');
         $items = $query->paginate(5)->appends($request->only('search_material'));
 
-        // Bagian 3: Logika untuk Tabel Stok Material Interaktif
         $materialList = $this->getUniqueMaterialBaseNames();
         $defaultMaterialName = $materialList->first() ?? null;
         $initialStockData = $defaultMaterialName ? $this->getFormattedStockData($defaultMaterialName) : [];
 
-        // Bagian 4: Mengirim SEMUA DATA ke view
         return view('dashboard_page.menu.dashboard', [
             'user' => $user,
             'roleName' => $roleName,
@@ -86,7 +87,9 @@ class DashboardController extends Controller
     {
         return Item::select('nama_material')->distinct()->pluck('nama_material')
             ->map(function ($name) {
-                return trim(explode('-', $name)[0]);
+                // Mengambil nama material sebelum '-'
+                $parts = explode(' - ', $name);
+                return $parts[0] ?? $name;
             })
             ->unique()->sort()->values();
     }
@@ -116,14 +119,22 @@ class DashboardController extends Controller
             $stock = ['baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0];
             foreach ($collection as $item) {
                 $currentStock = $item->stok_akhir;
-                if (str_contains($item->nama_material, 'Baru'))
-                    $stock['baru'] += $currentStock;
-                if (str_contains($item->nama_material, 'Baik'))
-                    $stock['baik'] += $currentStock;
-                if (str_contains($item->nama_material, 'Rusak'))
-                    $stock['rusak'] += $currentStock;
-                if (str_contains($item->nama_material, 'Afkir'))
-                    $stock['afkir'] += $currentStock;
+
+                // Gunakan kolom baru 'kategori_material'
+                switch (strtolower($item->kategori_material)) {
+                    case 'baru':
+                        $stock['baru'] += $currentStock;
+                        break;
+                    case 'baik':
+                        $stock['baik'] += $currentStock;
+                        break;
+                    case 'rusak':
+                        $stock['rusak'] += $currentStock;
+                        break;
+                    case 'afkir':
+                        $stock['afkir'] += $currentStock;
+                        break;
+                }
             }
             return $stock;
         };

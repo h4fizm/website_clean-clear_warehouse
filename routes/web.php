@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\UppMaterialController;
 use App\Http\Controllers\AktivitasHarianController;
 
 /*
@@ -158,17 +159,32 @@ Route::middleware(['auth'])->group(function () {
         ->name('aktivitas.transaksi') // Menambahkan nama route
         ->middleware('can:manage aktivitas harian'); // Middleware di sini
 
-    // Route UPP 
-    Route::get('/upp-material', function () {
-        return view('dashboard_page.menu.data_upp-material');
-    });
-    // --- Route Spesifik Lainnya ---
-    Route::get('/upp-material/tambah', function () {
-        return view('dashboard_page.upp_material.tambah_upp');
-    });
-    Route::get('/upp-material/preview', function () {
-        return view('dashboard_page.upp_material.preview_upp');
-    });
+    // Halaman data UPP
+    Route::get('/upp-material', [UppMaterialController::class, 'index'])
+        ->name('upp-material.index')
+        ->middleware('can:manage data playang');
+
+    // Halaman tambah UPP
+    Route::get('/upp-material/tambah', [UppMaterialController::class, 'create'])
+        ->name('upp-material.create')
+        ->middleware('can:manage data playang');
+
+    // Simpan pengajuan UPP
+    Route::post('/upp-material/store', [UppMaterialController::class, 'store'])
+        ->name('upp-material.store')
+        ->middleware('can:manage data playang');
+
+    // Halaman preview/detail UPP
+    Route::get('/upp-material/preview/{no_surat}', [UppMaterialController::class, 'preview'])
+        ->name('upp-material.preview')
+        ->middleware('can:manage data playang');
+
+    // Ambil data material untuk modal
+    Route::get('/upp-material/afkir', [UppMaterialController::class, 'getMaterials'])
+        ->name('upp-material.afkir')
+        ->middleware('can:manage data playang');
+
+
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');

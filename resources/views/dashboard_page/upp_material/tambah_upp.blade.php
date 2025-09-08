@@ -8,26 +8,27 @@
                 <h5 class="m-0 font-weight-bold text-primary">Form Pengajuan UPP Material</h5>
             </div>
             <div class="card-body">
-                <form id="pengajuanForm">
+                <form id="pengajuanForm" action="{{ route('upp-material.store') }}" method="POST">
+                    @csrf
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="noSurat" class="form-label">No. Surat</label>
-                            <input type="text" class="form-control" id="noSurat" required>
+                            <input type="text" class="form-control" id="noSurat" name="noSurat" required>
                         </div>
                         <div class="col-md-6">
                             <label for="tanggal" class="form-label">Tanggal Pengajuan</label>
-                            <input type="date" class="form-control" id="tanggal" required>
+                            <input type="date" class="form-control" id="tanggal" name="tanggal" required>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="tahapan" class="form-label">Tahapan</label>
-                            <input type="text" class="form-control" id="tahapan" required>
+                            <input type="text" class="form-control" id="tahapan" name="tahapan" required>
                         </div>
                         <div class="col-md-6">
                             <label for="pjUser" class="form-label">Penanggung Jawab</label>
-                            <input type="text" class="form-control" id="pjUser" required>
+                            <input type="text" class="form-control" id="pjUser" name="pjUser" required>
                         </div>
                     </div>
 
@@ -63,7 +64,7 @@
                     
                     <div class="mb-3">
                         <label for="keterangan" class="form-label">Keterangan Pengajuan</label>
-                        <textarea class="form-control" id="keterangan" rows="8"></textarea>
+                        <textarea class="form-control" id="keterangan" name="keterangan" rows="8"></textarea>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -107,26 +108,26 @@
 
 <script>
     let keteranganEditor;
-    let selectedMaterials = {}; // Menyimpan material yang dipilih
+    let selectedMaterials = {};
+    let allMaterials = [];
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Data dummy material untuk modal
-        const materialDummy = [
-            { id: 1, nama: 'Gas LPG 3 Kg', kode: 'LPG3001', stok: 150 },
-            { id: 2, nama: 'Bright Gas 12 Kg', kode: 'BG1202', stok: 90 },
-            { id: 3, nama: 'Pelumas Fastron', kode: 'PFAS03', stok: 0 },
-            { id: 4, nama: 'Aspal Curah', kode: 'ASPC04', stok: 110 },
-            { id: 5, nama: 'Avtur', kode: 'AVTR05', stok: 0 },
-            { id: 6, nama: 'Pertalite', kode: 'PRTL06', stok: 95 },
-            { id: 7, nama: 'Pertamina Dex', kode: 'PDEX07', stok: 170 },
-            { id: 8, nama: 'Minyak Tanah', kode: 'MINT08', stok: 140 },
-            { id: 9, nama: 'Asphalt Pen 60/70', kode: 'AP60709', stok: 160 },
-            { id: 10, nama: 'Bitumen', kode: 'BITU10', stok: 130 },
-            { id: 11, nama: 'Gas LPG 3 Kg (Extra)', kode: 'LPG311', stok: 200 },
-            { id: 12, nama: 'Elpiji Industri', kode: 'IND012', stok: 80 },
-        ];
+        fetch('{{ route('upp-material.afkir') }}')
+            .then(response => response.json())
+            .then(data => {
+                allMaterials = data.map(item => ({
+                    id: item.id,
+                    nama: item.nama_material,
+                    kode: item.kode_material,
+                    stok: item.stok_akhir
+                }));
+            })
+            .catch(error => {
+                console.error('Error fetching material data:', error);
+                const materialList = document.getElementById('materialList');
+                materialList.innerHTML = `<p class="text-center text-danger mt-3">Gagal memuat data material. Silakan coba lagi.</p>`;
+            });
         
-        // Inisialisasi CKEditor 5
         ClassicEditor
             .create( document.querySelector( '#keterangan' ) )
             .then( editor => {
@@ -136,12 +137,11 @@
                 console.error( 'Ada kesalahan saat menginisialisasi CKEditor:', error );
             });
 
-        // Tampilkan daftar material di modal
         function renderMaterialList(query = '') {
             const materialList = document.getElementById('materialList');
             materialList.innerHTML = '';
             
-            const filteredMaterials = materialDummy.filter(item => 
+            const filteredMaterials = allMaterials.filter(item => 
                 item.nama.toLowerCase().includes(query.toLowerCase()) || 
                 item.kode.toLowerCase().includes(query.toLowerCase())
             );
@@ -176,7 +176,6 @@
             });
         }
         
-        // Render tabel material yang dipilih
         function renderSelectedMaterials() {
             const tbody = document.getElementById('selectedMaterialsBody');
             tbody.innerHTML = '';
@@ -188,6 +187,7 @@
             
             Object.values(selectedMaterials).forEach(item => {
                 const row = document.createElement('tr');
+                const uniqueId = `jumlah-diambil-${item.id}`;
                 row.innerHTML = `
                     <td>
                         <h6 class="mb-0 text-sm">${item.nama}</h6>
@@ -197,7 +197,7 @@
                         <input type="number" class="form-control form-control-sm" value="${item.stok}" readonly>
                     </td>
                     <td>
-                        <input type="number" class="form-control form-control-sm jumlah-diambil" data-id="${item.id}" value="${item.jumlah_diambil || ''}" min="1" max="${item.stok}" required>
+                        <input type="number" class="form-control form-control-sm jumlah-diambil" id="${uniqueId}" data-id="${item.id}" value="${item.jumlah_diambil || ''}" min="1" max="${item.stok}" required>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-sm remove-material-btn" data-id="${item.id}">
@@ -206,20 +206,23 @@
                     </td>
                 `;
                 tbody.appendChild(row);
-            });
-            
-            // Tambahkan event listener untuk input jumlah
-            document.querySelectorAll('.jumlah-diambil').forEach(input => {
-                input.addEventListener('input', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
+
+                 document.getElementById(uniqueId).addEventListener('input', function() {
                     const value = parseInt(this.value);
-                    if (value > 0 && value <= selectedMaterials[id].stok) {
-                        selectedMaterials[id].jumlah_diambil = value;
+                    if (value > 0 && value <= item.stok) {
+                         selectedMaterials[item.id].jumlah_diambil = value;
+                    } else if (value < 1) {
+                         selectedMaterials[item.id].jumlah_diambil = 1;
+                         this.value = 1;
+                    } else if (value > item.stok) {
+                         selectedMaterials[item.id].jumlah_diambil = item.stok;
+                         this.value = item.stok;
+                    } else {
+                         delete selectedMaterials[item.id].jumlah_diambil;
                     }
                 });
             });
-
-            // Tambahkan event listener untuk tombol hapus
+            
             document.querySelectorAll('.remove-material-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -229,12 +232,11 @@
             });
         }
         
-        // Event listener untuk tombol "Tambah Material Terpilih"
         document.getElementById('addSelectedMaterialsBtn').addEventListener('click', function() {
             const checkboxes = document.querySelectorAll('#materialList input[type="checkbox"]:checked');
             checkboxes.forEach(checkbox => {
                 const id = parseInt(checkbox.value);
-                const material = materialDummy.find(item => item.id === id);
+                const material = allMaterials.find(item => item.id === id);
                 if (material && !selectedMaterials[id]) {
                     selectedMaterials[id] = { ...material, jumlah_diambil: '' };
                 }
@@ -245,21 +247,17 @@
             materialModal.hide();
         });
 
-        // Event listener untuk search di modal
         document.getElementById('modalSearchInput').addEventListener('input', function() {
             renderMaterialList(this.value);
         });
 
-        // Event listener untuk saat modal dibuka
         document.getElementById('materialModal').addEventListener('show.bs.modal', function() {
-            renderMaterialList(''); // Render ulang daftar setiap kali modal dibuka
+            renderMaterialList('');
         });
 
-        // Handle form submission with Swal confirmation
         document.getElementById('pengajuanForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Validasi: pastikan ada material yang dipilih
             if (Object.keys(selectedMaterials).length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -269,17 +267,20 @@
                 return;
             }
             
-            // Validasi: pastikan semua jumlah diisi dengan benar
             for (const id in selectedMaterials) {
                 const item = selectedMaterials[id];
-                if (!item.jumlah_diambil || item.jumlah_diambil <= 0 || item.jumlah_diambil > item.stok) {
-                    Swal.fire({
+                const inputJumlah = document.getElementById(`jumlah-diambil-${id}`);
+                const value = parseInt(inputJumlah.value);
+
+                if (!value || value <= 0 || value > item.stok) {
+                     Swal.fire({
                         icon: 'error',
                         title: 'Jumlah Tidak Valid',
                         text: `Jumlah diambil untuk material ${item.nama} tidak valid.`,
-                    });
-                    return;
+                     });
+                     return;
                 }
+                item.jumlah_diambil = value; // Simpan nilai valid ke objek
             }
             
             Swal.fire({
@@ -294,35 +295,58 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const formData = {
-                        no_surat: document.getElementById('noSurat').value,
+                        _token: document.querySelector('input[name="_token"]').value,
+                        noSurat: document.getElementById('noSurat').value,
                         tanggal: document.getElementById('tanggal').value,
                         tahapan: document.getElementById('tahapan').value,
-                        penanggung_jawab: document.getElementById('pjUser').value,
+                        pjUser: document.getElementById('pjUser').value,
                         keterangan: keteranganEditor.getData(),
                         materials: Object.values(selectedMaterials).map(item => ({
                             id: item.id,
-                            nama: item.nama,
-                            kode: item.kode,
                             jumlah_diambil: item.jumlah_diambil
                         }))
                     };
 
-                    console.log('Data yang akan dikirim:', formData);
-                    
-                    Swal.fire({
-                        title: 'Berhasil!',
-                        text: 'Pengajuan UPP berhasil ditambahkan.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = "{{ url('/upp-material') }}";
+                    fetch('{{ route('upp-material.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                             Swal.fire({
+                                 title: 'Berhasil!',
+                                 text: data.message,
+                                 icon: 'success',
+                                 timer: 2000,
+                                 showConfirmButton: false
+                             }).then(() => {
+                                 window.location.href = "{{ url('/upp-material') }}";
+                             });
+                        } else {
+                            Swal.fire({
+                                title: 'Gagal!',
+                                text: data.message,
+                                icon: 'error'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Terjadi Kesalahan',
+                            text: 'Gagal terhubung ke server.',
+                            icon: 'error'
+                        });
                     });
                 }
             });
         });
 
-        // Render tabel material saat halaman pertama kali dimuat
         renderSelectedMaterials();
     });
 </script>

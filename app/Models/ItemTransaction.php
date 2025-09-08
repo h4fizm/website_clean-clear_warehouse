@@ -20,9 +20,11 @@ class ItemTransaction extends Model
         'stok_awal_asal',
         'stok_akhir_asal',
         'jenis_transaksi',
-        'tujuan_sales', // BARU: Tambahkan ini agar sesuai dengan database
+        'tujuan_sales',
         'no_surat_persetujuan',
         'no_ba_serah_terima',
+        'tahapan',   // ✅ tambahkan
+        'status',    // ✅ tambahkan
     ];
 
     /*
@@ -34,8 +36,9 @@ class ItemTransaction extends Model
     // Relasi ke Item
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class, 'item_id');
     }
+
 
     // Relasi ke User (Penanggung Jawab)
     public function user()

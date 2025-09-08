@@ -19,8 +19,9 @@ class Item extends Model
         'region_id',
         'nama_material',
         'kode_material',
+        'kategori_material', // BARU: Tambahkan ini
         'stok_awal',
-        'stok_akhir', // PASTIKAN BARIS INI ADA
+        'stok_akhir',
     ];
 
     /*
@@ -118,7 +119,9 @@ class Item extends Model
             $sales = $this->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
         }
 
-        return $this->stok_awal + $penerimaan - $penyaluran - $sales;
-    }
+        // Perhitungan stok dengan logika pemusnahan jika ada
+        $pemusnahan = $this->transactions()->where('jenis_transaksi', 'pemusnahan')->sum('jumlah');
 
+        return $this->stok_awal + $penerimaan - $penyaluran - $sales - $pemusnahan;
+    }
 }

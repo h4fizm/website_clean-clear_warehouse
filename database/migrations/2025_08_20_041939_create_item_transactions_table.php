@@ -20,13 +20,16 @@ return new class extends Migration {
             $table->unsignedBigInteger('facility_to')->nullable();
             $table->unsignedBigInteger('region_from')->nullable();
             $table->unsignedBigInteger('region_to')->nullable();
-            $table->string('tujuan_sales')->nullable(); // DIUBAH: Method ->after() dihapus
+            $table->string('tujuan_sales')->nullable();
 
             // Kolom Kuantitas & Jenis Transaksi
             $table->integer('jumlah');
             $table->integer('stok_awal_asal')->nullable()->comment('Stok asal SEBELUM transaksi');
             $table->integer('stok_akhir_asal')->nullable()->comment('Stok asal SETELAH transaksi');
-            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales']);
+            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales', 'pemusnahan']);
+            $table->string('tahapan')->nullable();
+            $table->string('status')->default('proses'); // misalnya
+
 
             // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();

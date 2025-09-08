@@ -16,8 +16,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('region_id')->nullable();
             $table->string('nama_material', 150);
             $table->string('kode_material', 50);
+            $table->string('kategori_material', 50); // BARU: Tambahkan kolom ini
             $table->integer('stok_awal')->default(0);
-            $table->integer('stok_akhir')->default(0); // BARU: Tambahkan kolom ini
+            $table->integer('stok_akhir')->default(0);
 
             $table->timestamps();
 
@@ -26,6 +27,9 @@ return new class extends Migration {
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('items');
