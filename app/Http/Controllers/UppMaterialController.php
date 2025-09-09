@@ -46,7 +46,7 @@ class UppMaterialController extends Controller
         // Atur pengurutan agar data terbaru muncul di atas
         $query->orderByRaw('MIN(created_at) DESC');
 
-        $upps = $query->paginate(10)->appends($request->all());
+        $upps = $query->paginate(5)->appends($request->all());
 
         return view('dashboard_page.menu.data_upp-material', compact('upps'));
     }

@@ -121,10 +121,46 @@
                     </table>
                 </div>
 
-                {{-- Pagination --}}
+                {{-- PAGINATION YANG DIPERBAIKI --}}
+                @if ($upps->hasPages())
                 <div class="mt-4 px-3 d-flex justify-content-center">
-                    {{ $upps->appends(request()->except('page'))->links() }}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            @php
+                                $total = $upps->lastPage();
+                                $current = $upps->currentPage();
+                                $window = 1; 
+                            @endphp
+                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url(1) }}">&laquo;</a>
+                            </li>
+                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->previousPageUrl() }}">&lsaquo;</a>
+                            </li>
+                            @php $wasGap = false; @endphp
+                            @for ($i = 1; $i <= $total; $i++)
+                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
+                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                    @php $wasGap = false; @endphp
+                                @else
+                                    @if (!$wasGap)
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        @php $wasGap = true; @endphp
+                                    @endif
+                                @endif
+                            @endfor
+                            <li class="page-item {{ $upps->hasMorePages() ? '' : 'disabled' }}">
+                                <a class="page-link" href="{{ $upps->nextPageUrl() }}">&rsaquo;</a>
+                            </li>
+                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($total) }}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
+                @endif
             </div>
         </div>
     </div>
