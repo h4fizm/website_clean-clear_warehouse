@@ -36,7 +36,7 @@
                                     value="{{ request('search') }}">
                             </div>
                         </div>
-                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
+                        <div class="col-12 col-md-8 d-flex flex-wrap justify-content-md-end">
                             <div class="d-flex align-items-center me-2">
                                 <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
                                 <input type="date" name="start_date" id="startDate" 
@@ -51,7 +51,7 @@
                                     style="max-width: 160px;"
                                     value="{{ request('end_date') }}">
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
+                            <button type="submit" class="btn btn-primary btn-sm px-3" style="margin-top: 15px;">Filter</button>
                         </div>
                     </div>
                 </form>
@@ -106,9 +106,10 @@
                                     </p>
                                 </td>
                                 <td class="text-center">
-                                    <a href="{{ route('upp-material.preview', $upp->no_surat_persetujuan) }}" class="btn btn-sm btn-info text-white" style="font-size: 0.75rem;">
+                                    {{-- Ubah tombol ini --}}
+                                    <button type="button" class="btn btn-sm btn-info text-white preview-btn" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;">
                                         <i class="fas fa-eye me-1"></i> Preview
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                             @empty
@@ -129,4 +130,91 @@
     </div>
 </div>
 
+{{-- Modal Pop-up untuk Preview --}}
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Detail Pengajuan UPP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-content-placeholder">
+                    {{-- Konten akan dimuat di sini oleh AJAX --}}
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
+
+        document.querySelectorAll('.preview-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const noSurat = this.getAttribute('data-no-surat');
+                
+                // Tampilkan spinner loading saat memulai
+                modalContentPlaceholder.innerHTML = `
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data...</p>
+                    </div>
+                `;
+                
+                // Tampilkan modal
+                previewModal.show();
+
+                // Lakukan fetch data dari server
+                fetch(`/upp-material/preview/${noSurat}`)
+                    .then(response => {
+                        // Jika respons OK (200-299), kita tahu itu HTML dari view yang benar
+                        if (response.ok) {
+                            return response.text();
+                        }
+                        
+                        // Jika respons bukan OK, kita asumsikan itu adalah error.
+                        // Sekarang, kita harus tahu apakah itu JSON atau HTML.
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            // Jika responsnya JSON, kita parse untuk mendapatkan pesan error
+                            return response.json().then(data => {
+                                // Buat Error baru dengan pesan dari server
+                                throw new Error(data.error || 'Terjadi kesalahan tidak terduga.');
+                            });
+                        } else {
+                            // Jika responsnya bukan JSON (kemungkinan HTML dari Laravel),
+                            // kita buat pesan error default
+                            throw new Error('Data tidak ditemukan.');
+                        }
+                    })
+                    .then(htmlContent => {
+                        // Masukkan konten HTML ke dalam modal
+                        modalContentPlaceholder.innerHTML = htmlContent;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                        modalContentPlaceholder.innerHTML = `
+                            <div class="alert alert-danger" role="alert">
+                                Gagal memuat data: ${error.message}
+                            </div>
+                        `;
+                    });
+            });
+        });
+    });
+</script>
+@endpush

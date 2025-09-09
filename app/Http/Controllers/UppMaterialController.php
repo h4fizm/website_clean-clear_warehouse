@@ -33,13 +33,18 @@ class UppMaterialController extends Controller
             $query->where('no_surat_persetujuan', 'like', '%' . $request->search . '%');
         }
 
-        // 📅 Filter tanggal
+        // 📅 Filter tanggal (Perbaikan ada di sini)
         if ($request->filled('start_date')) {
-            $query->havingRaw('MIN(created_at) >= ?', [$request->start_date]);
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $query->havingRaw('MIN(created_at) >= ?', [$startDate]);
         }
         if ($request->filled('end_date')) {
-            $query->havingRaw('MIN(created_at) <= ?', [$request->end_date]);
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->havingRaw('MIN(created_at) <= ?', [$endDate]);
         }
+
+        // Atur pengurutan agar data terbaru muncul di atas
+        $query->orderByRaw('MIN(created_at) DESC');
 
         $upps = $query->paginate(10)->appends($request->all());
 
@@ -157,9 +162,6 @@ class UppMaterialController extends Controller
         }
     }
 
-    /**
-     * Preview detail UPP berdasarkan no_surat.
-     */
     public function preview($no_surat)
     {
         $transactions = ItemTransaction::with('item')
@@ -168,7 +170,8 @@ class UppMaterialController extends Controller
             ->get();
 
         if ($transactions->isEmpty()) {
-            return redirect()->route('upp-material.index')->with('error', 'Data tidak ditemukan.');
+            // Mengembalikan respons JSON dengan status 404 jika data tidak ditemukan
+            return response()->json(['error' => 'Data tidak ditemukan.'], 404);
         }
 
         $upp = [
@@ -179,6 +182,7 @@ class UppMaterialController extends Controller
             'materials' => $transactions,
         ];
 
-        return view('dashboard_page.upp_material.preview_upp', compact('upp'));
+        // Mengembalikan view modal sebagai string HTML
+        return view('dashboard_page.upp_material.modal_preview_upp', compact('upp'));
     }
 }

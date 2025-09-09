@@ -34,6 +34,7 @@ return new class extends Migration {
             // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
+            $table->text('keterangan_transaksi')->nullable();
             $table->timestamps();
 
             // Definisi Foreign Keys

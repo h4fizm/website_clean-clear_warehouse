@@ -174,10 +174,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('upp-material.store')
         ->middleware('can:manage data playang');
 
-    // Halaman preview/detail UPP
     Route::get('/upp-material/preview/{no_surat}', [UppMaterialController::class, 'preview'])
         ->name('upp-material.preview')
-        ->middleware('can:manage data playang');
+        ->where('no_surat', '.*'); // Tambahkan baris ini
 
     // Ambil data detail UPP untuk modal (endpoint JSON)
     Route::get('/upp-material/detail/{no_surat}', [UppMaterialController::class, 'getUppDetails'])

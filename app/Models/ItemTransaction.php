@@ -23,8 +23,9 @@ class ItemTransaction extends Model
         'tujuan_sales',
         'no_surat_persetujuan',
         'no_ba_serah_terima',
-        'tahapan',   // ✅ tambahkan
-        'status',    // ✅ tambahkan
+        'keterangan_transaksi', // ✅ Tambahkan baris ini
+        'tahapan',
+        'status',
     ];
 
     /*
