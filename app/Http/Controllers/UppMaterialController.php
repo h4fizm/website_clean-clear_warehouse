@@ -111,10 +111,6 @@ class UppMaterialController extends Controller
             foreach ($request->materials as $materialData) {
                 $item = Item::findOrFail($materialData['id']);
 
-                if ($materialData['jumlah_diambil'] > $item->stok_akhir) {
-                    throw new \Exception("Jumlah yang diajukan untuk {$item->nama_material} melebihi stok yang tersedia. Stok saat ini: {$item->stok_akhir} pcs.");
-                }
-
                 if (strtolower($item->kategori_material) !== 'afkir') {
                     throw new \Exception("Material {$item->nama_material} bukan kategori afkir.");
                 }
@@ -126,7 +122,7 @@ class UppMaterialController extends Controller
                     'region_to' => $pusatRegion->id,
                     'jumlah' => $materialData['jumlah_diambil'],
                     'stok_awal_asal' => $item->stok_akhir,
-                    'stok_akhir_asal' => $item->stok_akhir - $materialData['jumlah_diambil'],
+                    'stok_akhir_asal' => $item->stok_akhir,
                     'jenis_transaksi' => 'pemusnahan',
                     'no_surat_persetujuan' => $request->noSurat,
                     'keterangan_transaksi' => $request->keterangan,
@@ -134,16 +130,13 @@ class UppMaterialController extends Controller
                     'status' => 'proses',
                     'created_at' => Carbon::parse($request->tanggal),
                 ]);
-
-                $item->stok_akhir -= $materialData['jumlah_diambil'];
-                $item->save();
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pengajuan UPP berhasil ditambahkan.',
+                'message' => 'Pengajuan UPP berhasil ditambahkan. Status dalam proses.',
                 'redirect' => route('upp-material.index')
             ]);
         } catch (\Exception $e) {
@@ -328,11 +321,10 @@ class UppMaterialController extends Controller
     }
 
     /**
-     * Metode baru untuk mengubah status UPP.
+     * Metode untuk mengubah status UPP dan memengaruhi stok.
      */
     public function changeStatus(Request $request, $no_surat)
     {
-        // Validasi input
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:proses,done',
         ]);
@@ -344,20 +336,57 @@ class UppMaterialController extends Controller
         try {
             DB::beginTransaction();
 
-            $updated = ItemTransaction::where('no_surat_persetujuan', $no_surat)
+            $transactions = ItemTransaction::with('item')
+                ->where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
-                ->update([
-                    'status' => $request->status,
-                    'updated_at' => Carbon::now() // Memperbarui timestamp
-                ]);
+                ->get();
 
-            if ($updated) {
-                DB::commit();
-                return response()->json(['message' => "Status berhasil diubah menjadi **{$request->status}**."]);
+            if ($transactions->isEmpty()) {
+                DB::rollBack();
+                return response()->json(['message' => 'Data pengajuan tidak ditemukan.'], 404);
             }
 
-            DB::rollBack();
-            return response()->json(['message' => 'Data tidak ditemukan atau tidak ada perubahan.'], 404);
+            $currentStatus = strtolower($transactions->first()->status);
+            $newStatus = strtolower($request->status);
+
+            // Hanya proses jika ada perubahan status
+            if ($currentStatus === $newStatus) {
+                DB::rollBack();
+                return response()->json(['message' => "Status sudah **{$newStatus}**. Tidak ada perubahan yang dilakukan."]);
+            }
+
+            foreach ($transactions as $transaction) {
+                $item = $transaction->item;
+
+                if (!$item) {
+                    throw new \Exception("Material dengan ID {$transaction->item_id} tidak ditemukan.");
+                }
+
+                // Jika status berubah dari 'proses' menjadi 'done'
+                if ($currentStatus === 'proses' && $newStatus === 'done') {
+                    if ($item->stok_akhir < $transaction->jumlah) {
+                        throw new \Exception("Stok {$item->nama_material} tidak mencukupi untuk pemusnahan.");
+                    }
+                    $item->stok_akhir -= $transaction->jumlah;
+                }
+                // Jika status berubah dari 'done' menjadi 'proses'
+                else if ($currentStatus === 'done' && $newStatus === 'proses') {
+                    $item->stok_akhir += $transaction->jumlah;
+                }
+
+                $item->save();
+            }
+
+            // Perbarui status semua transaksi yang terkait dengan nomor surat ini
+            ItemTransaction::where('no_surat_persetujuan', $no_surat)
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->update([
+                    'status' => $newStatus,
+                    'updated_at' => Carbon::now()
+                ]);
+
+            DB::commit();
+            return response()->json(['message' => "Status berhasil diubah menjadi **{$newStatus}** dan stok universal telah diperbarui."]);
 
         } catch (\Exception $e) {
             DB::rollBack();

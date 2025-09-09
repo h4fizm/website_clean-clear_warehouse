@@ -282,6 +282,8 @@ class PusatController extends Controller
             'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'total_stok' => 'required|integer|min:0',
+            // Tambahkan validasi untuk kategori material
+            'kategori_material' => 'required|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -295,6 +297,8 @@ class PusatController extends Controller
             'stok_akhir' => $request->total_stok,
             'facility_id' => null,
             'region_id' => 1,
+            // Tambahkan nilai kategori material
+            'kategori_material' => $request->kategori_material,
         ]);
         return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
     }
@@ -397,4 +401,3 @@ class PusatController extends Controller
         return Excel::download(new PusatDataExport($filters), $filename);
     }
 }
-

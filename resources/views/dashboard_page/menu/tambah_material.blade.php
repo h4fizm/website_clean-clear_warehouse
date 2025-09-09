@@ -22,6 +22,30 @@
                         <label for="kodeMaterial" class="form-label">Kode Material</label>
                         <input type="text" class="form-control" id="kodeMaterial" name="kode_material" required>
                     </div>
+                    
+                    {{-- Tambahan: Field Kategori Material --}}
+                    <div class="col-12">
+                        <label class="form-label">Kategori Material</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaru" value="baru" required>
+                                <label class="form-check-label" for="kategoriBaru">Baru</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriAfkir" value="afkir" required>
+                                <label class="form-check-label" for="kategoriAfkir">Afkir</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaik" value="baik" required>
+                                <label class="form-check-label" for="kategoriBaik">Baik</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriRusak" value="rusak" required>
+                                <label class="form-check-label" for="kategoriRusak">Rusak</label>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="col-12">
                         <label for="totalStokMaterial" class="form-label">Total Stok Awal</label>
                         <input type="number" class="form-control" id="totalStokMaterial" name="total_stok" min="0" value="0" required>
@@ -42,12 +66,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('addMaterialForm');
 
     form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Mencegah form submit cara biasa
+        e.preventDefault(); 
 
         const formData = new FormData(form);
         const url = form.getAttribute('action');
 
-        // Kirim data menggunakan Fetch API
         fetch(url, {
             method: 'POST',
             headers: {
@@ -57,18 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
             body: formData
         })
         .then(response => {
-            // Cek jika response tidak OK (misal: error validasi 422)
             if (!response.ok) {
                 return response.json().then(data => {
-                    // Lemparkan error agar ditangkap oleh .catch()
                     throw data; 
                 });
             }
-            // Jika response OK, lanjutkan ke .then() berikutnya
             return response.json(); 
         })
         .then(data => {
-            // Ini blok untuk response SUKSES (status 2xx)
             if (data.success) {
                 Swal.fire({
                     title: 'Berhasil!',
@@ -77,17 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmButtonText: 'OK'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Arahkan ke halaman index pusat setelah user menekan OK
                         window.location.href = data.redirect_url;
                     }
                 });
             }
         })
         .catch(errorData => {
-            // Ini blok untuk response GAGAL (misal: validasi gagal, server error)
             let errorMessages = '';
             if (errorData.errors) {
-                // Format pesan validasi dari Laravel
                 errorMessages = '<ul class="list-unstyled text-start">';
                 for (const key in errorData.errors) {
                     errorData.errors[key].forEach(message => {
@@ -96,13 +112,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 errorMessages += '</ul>';
             } else {
-                // Pesan error umum jika format tidak sesuai
                 errorMessages = errorData.message || 'Terjadi kesalahan. Periksa kembali data Anda.';
             }
 
             Swal.fire({
                 title: 'Gagal!',
-                html: errorMessages, // Gunakan html agar bisa menampilkan list
+                html: errorMessages, 
                 icon: 'error',
                 confirmButtonText: 'Tutup'
             });
