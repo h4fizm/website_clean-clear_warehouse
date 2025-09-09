@@ -326,4 +326,42 @@ class UppMaterialController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Metode baru untuk mengubah status UPP.
+     */
+    public function changeStatus(Request $request, $no_surat)
+    {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:proses,done',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Status tidak valid.'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $updated = ItemTransaction::where('no_surat_persetujuan', $no_surat)
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->update([
+                    'status' => $request->status,
+                    'updated_at' => Carbon::now() // Memperbarui timestamp
+                ]);
+
+            if ($updated) {
+                DB::commit();
+                return response()->json(['message' => "Status berhasil diubah menjadi **{$request->status}**."]);
+            }
+
+            DB::rollBack();
+            return response()->json(['message' => 'Data tidak ditemukan atau tidak ada perubahan.'], 404);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
+        }
+    }
 }

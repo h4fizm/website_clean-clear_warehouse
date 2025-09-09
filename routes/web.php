@@ -177,7 +177,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/upp-material/preview/{no_surat}', [UppMaterialController::class, 'preview'])
         ->name('upp-material.preview')
         ->where('no_surat', '.*'); // Tambahkan baris ini
-        
+
     // Halaman edit UPP (memuat form dengan data yang sudah ada)
     Route::get('/upp-material/edit/{no_surat}', [UppMaterialController::class, 'edit'])
         ->name('upp-material.edit')
@@ -193,6 +193,11 @@ Route::middleware(['auth'])->group(function () {
     // Ambil data detail UPP untuk modal (endpoint JSON)
     Route::get('/upp-material/detail/{no_surat}', [UppMaterialController::class, 'getUppDetails'])
         ->name('upp-material.get-details')
+        ->middleware('can:manage data playang');
+
+    Route::post('/upp-material/change-status/{no_surat}', [App\Http\Controllers\UppMaterialController::class, 'changeStatus'])
+        ->name('upp-material.change-status')
+        ->where('no_surat', '.*')
         ->middleware('can:manage data playang');
 
     // Ambil data material untuk modal

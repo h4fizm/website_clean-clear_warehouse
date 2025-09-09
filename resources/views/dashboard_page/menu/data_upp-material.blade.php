@@ -10,6 +10,10 @@
             <div class="card-header pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
                 <div class="me-md-auto mb-2 mb-md-0">
                     <h4 class="mb-0">Tabel Data UPP Material</h4>
+                    {{-- Teks italic yang diminta --}}
+                    <p class="mt-3 text-xs font-italic text-secondary">
+                        Klik badge status pada kolom "Status" untuk mengubah status.
+                    </p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 justify-content-end">
                     <a href="{{ route('upp-material.create') }}" class="px-3 py-2 bg-primary text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
@@ -91,7 +95,10 @@
                                         $statusText = strtolower($upp->status) === 'done' ? 'Done' : 'Proses';
                                         $statusColor = strtolower($upp->status) === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
                                     @endphp
-                                    <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold">
+                                    <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold change-status-btn"
+                                        data-no-surat="{{ $upp->no_surat_persetujuan }}"
+                                        data-status-sekarang="{{ $upp->status }}"
+                                        style="cursor: pointer;">
                                         {{ $statusText }}
                                     </span>
                                 </td>
@@ -197,11 +204,11 @@
         const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
         const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
 
+        // Event listener untuk tombol Preview (tetap sama)
         document.querySelectorAll('.preview-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const noSurat = this.getAttribute('data-no-surat');
                 
-                // Tampilkan spinner loading saat memulai
                 modalContentPlaceholder.innerHTML = `
                     <div class="text-center">
                         <div class="spinner-border text-primary" role="status">
@@ -211,34 +218,23 @@
                     </div>
                 `;
                 
-                // Tampilkan modal
                 previewModal.show();
 
-                // Lakukan fetch data dari server
                 fetch(`/upp-material/preview/${noSurat}`)
                     .then(response => {
-                        // Jika respons OK (200-299), kita tahu itu HTML dari view yang benar
                         if (response.ok) {
                             return response.text();
                         }
-                        
-                        // Jika respons bukan OK, kita asumsikan itu adalah error.
-                        // Sekarang, kita harus tahu apakah itu JSON atau HTML.
                         const contentType = response.headers.get("content-type");
                         if (contentType && contentType.includes("application/json")) {
-                            // Jika responsnya JSON, kita parse untuk mendapatkan pesan error
                             return response.json().then(data => {
-                                // Buat Error baru dengan pesan dari server
                                 throw new Error(data.error || 'Terjadi kesalahan tidak terduga.');
                             });
                         } else {
-                            // Jika responsnya bukan JSON (kemungkinan HTML dari Laravel),
-                            // kita buat pesan error default
                             throw new Error('Data tidak ditemukan.');
                         }
                     })
                     .then(htmlContent => {
-                        // Masukkan konten HTML ke dalam modal
                         modalContentPlaceholder.innerHTML = htmlContent;
                     })
                     .catch(error => {
@@ -249,6 +245,76 @@
                             </div>
                         `;
                     });
+            });
+        });
+        
+        // Event listener BARU untuk badge Status
+        document.querySelectorAll('.change-status-btn').forEach(badge => {
+            badge.addEventListener('click', function() {
+                const noSurat = this.getAttribute('data-no-surat');
+                const statusSekarang = this.getAttribute('data-status-sekarang');
+                const nextStatus = statusSekarang.toLowerCase() === 'proses' ? 'done' : 'proses';
+                const nextStatusText = nextStatus.toUpperCase();
+
+                Swal.fire({
+                    title: `Ubah Status`,
+                    text: `Pilih status baru untuk pengajuan ${noSurat}.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Ubah ke Done',
+                    denyButtonText: 'Ubah ke Proses',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    confirmButtonColor: '#28a745',
+                    denyButtonColor: '#ffc107',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (result) => {
+                        // Tidak ada preConfirm di sini, karena tombol akan langsung mengirim
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    let newStatus = '';
+                    if (result.isConfirmed) {
+                        newStatus = 'done';
+                    } else if (result.isDenied) {
+                        newStatus = 'proses';
+                    } else {
+                        return; // Jika pengguna membatalkan
+                    }
+
+                    // Kirim permintaan perubahan status ke server
+                    fetch(`/upp-material/change-status/${noSurat}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.message); });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: data.message,
+                            icon: 'success'
+                        }).then(() => {
+                            window.location.reload(); // Reload halaman untuk melihat perubahan
+                        });
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: `Gagal: ${error.message}`,
+                            icon: 'error'
+                        });
+                    });
+                });
             });
         });
     });
