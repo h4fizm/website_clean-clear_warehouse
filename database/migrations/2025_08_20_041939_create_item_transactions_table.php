@@ -30,11 +30,15 @@ return new class extends Migration {
             $table->string('tahapan')->nullable();
             $table->string('status')->default('proses'); // misalnya
 
-
             // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
             $table->text('keterangan_transaksi')->nullable();
+
+            // Kolom Tambahan untuk Pemusnahan
+            $table->date('tanggal_pemusnahan')->nullable();
+            $table->text('aktivitas_pemusnahan')->nullable();
+
             $table->timestamps();
 
             // Definisi Foreign Keys

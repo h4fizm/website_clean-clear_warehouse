@@ -23,9 +23,12 @@ class ItemTransaction extends Model
         'tujuan_sales',
         'no_surat_persetujuan',
         'no_ba_serah_terima',
-        'keterangan_transaksi', // ✅ Tambahkan baris ini
+        'keterangan_transaksi',
         'tahapan',
         'status',
+        // Tambahkan kolom baru
+        'tanggal_pemusnahan',
+        'aktivitas_pemusnahan',
     ];
 
     /*
@@ -75,7 +78,5 @@ class ItemTransaction extends Model
     public function sales()
     {
         return $this->belongsTo(User::class, 'tujuan_sales');
-        // kolom "tujuan_sales" sesuai dengan fillable Anda
     }
-
 }

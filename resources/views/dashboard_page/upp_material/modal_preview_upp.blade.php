@@ -58,8 +58,63 @@
 @if(strtolower($upp['materials'][0]->status) !== 'done')
     <div class="modal-footer d-flex justify-content-end border-0">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-        <button type="button" class="btn btn-danger" id="confirmPemusnahanBtn" data-no-surat="{{ $upp['no_surat'] }}">
+        {{-- Tombol Lakukan Pemusnahan dengan desain konsisten --}}
+        <a href="{{ route('upp-material.edit', ['no_surat' => $upp['no_surat']]) }}" class="btn btn-danger">
             <i class="fas fa-trash-alt me-1"></i> Lakukan Pemusnahan
-        </button>
+        </a>
     </div>
 @endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmPemusnahanBtn = document.getElementById('confirmPemusnahanBtn');
+
+        confirmPemusnahanBtn.addEventListener('click', function() {
+            const noSurat = this.getAttribute('data-no-surat');
+
+            Swal.fire({
+                title: 'Konfirmasi Pemusnahan',
+                text: "Apakah Anda yakin ingin memusnahkan material untuk UPP ini?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Lakukan Pemusnahan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Lakukan permintaan POST/PUT ke endpoint pemusnahan
+                    // Contoh menggunakan fetch API
+                    fetch(`{{ url('/upp-material/update') }}/${noSurat}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            // Kirim data yang diperlukan untuk update/pemusnahan
+                            _method: 'PUT',
+                            status: 'done', // Contoh: ubah status
+                            tahapan: 'pemusnahan',
+                            tanggal_pemusnahan: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Berhasil!', data.message, 'success').then(() => {
+                                window.location.reload(); // Reload halaman setelah sukses
+                            });
+                        } else {
+                            Swal.fire('Gagal!', data.message || 'Terjadi kesalahan.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Gagal!', 'Gagal memuat data. Periksa koneksi atau coba lagi.', 'error');
+                    });
+                }
+            });
+        });
+    });
+</script>
