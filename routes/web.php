@@ -179,12 +179,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('upp-material.preview')
         ->middleware('can:manage data playang');
 
+    // Ambil data detail UPP untuk modal (endpoint JSON)
+    Route::get('/upp-material/detail/{no_surat}', [UppMaterialController::class, 'getUppDetails'])
+        ->name('upp-material.get-details')
+        ->middleware('can:manage data playang');
+
     // Ambil data material untuk modal
     Route::get('/upp-material/afkir', [UppMaterialController::class, 'getMaterials'])
         ->name('upp-material.afkir')
         ->middleware('can:manage data playang');
-
-
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');

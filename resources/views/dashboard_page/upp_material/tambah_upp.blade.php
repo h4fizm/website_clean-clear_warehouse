@@ -112,30 +112,39 @@
     let allMaterials = [];
 
     document.addEventListener('DOMContentLoaded', function() {
-        fetch('{{ route('upp-material.afkir') }}')
-            .then(response => response.json())
-            .then(data => {
-                allMaterials = data.map(item => ({
-                    id: item.id,
-                    nama: item.nama_material,
-                    kode: item.kode_material,
-                    stok: item.stok_akhir
-                }));
-            })
-            .catch(error => {
-                console.error('Error fetching material data:', error);
-                const materialList = document.getElementById('materialList');
-                materialList.innerHTML = `<p class="text-center text-danger mt-3">Gagal memuat data material. Silakan coba lagi.</p>`;
-            });
-        
+        // Inisialisasi CKEditor
         ClassicEditor
-            .create( document.querySelector( '#keterangan' ) )
-            .then( editor => {
+            .create(document.querySelector('#keterangan'))
+            .then(editor => {
                 keteranganEditor = editor;
             })
-            .catch( error => {
-                console.error( 'Ada kesalahan saat menginisialisasi CKEditor:', error );
+            .catch(error => {
+                console.error('Ada kesalahan saat menginisialisasi CKEditor:', error);
             });
+
+        // Ambil data material saat modal dibuka
+        document.getElementById('materialModal').addEventListener('show.bs.modal', function() {
+            if (allMaterials.length === 0) {
+                fetch('{{ route('upp-material.afkir') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        allMaterials = data.map(item => ({
+                            id: item.id,
+                            nama: item.nama_material,
+                            kode: item.kode_material,
+                            stok: item.stok_akhir
+                        }));
+                        renderMaterialList('');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching material data:', error);
+                        const materialList = document.getElementById('materialList');
+                        materialList.innerHTML = `<p class="text-center text-danger mt-3">Gagal memuat data material. Silakan coba lagi.</p>`;
+                    });
+            } else {
+                renderMaterialList('');
+            }
+        });
 
         function renderMaterialList(query = '') {
             const materialList = document.getElementById('materialList');
@@ -194,7 +203,7 @@
                         <p class="text-xs text-secondary mb-0">Kode: ${item.kode}</p>
                     </td>
                     <td>
-                        <input type="number" class="form-control form-control-sm" value="${item.stok}" readonly>
+                        <span>${item.stok} pcs</span>
                     </td>
                     <td>
                         <input type="number" class="form-control form-control-sm jumlah-diambil" id="${uniqueId}" data-id="${item.id}" value="${item.jumlah_diambil || ''}" min="1" max="${item.stok}" required>
@@ -207,19 +216,16 @@
                 `;
                 tbody.appendChild(row);
 
-                 document.getElementById(uniqueId).addEventListener('input', function() {
-                    const value = parseInt(this.value);
-                    if (value > 0 && value <= item.stok) {
-                         selectedMaterials[item.id].jumlah_diambil = value;
-                    } else if (value < 1) {
-                         selectedMaterials[item.id].jumlah_diambil = 1;
-                         this.value = 1;
+                document.getElementById(uniqueId).addEventListener('input', function() {
+                    let value = parseInt(this.value);
+                    if (isNaN(value) || value < 1) {
+                        value = 1;
+                        this.value = 1;
                     } else if (value > item.stok) {
-                         selectedMaterials[item.id].jumlah_diambil = item.stok;
-                         this.value = item.stok;
-                    } else {
-                         delete selectedMaterials[item.id].jumlah_diambil;
+                        value = item.stok;
+                        this.value = item.stok;
                     }
+                    selectedMaterials[item.id].jumlah_diambil = value;
                 });
             });
             
@@ -251,13 +257,36 @@
             renderMaterialList(this.value);
         });
 
-        document.getElementById('materialModal').addEventListener('show.bs.modal', function() {
-            renderMaterialList('');
-        });
-
         document.getElementById('pengajuanForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            const noSurat = document.getElementById('noSurat').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const tahapan = document.getElementById('tahapan').value;
+            const pjUser = document.getElementById('pjUser').value;
+            const keterangan = keteranganEditor.getData();
+
+            // Validasi form utama
+            if (!noSurat || !tanggal || !tahapan || !pjUser) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Form Belum Lengkap',
+                    text: 'Pastikan semua kolom form utama telah diisi.',
+                });
+                return;
+            }
+
+            // Validasi keterangan pengajuan
+            if (keterangan.trim() === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Keterangan Kosong',
+                    text: 'Keterangan pengajuan wajib diisi.',
+                });
+                return;
+            }
+
+            // Validasi material dan jumlah
             if (Object.keys(selectedMaterials).length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -267,22 +296,27 @@
                 return;
             }
             
+            const materialsToSubmit = [];
+            let isValid = true;
             for (const id in selectedMaterials) {
                 const item = selectedMaterials[id];
                 const inputJumlah = document.getElementById(`jumlah-diambil-${id}`);
                 const value = parseInt(inputJumlah.value);
 
-                if (!value || value <= 0 || value > item.stok) {
-                     Swal.fire({
+                if (isNaN(value) || value <= 0 || value > item.stok) {
+                    Swal.fire({
                         icon: 'error',
                         title: 'Jumlah Tidak Valid',
-                        text: `Jumlah diambil untuk material ${item.nama} tidak valid.`,
-                     });
-                     return;
+                        text: `Jumlah diambil untuk material "${item.nama}" tidak valid. Harap isi dengan angka antara 1 sampai ${item.stok}.`,
+                    });
+                    isValid = false;
+                    break;
                 }
-                item.jumlah_diambil = value; // Simpan nilai valid ke objek
+                materialsToSubmit.push({ id: item.id, jumlah_diambil: value });
             }
             
+            if (!isValid) return;
+
             Swal.fire({
                 title: 'Konfirmasi Pengajuan',
                 text: "Apakah Anda yakin ingin mengajukan UPP ini?",
@@ -295,42 +329,46 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const formData = {
-                        _token: document.querySelector('input[name="_token"]').value,
-                        noSurat: document.getElementById('noSurat').value,
-                        tanggal: document.getElementById('tanggal').value,
-                        tahapan: document.getElementById('tahapan').value,
-                        pjUser: document.getElementById('pjUser').value,
-                        keterangan: keteranganEditor.getData(),
-                        materials: Object.values(selectedMaterials).map(item => ({
-                            id: item.id,
-                            jumlah_diambil: item.jumlah_diambil
-                        }))
+                        noSurat: noSurat,
+                        tanggal: tanggal,
+                        tahapan: tahapan,
+                        pjUser: pjUser,
+                        keterangan: keterangan,
+                        materials: materialsToSubmit
                     };
+                    
+                    // Ambil CSRF token dari meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                     fetch('{{ route('upp-material.store') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken // Menggunakan token CSRF yang baru diambil
                         },
                         body: JSON.stringify(formData)
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                             Swal.fire({
-                                 title: 'Berhasil!',
-                                 text: data.message,
-                                 icon: 'success',
-                                 timer: 2000,
-                                 showConfirmButton: false
-                             }).then(() => {
-                                 window.location.href = "{{ url('/upp-material') }}";
-                             });
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = data.redirect;
+                            });
                         } else {
+                            let errorMessage = data.message || 'Terjadi kesalahan saat menyimpan data.';
+                            if (data.errors) {
+                                errorMessage = Object.values(data.errors).flat().join('<br>');
+                            }
                             Swal.fire({
                                 title: 'Gagal!',
-                                text: data.message,
+                                html: errorMessage,
                                 icon: 'error'
                             });
                         }
