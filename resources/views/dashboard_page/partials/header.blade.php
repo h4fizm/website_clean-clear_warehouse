@@ -96,37 +96,56 @@
 
         @php
             $menuMap = [
-                'dashboard'         => ['label' => 'Dashboard',              'url' => '/dashboard'],
-                'pusat'             => ['label' => 'Data P.Layang (Pusat)',  'url' => '/pusat'],
-                'pusat/create'      => ['label' => 'Tambah Data Material',   'url' => '/pusat/create'],
-                'transaksi'         => ['label' => 'Data Transaksi',         'url' => '/transaksi'],
-                'transaksi/tambah'  => ['label' => 'Tambah SPBE/BPT',        'url' => '/transaksi/tambah'],
-                'upp-material'      => ['label' => 'UPP Material',           'url' => '/upp-material'],
-                'aktivitas'         => ['label' => 'Aktivitas Harian',       'url' => '/aktivitas-transaksi'],
-                'pengguna'          => ['label' => 'Manajemen User',         'url' => '/pengguna'],
+                'dashboard'              => ['label' => 'Dashboard',                  'url' => '/dashboard'],
+                'pusat'                  => ['label' => 'Data P.Layang (Pusat)',      'url' => '/pusat'],
+                'pusat/create'           => ['label' => 'Tambah Data Material',       'url' => '/pusat/create'],
+                'transaksi'              => ['label' => 'Data Transaksi',             'url' => '/transaksi'],
+                'transaksi/tambah'       => ['label' => 'Tambah SPBE/BPT',            'url' => '/transaksi/tambah'],
+                'upp-material'           => ['label' => 'UPP Material',               'url' => '/upp-material'],
+                'aktivitas'              => ['label' => 'Aktivitas Harian',           'url' => '/aktivitas-transaksi'],
+                'pengguna'               => ['label' => 'Manajemen User',             'url' => '/pengguna'],
             ];
 
             $path = trim(request()->path(), '/');
             $breadcrumbs = [['label' => 'Menu']];
 
             if (isset($menuMap[$path])) {
-                // langsung ambil dari map
+                // Langsung ambil dari map jika path cocok persis
                 $breadcrumbs[] = $menuMap[$path];
+            } elseif (request()->routeIs('upp-material.create')) {
+                // Logika untuk halaman Tambah
+                $breadcrumbs[] = $menuMap['upp-material'];
+                $breadcrumbs[] = ['label' => 'Tambah Pengajuan UPP', 'url' => null];
+            } elseif (request()->routeIs('upp-material.preview')) {
+                // Logika untuk halaman Preview
+                $breadcrumbs[] = $menuMap['upp-material'];
+                $breadcrumbs[] = ['label' => 'Preview Pengajuan UPP', 'url' => null];
+                $noSurat = request()->route('no_surat');
+                if ($noSurat) {
+                    $breadcrumbs[] = ['label' => $noSurat, 'url' => null];
+                }
+            } elseif (request()->routeIs('upp-material.edit')) {
+                // Logika baru untuk halaman Edit
+                $breadcrumbs[] = $menuMap['upp-material'];
+                $breadcrumbs[] = ['label' => 'Edit Pengajuan UPP', 'url' => null];
+                $noSurat = request()->route('no_surat');
+                if ($noSurat) {
+                    $breadcrumbs[] = ['label' => $noSurat, 'url' => null];
+                }
             } elseif (request()->routeIs('materials.index')) {
-                $facility = request()->route('facility'); 
+                $facility = request()->route('facility');
                 $breadcrumbs[] = $menuMap['transaksi'];
                 $breadcrumbs[] = ['label' => 'Daftar Stok Material - ' . ($facility->nama ?? 'SPBE/BPT'), 'url' => null];
             } elseif ($path === 'aktivitas-transaksi') {
                 $breadcrumbs[] = $menuMap['aktivitas'];
             } elseif ($path === 'profil') {
-                $breadcrumbs[] = $menuMap['pengguna']; // Manajemen User
+                $breadcrumbs[] = $menuMap['pengguna'];
                 $breadcrumbs[] = ['label' => 'Edit Profil', 'url' => null];
             } else {
-                $breadcrumbs[] = ['label' => 'Menu', 'url' => null];
+                 $breadcrumbs[] = ['label' => ucwords(str_replace('-', ' ', $path)), 'url' => null];
             }
         @endphp
 
-    
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0">
                 @foreach ($breadcrumbs as $key => $crumb)
@@ -145,7 +164,6 @@
                 {{ $pageTitle ?? ($breadcrumbs[count($breadcrumbs)-1]['label'] ?? 'Menu') }}
             </h6>
         </nav>
-
 
         <div class="navbar-right-icons">
             {{-- Burger --}}
@@ -176,7 +194,7 @@
                         <li>
                             <a class="dropdown-item text-danger" href="{{ route('logout') }}"
                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                 <i class="fas fa-sign-out-alt me-2"></i> Logout
                             </a>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                 @csrf
