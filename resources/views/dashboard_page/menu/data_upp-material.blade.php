@@ -18,7 +18,7 @@
                     <a href="{{ route('upp-material.create') }}" class="px-3 py-2 bg-primary text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
                         <i class="fas fa-plus me-2"></i>Tambah UPP
                     </a>
-                    <button type="button" id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
+                    <button type="button" id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold; border: none; outline: none;">
                         <i class="fas fa-file-excel me-2"></i> Export Excel
                     </button>
                 </div>

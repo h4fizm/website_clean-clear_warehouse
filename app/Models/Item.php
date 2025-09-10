@@ -98,6 +98,8 @@ class Item extends Model
             $penerimaan = (int) $this->penerimaan_total;
             $penyaluran = (int) $this->penyaluran_total;
             $sales = (int) $this->sales_total;
+            // Gunakan pemusnahan_total yang sudah dihitung di controller
+            $pemusnahan = (int) ($this->pemusnahan_total ?? 0);
         } else {
             // Hitung manual kalau tidak ada preload dari controller
             $penyaluran = $this->outgoingTransfers()->sum('jumlah');
@@ -117,11 +119,15 @@ class Item extends Model
 
             // Tambahkan sales
             $sales = $this->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
+
+            // Perbaikan: Hanya hitung pemusnahan yang statusnya 'done'
+            $pemusnahan = $this->transactions()
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->where('status', 'done')
+                ->sum('jumlah');
         }
 
-        // Perhitungan stok dengan logika pemusnahan jika ada
-        $pemusnahan = $this->transactions()->where('jenis_transaksi', 'pemusnahan')->sum('jumlah');
-
+        // Perhitungan akhir
         return $this->stok_awal + $penerimaan - $penyaluran - $sales - $pemusnahan;
     }
 }

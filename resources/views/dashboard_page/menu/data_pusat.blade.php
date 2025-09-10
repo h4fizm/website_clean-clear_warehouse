@@ -8,8 +8,8 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                     alt="Branch Icon"
-                     class="welcome-card-icon">
+                    alt="Branch Icon"
+                    class="welcome-card-icon">
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
@@ -35,7 +35,7 @@
                             <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                         </div>
                         <div class="col-12 col-md-auto">
-                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
+                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold; border: none; outline: none;">
                                 <i class="fas fa-file-excel me-2"></i> Export Excel
                             </span>
                         </div>
@@ -164,13 +164,17 @@
                                         @php
                                             $tanggal = $item->latest_transaction_date ?? $item->updated_at;
                                         @endphp
-                                        {{-- Format tanggal ini sudah sesuai preferensi Anda --}}
                                         {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
                                     </p>
                                 </td>
                                 <td class="text-center">
                                     {{-- Tombol Aksi --}}
-                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" data-id="{{ $item->id }}" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
+                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" 
+                                        data-id="{{ $item->id }}" 
+                                        data-kode-material="{{ $item->kode_material }}"
+                                        data-stok-akhir="{{ $item->stok_akhir }}"
+                                        data-nama-material="{{ $item->nama_material }}"
+                                        data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}">
@@ -187,7 +191,6 @@
                             </tr>
                             @empty
                             <tr>
-                                {{-- colspan menjadi 11 karena ada 2 kolom baru (Sales & Pemusnahan) --}}
                                 <td colspan="11" class="text-center text-muted py-4">Data Kosong</td>
                             </tr>
                             @endforelse
@@ -262,24 +265,23 @@
                 {{-- Form Transaksi --}}
                 <form id="kirimMaterialForm" onsubmit="return false;">
                     @csrf
-                    <input type="hidden" id="item-id-pusat">
-                    <input type="hidden" id="kode-material-selected">
+                    <input type="hidden" id="item-id-pusat" name="item_id_pusat">
+                    <input type="hidden" id="kode-material-selected" name="kode_material">
 
                     {{-- Pilihan Jenis Transaksi --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
                                 <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
                                 <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
-                            {{-- Button baru ditambahkan di sini --}}
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-sales" value="sales">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
                                 <label class="form-check-label" for="jenis-sales">Sales</label>
                             </div>
                         </div>
@@ -289,36 +291,40 @@
                     <div class="mb-3">
                         <label id="asal-label" class="form-label">Asal Transaksi</label>
                         <div id="asal-container">
-                            {{-- Akan diisi oleh JavaScript --}}
+                             <input type="text" class="form-control" value="P.Layang (Pusat)" readonly>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label id="tujuan-label" class="form-label">Tujuan Transaksi</label>
                         <div id="tujuan-container">
-                             {{-- Akan diisi oleh JavaScript --}}
+                            <div class="position-relative w-100">
+                                <input type="text" class="form-control" id="facility-search" placeholder="Cari SPBE/BPT...">
+                                <input type="hidden" id="facility-id-hidden" name="facility_id_selected">
+                                <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="tanggal-transaksi" class="form-label">Tanggal Transaksi</label>
-                        <input type="date" class="form-control" id="tanggal-transaksi" required>
+                        <input type="date" class="form-control" id="tanggal-transaksi" name="tanggal_transaksi" required>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
-                            <input type="text" class="form-control" id="no-surat-persetujuan" placeholder="(Opsional)">
+                            <input type="text" class="form-control" id="no-surat-persetujuan" name="no_surat_persetujuan" placeholder="(Opsional)">
                         </div>
                         <div class="col-md-6 mb-3">
                              <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
-                            <input type="text" class="form-control" id="no-ba-serah-terima" placeholder="(Opsional)">
+                            <input type="text" class="form-control" id="no-ba-serah-terima" name="no_ba_serah_terima" placeholder="(Opsional)">
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="jumlah-stok" class="form-label">Jumlah (pcs)</label>
-                        <input type="number" class="form-control" id="jumlah-stok" min="1" required>
+                        <input type="number" class="form-control" id="jumlah-stok" name="jumlah" min="1" required>
                     </div>
                 </form>
             </div>
@@ -335,55 +341,53 @@
 {{-- Modal Edit dibuat di dalam Loop --}}
 @foreach ($items as $item)
 <div class="modal fade" id="editMaterialModal-{{ $item->id }}" tabindex="-1" aria-labelledby="editMaterialModalLabel-{{ $item->id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form action="{{ route('pusat.update', $item->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="modal-body">
-          <div class="form-floating mb-3">
-            <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
-                   value="{{ old('nama_material', $item->nama_material) }}">
-            <label for="nama_material-{{ $item->id }}">Nama Material</label>
-            @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
-            @endif
-          </div>
-          <div class="form-floating mb-3">
-            <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
-                   value="{{ old('kode_material', $item->kode_material) }}">
-            <label for="kode_material-{{ $item->id }}">Kode Material</label>
-            @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
-            @endif
-          </div>
-          
-          {{-- Penambahan Form Stok Awal --}}
-          <div class="form-floating mb-3">
-            <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
-                   value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
-            <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
-            @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
-            @endif
-          </div>
-          {{-- Akhir Penambahan --}}
-          
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('pusat.update', $item->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
+                                value="{{ old('nama_material', $item->nama_material) }}">
+                        <label for="nama_material-{{ $item->id }}">Nama Material</label>
+                        @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
+                        @endif
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
+                                value="{{ old('kode_material', $item->kode_material) }}">
+                        <label for="kode_material-{{ $item->id }}">Kode Material</label>
+                        @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
+                        @endif
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
+                                value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
+                        <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
+                        @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
+                        @endif
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 @endforeach
 
@@ -461,27 +465,23 @@
 {{-- script transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Ambil data facilities dari Controller
         const facilities = @json($facilities);
 
-        // 🔹 Template HTML untuk setiap jenis input
         const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
 
-        // DIUBAH: Template Searchbar untuk Penyaluran & Penerimaan
         function createFacilitySearchInputHTML() {
             return `
                 <div class="position-relative w-100">
                     <input type="text" class="form-control" id="facility-search" placeholder="Cari SPBE/BPT...">
-                    <input type="hidden" id="facility-id-hidden">
+                    <input type="hidden" id="facility-id-hidden" name="facility_id_selected">
                     <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             `;
         }
         
-        // BARU: Template Dropdown untuk Sales
         function createSalesDropdownHTML() {
             return `
-                <select class="form-select" id="tujuan-sales-select">
+                <select class="form-select" id="tujuan-sales-select" name="tujuan_sales">
                     <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
                     <option value="Vendor UPP">Vendor UPP</option>
                     <option value="Sales Agen">Sales Agen</option>
@@ -491,33 +491,29 @@
             `;
         }
 
-        // 🔹 Fungsi untuk update form sesuai jenis transaksi
         function updateFormUI(type) {
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
             const asalLabel = document.getElementById('asal-label');
             const tujuanLabel = document.getElementById('tujuan-label');
 
-            // Reset label
             asalLabel.textContent = "Asal Transaksi";
             tujuanLabel.textContent = "Tujuan Transaksi";
 
-            // DIUBAH: Logika diperbarui untuk menangani 'sales'
             if (type === 'penyaluran') {
                 asalContainer.innerHTML = readonlyInputHTML;
                 tujuanContainer.innerHTML = createFacilitySearchInputHTML();
-                initFacilitySearchbar(); // aktifkan searchbar
+                initFacilitySearchbar();
             } else if (type === 'penerimaan') {
                 asalContainer.innerHTML = createFacilitySearchInputHTML();
                 tujuanContainer.innerHTML = readonlyInputHTML;
-                initFacilitySearchbar(); // aktifkan searchbar
+                initFacilitySearchbar();
             } else if (type === 'sales') {
                 asalContainer.innerHTML = readonlyInputHTML;
                 tujuanContainer.innerHTML = createSalesDropdownHTML();
             }
         }
 
-        // 🔹 Fungsi Searchbar Autocomplete untuk Facility
         function initFacilitySearchbar() {
             const searchInput = document.getElementById("facility-search");
             const hiddenInput = document.getElementById("facility-id-hidden");
@@ -528,6 +524,7 @@
             searchInput.addEventListener("input", function() {
                 const query = this.value.toLowerCase();
                 suggestionsBox.innerHTML = "";
+                hiddenInput.value = ""; // Reset hidden input saat mulai mengetik
 
                 if (!query) {
                     suggestionsBox.style.display = "none";
@@ -557,7 +554,6 @@
                     suggestionsBox.style.display = "none";
                 }
             });
-             // Sembunyikan suggestion box jika klik di luar
             document.addEventListener('click', function(e) {
                 if (!searchInput.contains(e.target)) {
                     suggestionsBox.style.display = 'none';
@@ -565,38 +561,33 @@
             });
         }
 
-        // 🔹 Radio button listener
-        document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
+        document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', (event) => {
                 updateFormUI(event.target.value);
             });
         });
 
-        // 🔹 Saat klik tombol kirim (di tabel)
         document.querySelectorAll('.kirim-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const row = this.closest('tr');
-                const stokCellIndex = 8; 
-                document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
-                document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
-                document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
-                document.getElementById('modal-stok-akhir-display').textContent = row.cells[stokCellIndex].innerText;
-                document.getElementById('kode-material-selected').value = row.cells[2].innerText;
-                document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('item-id-pusat').value = this.dataset.id;
+                document.getElementById('modal-nama-material-display').textContent = this.dataset.namaMaterial;
+                document.getElementById('modal-kode-material-display').textContent = this.dataset.kodeMaterial;
+                document.getElementById('modal-stok-akhir-display').textContent = this.dataset.stokAkhir + ' pcs';
+                document.getElementById('kode-material-selected').value = this.dataset.kodeMaterial;
                 
-                // Reset form ke default (Penyaluran/Produk Transfer)
+                const today = new Date().toISOString().slice(0, 10);
+                document.getElementById('tanggal-transaksi').value = today;
+
                 document.getElementById('jenis-penyaluran').checked = true;
                 updateFormUI('penyaluran');
             });
         });
 
-        // 🔹 Submit button
         document.getElementById('submitKirim').addEventListener('click', function() {
-            const jenisTransaksi = document.querySelector('input[name="jenisTransaksi"]:checked').value;
+            const jenisTransaksi = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             let isValid = true;
             
-            // DIUBAH: Menyesuaikan data yang dikirim berdasarkan jenis transaksi
-            const formData = {
+            let formData = {
                 _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
                 item_id_pusat: document.getElementById('item-id-pusat').value,
                 kode_material: document.getElementById('kode-material-selected').value,
@@ -608,14 +599,14 @@
             };
 
             if (jenisTransaksi === 'sales') {
-                const tujuanSales = document.getElementById('tujuan-sales-select').value;
+                const tujuanSales = document.querySelector('#tujuan-sales-select')?.value;
                 if (!tujuanSales) {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih tujuan sales!' });
                     isValid = false;
                 }
-                formData.tujuan_sales = tujuanSales; // BARU: Tambah data tujuan sales
-            } else { // Penyaluran atau Penerimaan
-                const selectedFacilityId = document.getElementById('facility-id-hidden')?.value;
+                formData.tujuan_sales = tujuanSales;
+            } else { // penyaluran atau penerimaan
+                const selectedFacilityId = document.querySelector('#facility-id-hidden')?.value;
                 if (!selectedFacilityId) {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
                     isValid = false;
@@ -626,39 +617,46 @@
             if (!isValid) return;
 
             fetch('{{ route('pusat.transfer') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': formData._token
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: data.message
-                        }).then(() => window.location.reload());
-                    } else if (data.errors) {
-                        let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal Validasi',
-                            html: `<ul class="text-start">${errorMessages}</ul>`
-                        });
-                    } else {
-                        throw new Error(data.message || 'Terjadi kesalahan.');
-                    }
-                })
-                .catch(error => {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': formData._token
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                     return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Terjadi kesalahan pada server.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: error.message
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start">${errorMessages}</ul>`
                     });
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: error.message
                 });
+            });
         });
     });
 </script>
@@ -666,34 +664,25 @@
 {{-- modal export excel --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi modal Bootstrap
         const exportModalElement = document.getElementById('exportExcelModal');
         const exportModal = new bootstrap.Modal(exportModalElement);
 
-        // Cari tombol untuk membuka modal
         const openExportModalBtn = document.getElementById('openExportModalBtn');
-        // Cari tombol konfirmasi export di dalam modal
         const confirmExportBtn = document.getElementById('confirmExportBtn');
 
-        // Tambahkan event listener saat tombol untuk membuka modal di-klik
         if (openExportModalBtn) {
             openExportModalBtn.addEventListener('click', function() {
-                // Tampilkan modal
                 exportModal.show();
             });
         }
 
-        // Tambahkan event listener untuk tombol "Export" di dalam modal
         if (confirmExportBtn) {
             confirmExportBtn.addEventListener('click', function() {
-                // 1. Ambil nilai dari input tanggal
                 const startDate = document.getElementById('exportStartDate').value;
                 const endDate = document.getElementById('exportEndDate').value;
 
-                // 2. Siapkan URL dasar dari route Laravel
                 const baseUrl = "{{ route('pusat.export') }}";
 
-                // 3. Buat URLSearchParams untuk menambahkan parameter tanggal
                 const params = new URLSearchParams();
                 if (startDate) {
                     params.append('start_date', startDate);
@@ -702,19 +691,15 @@
                     params.append('end_date', endDate);
                 }
 
-                // 4. Gabungkan URL dasar dengan parameter
                 const exportUrl = `${baseUrl}?${params.toString()}`;
 
-                // 5. Sembunyikan modal
                 exportModal.hide();
 
-                // 6. Arahkan browser ke URL export untuk memulai download
                 window.location.href = exportUrl;
             });
         }
     });
 </script>
-
 @endpush
 
 {{-- CSS Lengkap --}}
