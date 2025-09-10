@@ -176,7 +176,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/upp-material/preview/{no_surat}', [UppMaterialController::class, 'preview'])
         ->name('upp-material.preview')
-        ->where('no_surat', '.*'); // Tambahkan baris ini
+        ->where('no_surat', '.*');
 
     // Halaman edit UPP (memuat form dengan data yang sudah ada)
     Route::get('/upp-material/edit/{no_surat}', [UppMaterialController::class, 'edit'])
@@ -190,9 +190,9 @@ Route::middleware(['auth'])->group(function () {
         ->where('no_surat', '.*')
         ->middleware('can:manage data playang');
 
-    // Ambil data detail UPP untuk modal (endpoint JSON)
-    Route::get('/upp-material/detail/{no_surat}', [UppMaterialController::class, 'getUppDetails'])
-        ->name('upp-material.get-details')
+    // Ambil data material untuk modal
+    Route::get('/upp-material/afkir', [UppMaterialController::class, 'getMaterials'])
+        ->name('upp-material.afkir')
         ->middleware('can:manage data playang');
 
     Route::post('/upp-material/change-status/{no_surat}', [App\Http\Controllers\UppMaterialController::class, 'changeStatus'])
@@ -200,9 +200,9 @@ Route::middleware(['auth'])->group(function () {
         ->where('no_surat', '.*')
         ->middleware('can:manage data playang');
 
-    // Ambil data material untuk modal
-    Route::get('/upp-material/afkir', [UppMaterialController::class, 'getMaterials'])
-        ->name('upp-material.afkir')
+    // BARIS BARU UNTUK EKSPOR EXCEL
+    Route::get('/upp-material/export-excel', [UppMaterialController::class, 'exportExcel'])
+        ->name('upp-material.export')
         ->middleware('can:manage data playang');
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy

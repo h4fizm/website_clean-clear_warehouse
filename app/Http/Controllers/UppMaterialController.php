@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini
+use App\Exports\UppMaterialExport; // Tambahkan ini
 
 class UppMaterialController extends Controller
 {
@@ -392,5 +394,27 @@ class UppMaterialController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Metode baru untuk ekspor data UPP material ke Excel.
+     */
+    public function exportExcel(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $filters = [
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+        ];
+
+        $startDate = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d-m-Y') : 'Awal';
+        $endDate = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d-m-Y') : 'Akhir';
+        $filename = "Laporan UPP Material ({$startDate} - {$endDate}).xlsx";
+
+        return Excel::download(new UppMaterialExport($filters), $filename);
     }
 }

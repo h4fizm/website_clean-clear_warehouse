@@ -10,7 +10,6 @@
             <div class="card-header pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
                 <div class="me-md-auto mb-2 mb-md-0">
                     <h4 class="mb-0">Tabel Data UPP Material</h4>
-                    {{-- Teks italic yang diminta --}}
                     <p class="mt-3 text-xs font-italic text-secondary">
                         Klik badge status pada kolom "Status" untuk mengubah status.
                     </p>
@@ -19,11 +18,9 @@
                     <a href="{{ route('upp-material.create') }}" class="px-3 py-2 bg-primary text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
                         <i class="fas fa-plus me-2"></i>Tambah UPP
                     </a>
-                    <form method="GET" action="{{ route('upp-material.index') }}">
-                        <button type="submit" formaction="" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
-                            <i class="fas fa-file-excel me-2"></i> Export Excel
-                        </button>
-                    </form>
+                    <button type="button" id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
+                        <i class="fas fa-file-excel me-2"></i> Export Excel
+                    </button>
                 </div>
             </div>
             
@@ -113,7 +110,7 @@
                                     </p>
                                 </td>
                                 <td class="text-center">
-                                    {{-- Ubah tombol ini --}}
+                                    {{-- HANYA TAMPILKAN TOMBOL PREVIEW --}}
                                     <button type="button" class="btn btn-sm btn-info text-white preview-btn" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;">
                                         <i class="fas fa-eye me-1"></i> Preview
                                     </button>
@@ -195,6 +192,35 @@
         </div>
     </div>
 </div>
+
+{{-- Modal Export Excel BARU --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data UPP ke Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-secondary">Pilih rentang tanggal **pengajuan** untuk data UPP yang ingin Anda export.</p>
+                <div class="mb-3">
+                    <label for="exportStartDate" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="exportStartDate">
+                </div>
+                <div class="mb-3">
+                    <label for="exportEndDate" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="exportEndDate">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmExportBtn">
+                    <i class="fas fa-file-excel me-2"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -203,6 +229,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
         const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
+        const exportModal = new bootstrap.Modal(document.getElementById('exportExcelModal'));
 
         // Event listener untuk tombol Preview (tetap sama)
         document.querySelectorAll('.preview-btn').forEach(button => {
@@ -317,6 +344,40 @@
                 });
             });
         });
+        
+        // ==========================================
+        // SCRIPT BARU UNTUK EKSPOR EXCEL
+        // ==========================================
+        const openExportModalBtn = document.getElementById('openExportModalBtn');
+        const confirmExportBtn = document.getElementById('confirmExportBtn');
+
+        if (openExportModalBtn) {
+            openExportModalBtn.addEventListener('click', function() {
+                exportModal.show();
+            });
+        }
+        
+        if (confirmExportBtn) {
+            confirmExportBtn.addEventListener('click', function() {
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+
+                if (!startDate || !endDate) {
+                    Swal.fire('Peringatan', 'Silakan pilih rentang tanggal pengajuan terlebih dahulu.', 'warning');
+                    return;
+                }
+
+                const baseUrl = "{{ route('upp-material.export') }}";
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+
+                const exportUrl = `${baseUrl}?${params.toString()}`;
+
+                exportModal.hide();
+                window.location.href = exportUrl;
+            });
+        }
     });
 </script>
 @endpush
