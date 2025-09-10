@@ -35,7 +35,7 @@
                             <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                         </div>
                         <div class="col-12 col-md-auto">
-                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold; border: none; outline: none;">
+                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
                                 <i class="fas fa-file-excel me-2"></i> Export Excel
                             </span>
                         </div>
@@ -68,7 +68,7 @@
                         @endif
                     </div>
                     
-                   <div class="row mb-3 align-items-start">
+                    <div class="row mb-3 align-items-start">
                         {{-- Input Search --}}
                         <div class="col-12 col-md-4 mb-3 mb-md-0">
                             <div class="input-group">
@@ -291,7 +291,7 @@
                     <div class="mb-3">
                         <label id="asal-label" class="form-label">Asal Transaksi</label>
                         <div id="asal-container">
-                             <input type="text" class="form-control" value="P.Layang (Pusat)" readonly>
+                            <input type="text" class="form-control" value="P.Layang (Pusat)" readonly>
                         </div>
                     </div>
 
@@ -317,7 +317,7 @@
                             <input type="text" class="form-control" id="no-surat-persetujuan" name="no_surat_persetujuan" placeholder="(Opsional)">
                         </div>
                         <div class="col-md-6 mb-3">
-                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
                             <input type="text" class="form-control" id="no-ba-serah-terima" name="no_ba_serah_terima" placeholder="(Opsional)">
                         </div>
                     </div>
@@ -625,9 +625,17 @@
                 body: JSON.stringify(formData)
             })
             .then(response => {
+                // ✅ Perbaikan: Tangani respons non-JSON
                 if (!response.ok) {
-                     return response.json().then(errorData => {
-                        throw new Error(errorData.message || 'Terjadi kesalahan pada server.');
+                    return response.text().then(text => {
+                        // Jika respons bukan JSON, server mengembalikan HTML
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan pada server. Mohon coba lagi.',
+                            footer: '<a href="javascript:void(0)" onclick="document.querySelector(\'#error-details\').style.display=\'block\'">Lihat Detail Error</a><div id="error-details" style="display:none; text-align: left; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">' + text + '</div>'
+                        });
+                        throw new Error('Server returned HTML instead of JSON');
                     });
                 }
                 return response.json();
@@ -651,55 +659,18 @@
                 }
             })
             .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: error.message
-                });
+                if (error.message !== 'Server returned HTML instead of JSON') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: error.message
+                    });
+                }
             });
         });
     });
 </script>
 
-{{-- modal export excel --}}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const exportModalElement = document.getElementById('exportExcelModal');
-        const exportModal = new bootstrap.Modal(exportModalElement);
-
-        const openExportModalBtn = document.getElementById('openExportModalBtn');
-        const confirmExportBtn = document.getElementById('confirmExportBtn');
-
-        if (openExportModalBtn) {
-            openExportModalBtn.addEventListener('click', function() {
-                exportModal.show();
-            });
-        }
-
-        if (confirmExportBtn) {
-            confirmExportBtn.addEventListener('click', function() {
-                const startDate = document.getElementById('exportStartDate').value;
-                const endDate = document.getElementById('exportEndDate').value;
-
-                const baseUrl = "{{ route('pusat.export') }}";
-
-                const params = new URLSearchParams();
-                if (startDate) {
-                    params.append('start_date', startDate);
-                }
-                if (endDate) {
-                    params.append('end_date', endDate);
-                }
-
-                const exportUrl = `${baseUrl}?${params.toString()}`;
-
-                exportModal.hide();
-
-                window.location.href = exportUrl;
-            });
-        }
-    });
-</script>
 @endpush
 
 {{-- CSS Lengkap --}}

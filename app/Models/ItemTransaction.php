@@ -9,6 +9,8 @@ class ItemTransaction extends Model
 {
     use HasFactory;
 
+    public $timestamps = true;
+
     protected $fillable = [
         'item_id',
         'user_id',
@@ -26,7 +28,6 @@ class ItemTransaction extends Model
         'keterangan_transaksi',
         'tahapan',
         'status',
-        // Tambahkan kolom baru
         'tanggal_pemusnahan',
         'aktivitas_pemusnahan',
     ];
@@ -42,7 +43,6 @@ class ItemTransaction extends Model
     {
         return $this->belongsTo(Item::class, 'item_id');
     }
-
 
     // Relasi ke User (Penanggung Jawab)
     public function user()
@@ -72,11 +72,5 @@ class ItemTransaction extends Model
     public function regionTo()
     {
         return $this->belongsTo(Region::class, 'region_to');
-    }
-
-    // Relasi ke Sales (User yang menerima penyaluran)
-    public function sales()
-    {
-        return $this->belongsTo(User::class, 'tujuan_sales');
     }
 }

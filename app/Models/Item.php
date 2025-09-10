@@ -19,7 +19,7 @@ class Item extends Model
         'region_id',
         'nama_material',
         'kode_material',
-        'kategori_material', // BARU: Tambahkan ini
+        'kategori_material',
         'stok_awal',
         'stok_akhir',
     ];
@@ -29,7 +29,6 @@ class Item extends Model
     | RELATIONSHIPS
     |--------------------------------------------------------------------------
     */
-
 
     /**
      * Relasi ke Facility (jika item dimiliki SPBE/BPT).
@@ -48,86 +47,46 @@ class Item extends Model
     }
 
     /**
-     * Relasi umum ke semua transaksi yang tercatat di item_id ini.
-     * Secara default, ini mewakili transaksi KELUAR (penyaluran).
+     * Relasi ke semua transaksi yang terkait langsung dengan item ini.
+     * Ini bisa berupa transaksi keluar (penyaluran) atau sales.
      */
     public function transactions()
-    {
-        return $this->hasMany(ItemTransaction::class);
-    }
-
-    /**
-     * [BARU] Relasi spesifik untuk transaksi KELUAR (Penyaluran) dari item ini.
-     * Sama seperti transactions(), namun dengan nama yang lebih jelas.
-     */
-    public function outgoingTransfers()
     {
         return $this->hasMany(ItemTransaction::class, 'item_id');
     }
 
     /**
-     * [BARU] Relasi spesifik untuk transaksi MASUK (Penerimaan) ke lokasi item ini.
-     * Bekerja dengan mencocokkan 'region_to' atau 'facility_to' di tabel transaksi.
+     * Relasi untuk transaksi yang MENGIRIM ke item ini (penerimaan).
+     * Relasi ini akan mencari transaksi yang memiliki 'region_to' atau 'facility_to' yang cocok.
      */
     public function incomingTransfers()
     {
-        // Jika ini item Pusat (tidak punya facility_id)
+        // Jika item ini adalah item Pusat
         if (is_null($this->facility_id)) {
-            return $this->hasMany(ItemTransaction::class, 'region_to', 'region_id')
+            return ItemTransaction::where('region_to', $this->region_id)
                 ->whereNull('facility_to');
         }
 
-        // Jika ini item Facility
-        return $this->hasMany(ItemTransaction::class, 'facility_to', 'facility_id');
+        // Jika item ini adalah item Fasilitas
+        return ItemTransaction::where('facility_to', $this->facility_id);
     }
-
 
     /*
     |--------------------------------------------------------------------------
     | ACCESSORS & HELPERS
     |--------------------------------------------------------------------------
     */
+
+    /**
+     * Hitung stok akhir berdasarkan stok awal dan semua transaksi terkait.
+     * Ini digunakan sebagai fallback jika data tidak di-load dari controller.
+     */
     public function getStokAkhirAttribute()
     {
-        if (
-            array_key_exists('penerimaan_total', $this->attributes) &&
-            array_key_exists('penyaluran_total', $this->attributes) &&
-            array_key_exists('sales_total', $this->attributes)
-        ) {
-            // Gunakan nilai dari controller (lebih efisien)
-            $penerimaan = (int) $this->penerimaan_total;
-            $penyaluran = (int) $this->penyaluran_total;
-            $sales = (int) $this->sales_total;
-            // Gunakan pemusnahan_total yang sudah dihitung di controller
-            $pemusnahan = (int) ($this->pemusnahan_total ?? 0);
-        } else {
-            // Hitung manual kalau tidak ada preload dari controller
-            $penyaluran = $this->outgoingTransfers()->sum('jumlah');
+        // Perhitungan yang lebih sederhana dan fokus pada transaksi yang mempengaruhi item ini
+        $totalMasuk = $this->incomingTransfers()->where('jenis_transaksi', 'transfer')->sum('jumlah');
+        $totalKeluar = $this->transactions()->whereIn('jenis_transaksi', ['transfer', 'sales', 'pemusnahan'])->sum('jumlah');
 
-            // Penerimaan (logika lama tetap dipakai)
-            $penerimaan = 0;
-            if (is_null($this->facility_id)) {
-                $penerimaan = ItemTransaction::where('region_to', $this->region_id)
-                    ->whereNull('facility_to')
-                    ->whereHas('item', fn($q) => $q->where('kode_material', $this->kode_material))
-                    ->sum('jumlah');
-            } else {
-                $penerimaan = ItemTransaction::where('facility_to', $this->facility_id)
-                    ->whereHas('item', fn($q) => $q->where('kode_material', $this->kode_material))
-                    ->sum('jumlah');
-            }
-
-            // Tambahkan sales
-            $sales = $this->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
-
-            // Perbaikan: Hanya hitung pemusnahan yang statusnya 'done'
-            $pemusnahan = $this->transactions()
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->where('status', 'done')
-                ->sum('jumlah');
-        }
-
-        // Perhitungan akhir
-        return $this->stok_awal + $penerimaan - $penyaluran - $sales - $pemusnahan;
+        return $this->stok_awal + $totalMasuk - $totalKeluar;
     }
 }

@@ -10,24 +10,33 @@ use Carbon\Carbon;
 
 class AktivitasHarianController extends Controller
 {
-    public function index()
-    {
-        return view('dashboard_page.aktivitas_harian.data_transaksi');
-    }
-
-    public function logTransaksi(Request $request)
+    public function index(Request $request)
     {
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $jenisTransaksi = $request->input('jenis_transaksi');
 
-        $query = ItemTransaction::with(['item', 'user', 'facilityFrom', 'facilityTo', 'regionFrom', 'regionTo']);
+        // Membangun kueri dasar dengan eager loading untuk performa
+        $query = ItemTransaction::with([
+            'item' => fn($q) => $q->withTrashed(),
+            'user',
+            'facilityFrom',
+            'facilityTo',
+            'regionFrom',
+            'regionTo',
+        ]);
 
-        // ✅ PERBAIKAN: Kecualikan transaksi dengan jenis 'pemusnahan'
-        $query->where('jenis_transaksi', '!=', 'pemusnahan');
+        // Memastikan hanya transaksi non-pemusnahan yang ditampilkan secara default
+        $query->where(function ($q) use ($jenisTransaksi) {
+            if (!$jenisTransaksi) {
+                $q->where('jenis_transaksi', '!=', 'pemusnahan');
+            } else {
+                $q->where('jenis_transaksi', $jenisTransaksi);
+            }
+        });
 
-        // Filter pencarian
+        // Filter pencarian berdasarkan berbagai kolom
         $query->when($search, function ($q) use ($search) {
             $q->where(function ($subQuery) use ($search) {
                 $subQuery->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
@@ -61,11 +70,7 @@ class AktivitasHarianController extends Controller
             });
         });
 
-        // Terapkan filter berdasarkan jenis aktivitas/transaksi
-        $query->when($jenisTransaksi, function ($q, $jenis) {
-            return $q->where('jenis_transaksi', $jenis);
-        });
-
+        // Filter tanggal
         $query->when($startDate, function ($q, $date) {
             return $q->whereDate('created_at', '>=', $date);
         });
@@ -78,6 +83,7 @@ class AktivitasHarianController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Mengembalikan tampilan dengan data yang telah difilter dan parameter filter
         return view('dashboard_page.aktivitas_harian.data_transaksi', compact(
             'transactions',
             'search',
@@ -95,6 +101,11 @@ class AktivitasHarianController extends Controller
             'end_date' => $request->query('end_date'),
             'jenis_transaksi' => $request->query('jenis_transaksi'),
         ];
+
+        // Tambahkan filter default agar pemusnahan tidak ter-export secara default
+        if (empty($filters['jenis_transaksi'])) {
+            $filters['jenis_transaksi'] = ['!=', 'pemusnahan'];
+        }
 
         $today = Carbon::now()->isoFormat('dddd, D MMMM YYYY');
         $filename = "Laporan Aktivitas Transaksi - Dicetak {$today}.xlsx";
