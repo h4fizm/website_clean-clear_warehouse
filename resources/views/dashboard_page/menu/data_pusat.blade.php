@@ -121,6 +121,7 @@
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Pemusnahan</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
@@ -149,9 +150,11 @@
                                 <td class="text-center">
                                     <span class="badge bg-gradient-info text-white text-xs">{{ $item->penyaluran_total }} pcs</span>
                                 </td>
-                                {{-- DIUBAH: Menampilkan data sales --}}
                                 <td class="text-center">
                                     <span class="badge bg-gradient-warning text-white text-xs">{{ $item->sales_total ?? 0 }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-danger text-white text-xs">{{ $item->pemusnahan_total ?? 0 }} pcs</span>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-gradient-success text-white text-xs">{{ $item->stok_akhir }} pcs</span>
@@ -184,8 +187,8 @@
                             </tr>
                             @empty
                             <tr>
-                                {{-- colspan menjadi 10 karena ada 1 kolom baru --}}
-                                <td colspan="10" class="text-center text-muted py-4">Data Kosong</td>
+                                {{-- colspan menjadi 11 karena ada 2 kolom baru (Sales & Pemusnahan) --}}
+                                <td colspan="11" class="text-center text-muted py-4">Data Kosong</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -573,8 +576,7 @@
         document.querySelectorAll('.kirim-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const row = this.closest('tr');
-                // Mengambil stok dari kolom ke-8 (index 7) karena Sales ditambahkan
-                const stokCellIndex = 7; 
+                const stokCellIndex = 8; 
                 document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
                 document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
                 document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;

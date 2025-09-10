@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
             id: transaction.item.id,
             nama_material: transaction.item.nama_material,
             kode_material: transaction.item.kode_material,
-            stok_akhir: transaction.stok_akhir_asal + transaction.jumlah,
+            stok_akhir: transaction.stok_awal_asal,
             jumlah: transaction.jumlah
         };
     });

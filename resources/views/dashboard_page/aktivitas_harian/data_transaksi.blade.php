@@ -11,7 +11,7 @@
                     Aktivitas Log Harian Transaksi
                 </h4>
                 <p class="mb-2 opacity-8" id="summary-text">
-                    Laporan detail semua aktivitas penerimaan dan penyaluran material.
+                    Laporan detail semua aktivitas penerimaan, penyaluran, dan sales material.
                 </p>
             </div>
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
@@ -31,7 +31,7 @@
             <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap">
                 <div class="d-flex flex-column">
                     <h4>Tabel Aktivitas Transaksi Harian</h4>
-                    <h6>Data riwayat penerimaan dan penyaluran material.</h6>
+                    <h6>Data riwayat penerimaan, penyaluran, dan sales material.</h6>
                 </div>
                 <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
                     <i class="fas fa-file-excel me-2"></i> Export Excel
@@ -83,7 +83,6 @@
                                 @if (!$transaction->item) @continue @endif
 
                                 @php
-                                    // =================== LOGIKA TAMPILAN BARU ===================
                                     $asal = 'N/A';
                                     $tujuan = 'N/A';
                                     $activityAsal = null;
@@ -92,9 +91,8 @@
                                     // CASE 1: Jika transaksi adalah SALES
                                     if ($transaction->jenis_transaksi == 'sales') {
                                         $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
-                                        $tujuan = $transaction->tujuan_sales; // Mengambil dari kolom tujuan_sales
+                                        $tujuan = $transaction->tujuan_sales;
 
-                                        // Aktivitasnya adalah penyaluran (keluar) yang berjenis sales
                                         $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
                                         $activityTujuan = ['text' => 'Transaksi Sales', 'color' => 'bg-gradient-warning', 'icon' => 'fa-dollar-sign'];
                                     
@@ -103,7 +101,6 @@
                                         $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
                                         $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
 
-                                        // Aktivitasnya adalah transfer biasa (Penyaluran -> Penerimaan)
                                         $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
                                         $activityTujuan = ['text' => 'Penerimaan', 'color' => 'bg-gradient-success', 'icon' => 'fa-arrow-down'];
                                     }
@@ -275,6 +272,9 @@
                 if (searchValue) {
                     params.append('search', searchValue);
                 }
+                // Tambahkan filter untuk mengecualikan "pemusnahan"
+                params.append('jenis_transaksi', 'penyaluran,penerimaan,sales');
+
 
                 // 5. Gabungkan URL dasar dengan parameter
                 const exportUrl = `${baseUrl}?${params.toString()}`;

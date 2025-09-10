@@ -59,17 +59,16 @@ class PusatController extends Controller
 
         // ➕ Subquery kalkulasi
         $query->addSelect([
-            'penerimaan_total' => ItemTransaction::query()
-                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
-                ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.region_to', 'items.region_id')
+            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+                ->where('jenis_transaksi', 'transfer')
+                ->whereNotNull('facility_from') // Filter hanya dari fasilitas lain (bukan dari pusat sendiri)
                 ->when($filters['start_date'], function ($subQ, $date) {
-                    $subQ->whereDate('item_transactions.created_at', '>=', $date);
+                    $subQ->whereDate('created_at', '>=', $date);
                 })
                 ->when($filters['end_date'], function ($subQ, $date) {
-                    $subQ->whereDate('item_transactions.created_at', '<=', $date);
-                })
-                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
+                    $subQ->whereDate('created_at', '<=', $date);
+                }),
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'transfer')
@@ -82,6 +81,16 @@ class PusatController extends Controller
             'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'sales')
+                ->when($filters['start_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '<=', $date);
+                }),
+            'pemusnahan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->where('status', 'done')
                 ->when($filters['start_date'], function ($subQ, $date) {
                     $subQ->whereDate('created_at', '>=', $date);
                 })
@@ -335,6 +344,7 @@ class PusatController extends Controller
             $query->where('kode_material', $item->kode_material);
         })
             ->where('region_to', $item->region_id)
+            ->where('jenis_transaksi', 'transfer')
             ->sum('jumlah');
 
         // ✅ DIPERBAIKI: Kueri dibuat lebih spesifik untuk hanya menghitung transfer KELUAR dari pusat
@@ -348,10 +358,16 @@ class PusatController extends Controller
             ->where('jenis_transaksi', 'sales')
             ->sum('jumlah');
 
+        // BARU: Hitung total pemusnahan untuk item ini
+        $totalPemusnahan = $item->transactions()
+            ->where('jenis_transaksi', 'pemusnahan')
+            ->where('status', 'done')
+            ->sum('jumlah');
+
         $stokAwalBaru = $request->stok_awal;
 
-        // DIPERBAIKI: Formula sekarang mengurangi sales untuk kalkulasi yang akurat
-        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales;
+        // DIPERBAIKI: Formula sekarang mengurangi sales dan pemusnahan untuk kalkulasi yang akurat
+        $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales - $totalPemusnahan;
 
         $item->update([
             'stok_awal' => $stokAwalBaru,

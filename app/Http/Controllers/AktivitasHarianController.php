@@ -17,17 +17,17 @@ class AktivitasHarianController extends Controller
 
     public function logTransaksi(Request $request)
     {
-        // Ambil semua input filter dari request
         $search = $request->input('search');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-        $jenisTransaksi = $request->input('jenis_transaksi'); // <-- TAMBAHKAN FILTER BARU
+        $jenisTransaksi = $request->input('jenis_transaksi');
 
         $query = ItemTransaction::with(['item', 'user', 'facilityFrom', 'facilityTo', 'regionFrom', 'regionTo']);
 
-        /**
-         * ✅ PERBAIKAN: Menambahkan 'tujuan_sales' ke dalam kueri pencarian.
-         */
+        // ✅ PERBAIKAN: Kecualikan transaksi dengan jenis 'pemusnahan'
+        $query->where('jenis_transaksi', '!=', 'pemusnahan');
+
+        // Filter pencarian
         $query->when($search, function ($q) use ($search) {
             $q->where(function ($subQuery) use ($search) {
                 $subQuery->orWhere('no_surat_persetujuan', 'like', "%{$search}%")
@@ -61,7 +61,7 @@ class AktivitasHarianController extends Controller
             });
         });
 
-        // ✅ BARU: Terapkan filter berdasarkan jenis aktivitas/transaksi
+        // Terapkan filter berdasarkan jenis aktivitas/transaksi
         $query->when($jenisTransaksi, function ($q, $jenis) {
             return $q->where('jenis_transaksi', $jenis);
         });
@@ -78,24 +78,22 @@ class AktivitasHarianController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Kirim data ke view
         return view('dashboard_page.aktivitas_harian.data_transaksi', compact(
             'transactions',
             'search',
             'startDate',
             'endDate',
-            'jenisTransaksi' // <-- KIRIM FILTER BARU KE VIEW
+            'jenisTransaksi'
         ));
     }
 
     public function exportTransaksiExcel(Request $request)
     {
-        // ✅ PERBAIKAN: Tambahkan filter jenis_transaksi ke data export
         $filters = [
             'search' => $request->query('search'),
             'start_date' => $request->query('start_date'),
             'end_date' => $request->query('end_date'),
-            'jenis_transaksi' => $request->query('jenis_transaksi'), // <-- TAMBAHKAN INI
+            'jenis_transaksi' => $request->query('jenis_transaksi'),
         ];
 
         $today = Carbon::now()->isoFormat('dddd, D MMMM YYYY');
@@ -104,4 +102,3 @@ class AktivitasHarianController extends Controller
         return Excel::download(new TransaksiLogExport($filters), $filename);
     }
 }
-
