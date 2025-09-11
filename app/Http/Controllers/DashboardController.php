@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -21,24 +22,92 @@ class DashboardController extends Controller
         $user = Auth::user();
         $roleName = $user->getRoleNames()->first() ?? 'User';
 
+        // ============================
+        // Hitungan untuk card statistik
+        // ============================
         $totalSpbe = Facility::where('type', 'SPBE')->count();
         $totalBpt = Facility::where('type', 'BPT')->count();
-        $totalPenerimaan = ItemTransaction::where('jenis_transaksi', 'penerimaan')->sum('jumlah');
-        $totalPenyaluran = ItemTransaction::where('jenis_transaksi', 'penyaluran')->sum('jumlah');
 
-        // Perbarui perhitungan UPP dengan mencari transaksi pemusnahan yang disetujui
-        $totalUpp = ItemTransaction::where('jenis_transaksi', 'pemusnahan')
+        // ============================
+        // UPP Material
+        // ============================
+
+        // ✅ Versi aktif (jumlah dokumen UPP)
+        $totalUpp = ItemTransaction::query()
             ->whereNotNull('no_surat_persetujuan')
-            ->count();
+            ->where('no_surat_persetujuan', '!=', '')
+            ->where('status', 'done')
+            ->distinct('no_surat_persetujuan')
+            ->count('no_surat_persetujuan');
 
+        /*
+        // 🔄 Versi alternatif (stok UPP / jumlah tabung dalam UPP)
+        $totalUpp = ItemTransaction::query()
+            ->whereNotNull('no_surat_persetujuan')
+            ->where('no_surat_persetujuan', '!=', '')
+            ->where('status', 'done')
+            ->sum('jumlah');
+        */
+
+        // ============================
+        // Hitungan Transaksi (Aktif) → pakai jumlah baris transaksi
+        // ============================
+        $allTransactions = ItemTransaction::with(['facilityFrom', 'facilityTo', 'regionFrom', 'regionTo'])
+            ->where('jenis_transaksi', '!=', 'pemusnahan')
+            ->get();
+
+        $totalPenyaluran = 0;
+        $totalPenerimaan = 0;
+
+        foreach ($allTransactions as $trx) {
+            if ($trx->jenis_transaksi === 'sales') {
+                // Sales dihitung sebagai 1 penyaluran
+                $totalPenyaluran++;
+            } else {
+                if ($trx->facility_from || $trx->region_from) {
+                    $totalPenyaluran++;
+                }
+                if ($trx->facility_to || $trx->region_to) {
+                    $totalPenerimaan++;
+                }
+            }
+        }
+
+        /*
+        // ============================
+        // Hitungan Transaksi (Alternatif) → pakai stok/jumlah tabung
+        // ============================
+        $totalPenyaluran = ItemTransaction::query()
+            ->where(function ($q) {
+                $q->whereNotNull('facility_from')
+                  ->orWhereNotNull('region_from')
+                  ->orWhere('jenis_transaksi', 'sales');
+            })
+            ->sum('jumlah');
+
+        $totalPenerimaan = ItemTransaction::query()
+            ->where(function ($q) {
+                $q->whereNotNull('facility_to')
+                  ->orWhereNotNull('region_to');
+            })
+            ->whereNull('tujuan_sales')
+            ->sum('jumlah');
+        */
+
+        // ============================
+        // Card Dashboard
+        // ============================
         $cards = [
             ['title' => 'Total SPBE', 'value' => number_format($totalSpbe), 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => number_format($totalBpt), 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
             ['title' => 'Transaksi Penerimaan', 'value' => number_format($totalPenerimaan), 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
             ['title' => 'Transaksi Penyaluran', 'value' => number_format($totalPenyaluran), 'icon' => 'fas fa-arrow-up', 'bg' => 'danger', 'link' => '#'],
-            ['title' => 'UPP Material', 'value' => number_format($totalUpp), 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#upp-material-section'],
+            ['title' => 'UPP Material', 'value' => number_format($totalUpp), 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#'],
         ];
 
+        // ============================
+        // Data tabel material
+        // ============================
         $query = Item::query()
             ->selectRaw('nama_material, kode_material, SUM(stok_awal) as total_stok_awal')
             ->groupBy('nama_material', 'kode_material')
@@ -47,6 +116,7 @@ class DashboardController extends Controller
                     ->orWhere('kode_material', 'like', '%' . $request->search_material . '%');
             })
             ->orderBy('nama_material');
+
         $items = $query->paginate(5)->appends($request->only('search_material'));
 
         $materialList = $this->getUniqueMaterialBaseNames();
@@ -87,23 +157,17 @@ class DashboardController extends Controller
     {
         return Item::select('nama_material')->distinct()->pluck('nama_material')
             ->map(function ($name) {
-                // Mengambil nama material sebelum '-'
                 $parts = explode(' - ', $name);
                 return $parts[0] ?? $name;
             })
             ->unique()->sort()->values();
     }
 
-    /**
-     * [FUNGSI DIPERBARUI]
-     * Menggunakan Eloquent dan menyederhanakan output.
-     */
     private function getFormattedStockData($materialBaseName, $month = null, $year = null)
     {
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
         $pusatRegionId = $pusatRegion ? $pusatRegion->id : null;
 
-        // Default ke bulan & tahun berjalan
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
 
@@ -120,7 +184,6 @@ class DashboardController extends Controller
             foreach ($collection as $item) {
                 $currentStock = $item->stok_akhir;
 
-                // Gunakan kolom baru 'kategori_material'
                 switch (strtolower($item->kategori_material)) {
                     case 'baru':
                         $stock['baru'] += $currentStock;
@@ -191,5 +254,4 @@ class DashboardController extends Controller
 
         return Excel::download(new AllMaterialStockExport($filters), 'Total Stok Material.xlsx');
     }
-
 }
