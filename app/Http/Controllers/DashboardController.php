@@ -80,15 +80,15 @@ class DashboardController extends Controller
         $totalPenyaluran = ItemTransaction::query()
             ->where(function ($q) {
                 $q->whereNotNull('facility_from')
-                  ->orWhereNotNull('region_from')
-                  ->orWhere('jenis_transaksi', 'sales');
+                    ->orWhereNotNull('region_from')
+                    ->orWhere('jenis_transaksi', 'sales');
             })
             ->sum('jumlah');
 
         $totalPenerimaan = ItemTransaction::query()
             ->where(function ($q) {
                 $q->whereNotNull('facility_to')
-                  ->orWhereNotNull('region_to');
+                    ->orWhereNotNull('region_to');
             })
             ->whereNull('tujuan_sales')
             ->sum('jumlah');
@@ -109,7 +109,7 @@ class DashboardController extends Controller
         // Data tabel material
         // ============================
         $query = Item::query()
-            ->selectRaw('nama_material, kode_material, SUM(stok_awal) as total_stok_awal')
+            ->selectRaw('nama_material, kode_material, SUM(stok_akhir) as total_stok_akhir') // ✅ PERBAIKAN: Menggunakan stok_akhir
             ->groupBy('nama_material', 'kode_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
                 $q->where('nama_material', 'like', '%' . $request->search_material . '%')
@@ -171,6 +171,9 @@ class DashboardController extends Controller
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
 
+        // Ambil data dari tabel `items` dengan filtering nama material dan tanggal
+        // Kita asumsikan `stok_akhir` di tabel `items` sudah ter-update
+        // Berdasarkan logika yang sudah ada di controller sebelumnya.
         $items = Item::where('nama_material', 'like', $materialBaseName . '%')
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
@@ -179,50 +182,44 @@ class DashboardController extends Controller
         $pusatItems = $items->where('region_id', $pusatRegionId)->whereNull('facility_id');
         $fasilitasItems = $items->whereNotNull('facility_id');
 
-        $calculateStock = function ($collection) {
-            $stock = ['baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0];
-            foreach ($collection as $item) {
-                $currentStock = $item->stok_akhir;
+        // Menggunakan array untuk menampung total stok per kategori
+        $pusatStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
+        $fasilitasStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
 
-                switch (strtolower($item->kategori_material)) {
-                    case 'baru':
-                        $stock['baru'] += $currentStock;
-                        break;
-                    case 'baik':
-                        $stock['baik'] += $currentStock;
-                        break;
-                    case 'rusak':
-                        $stock['rusak'] += $currentStock;
-                        break;
-                    case 'afkir':
-                        $stock['afkir'] += $currentStock;
-                        break;
-                }
+        // Hitung stok untuk gudang pusat
+        foreach ($pusatItems as $item) {
+            $kategori = $item->kategori_material;
+            if (array_key_exists($kategori, $pusatStock)) {
+                $pusatStock[$kategori] += $item->stok_akhir;
             }
-            return $stock;
-        };
+        }
 
-        $pusatStock = $calculateStock($pusatItems);
-        $fasilitasStock = $calculateStock($fasilitasItems);
+        // Hitung stok untuk gudang fasilitas (SPBE/BPT)
+        foreach ($fasilitasItems as $item) {
+            $kategori = $item->kategori_material;
+            if (array_key_exists($kategori, $fasilitasStock)) {
+                $fasilitasStock[$kategori] += $item->stok_akhir;
+            }
+        }
 
         $data = [
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'Gudang Region',
-                'baru' => $pusatStock['baru'],
-                'baik' => $pusatStock['baik'],
-                'rusak' => $pusatStock['rusak'],
-                'afkir' => $pusatStock['afkir'],
-                'layak_edar' => $pusatStock['baru'] + $pusatStock['baik'],
+                'baru' => $pusatStock['Baru'],
+                'baik' => $pusatStock['Baik'],
+                'rusak' => $pusatStock['Rusak'],
+                'afkir' => $pusatStock['Afkir'],
+                'layak_edar' => $pusatStock['Baru'] + $pusatStock['Baik'],
             ],
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'SPBE/BPT (Global)',
-                'baru' => $fasilitasStock['baru'],
-                'baik' => $fasilitasStock['baik'],
-                'rusak' => $fasilitasStock['rusak'],
-                'afkir' => $fasilitasStock['afkir'],
-                'layak_edar' => $fasilitasStock['baru'] + $fasilitasStock['baik'],
+                'baru' => $fasilitasStock['Baru'],
+                'baik' => $fasilitasStock['Baik'],
+                'rusak' => $fasilitasStock['Rusak'],
+                'afkir' => $fasilitasStock['Afkir'],
+                'layak_edar' => $fasilitasStock['Baru'] + $fasilitasStock['Baik'],
             ],
         ];
 

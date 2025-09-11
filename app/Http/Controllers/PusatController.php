@@ -264,22 +264,23 @@ class PusatController extends Controller
             'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'total_stok' => 'required|integer|min:0',
+            'kategori_material' => ['required', 'string', 'in:Baru,Baik,Rusak,Afkir'],
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // ✅ Perbaikan: Tambahkan 'kategori_material'
         Item::create([
             'nama_material' => $request->nama_material,
             'kode_material' => $request->kode_material,
-            'kategori_material' => 'contoh_kategori', // ✅ BERI NILAI DEFAULT ATAU DAPATKAN DARI INPUT
+            'kategori_material' => $request->kategori_material, // ✅ PERBAIKAN: Mengambil nilai dari request
             'stok_awal' => $request->total_stok,
             'stok_akhir' => $request->total_stok,
             'facility_id' => null,
             'region_id' => 1,
         ]);
+
         return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
     }
 

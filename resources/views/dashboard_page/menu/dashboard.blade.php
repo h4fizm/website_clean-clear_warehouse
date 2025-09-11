@@ -96,7 +96,7 @@
                                     </td>
                                     <td><div class="text-center"><h6 class="text-sm mb-0">{{ $item->kode_material }}</h6></div></td>
                                     <td class="text-center">
-                                        <h6 class="text-sm mb-0">{{ number_format($item->total_stok_awal) }} pcs</h6>
+                                        <h6 class="text-sm mb-0">{{ number_format($item->total_stok_akhir) }} pcs</h6>
                                     </td>
                                 </tr>
                             @empty
@@ -160,7 +160,7 @@
             <div class="card-header p-3 pb-0">
                 {{-- Baris 1: Judul & Tombol Export --}}
                 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
-                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">STOCK MATERIAL REGION</h6>
+                    <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">DAFTAR STOK MATERIAL SELURUH REGIONAL</h6>
                     <div class="col-12 col-md-auto">
                         <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
                                 style="cursor: pointer; font-size: 0.875rem; font-weight: bold; white-space: nowrap;">
@@ -225,12 +225,56 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- ✅ TAMBAHAN: Form Kapasitas --}}
+                <div class="mt-4 px-3 py-2 bg-light rounded-lg d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                        <h6 class="text-sm font-weight-bold me-2 mb-0">Kapasitas:</h6>
+                        <div class="input-group input-group-sm" style="width: 150px;">
+                            <input type="number" id="material-capacity-input" class="form-control" placeholder="Masukkan kapasitas" min="0" value="{{ $initialStockData['capacity'] ?? 0 }}">
+                        </div>
+                        <h6 class="text-sm font-weight-bold ms-2 mb-0" id="capacity-value">
+                            / {{ number_format($initialStockData['capacity'] ?? 0) }} pcs
+                        </h6>
+                    </div>
+                    <button class="btn btn-sm btn-info mb-0" id="save-capacity-btn">
+                        <i class="fas fa-save me-1"></i> Simpan Kapasitas
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- MODAL PREVIEW (dihapus karena permintaan) --}}
+{{-- MODAL EXPORT EXCEL --}}
+<div class="modal fade" id="exportExcelModal" tabindex="-1" role="dialog" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportExcelModalLabel">Export Data Stok</h5>
+                <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Pilih rentang tanggal untuk data yang akan diexport.</p>
+                <form id="exportForm">
+                    <div class="mb-3">
+                        <label for="exportStartDate" class="form-label">Tanggal Mulai:</label>
+                        <input type="date" class="form-control" id="exportStartDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportEndDate" class="form-label">Tanggal Selesai:</label>
+                        <input type="date" class="form-control" id="exportEndDate" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn bg-gradient-success" id="confirmExportBtn">Export</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -248,6 +292,11 @@
         const stockSearchInput = document.getElementById('search-stock-material');
         const stockTitle = document.getElementById('stock-title');
         const materialSuggestionsContainer = document.getElementById('material-suggestions');
+        
+        // ✅ Elemen untuk Kapasitas
+        const capacityInput = document.getElementById('material-capacity-input');
+        const saveCapacityBtn = document.getElementById('save-capacity-btn');
+        const capacityValueSpan = document.getElementById('capacity-value');
 
         // 🔹 Dropdown bulan & tahun
         const monthSelect = document.getElementById('month-select');
@@ -258,13 +307,13 @@
         const exportExcelModalEl = document.getElementById('exportExcelModal');
         const confirmExportBtn = document.getElementById('confirmExportBtn');
         const exportExcelModal = new bootstrap.Modal(exportExcelModalEl);
-
+        
         // 📌 Buka modal export
         openExportModalBtn.addEventListener('click', function() {
             exportExcelModal.show();
         });
 
-        // 📌 Jalankan export Excel (fungsi export backend sudah berjalan)
+        // 📌 Jalankan export Excel
         confirmExportBtn.addEventListener('click', function() {
             const startDate = document.getElementById('exportStartDate').value;
             const endDate = document.getElementById('exportEndDate').value;
@@ -275,6 +324,7 @@
             }
 
             window.location.href = `/export-excel?start_date=${startDate}&end_date=${endDate}`;
+            exportExcelModal.hide();
         });
 
         // 📌 Format angka dengan pemisah ribuan
@@ -284,15 +334,16 @@
 
         // 📌 Konversi nomor bulan → nama bulan
         function getMonthName(month) {
-            return new Date(2000, month - 1, 1).toLocaleString('id-ID', { month: 'long' });
+            const date = new Date(null, month - 1);
+            return date.toLocaleString('id-ID', { month: 'long' });
         }
 
         // 📌 Render isi tabel stok material
         function renderStockTable(data) {
             stockTableBody.innerHTML = '';
             const materialName = data?.stock?.[0]?.material_name;
-            const month = monthSelect.value;
-            const year = yearSelect.value;
+            const month = data?.month;
+            const year = data?.year;
             const bulanNama = getMonthName(parseInt(month));
 
             // Set judul tabel
@@ -302,14 +353,19 @@
             } else {
                 stockTitle.innerText = `Stok ${bulanNama} ${year}`;
             }
-            
+
+            // Update nilai input kapasitas
+            capacityInput.value = data?.capacity ?? 0;
+            capacityValueSpan.innerText = `/ ${formatNumber(data?.capacity ?? 0)} pcs`;
+
             // Render data stok
             if (data && data.stock && data.stock.length > 0) {
                 const stockData = data.stock;
-                stockData.forEach((item, index) => {
+                let firstRow = true;
+                stockData.forEach((item) => {
                     const rowHtml = `
                         <tr>
-                            ${index === 0 ? `<td class="ps-2 text-wrap align-middle" rowspan="${stockData.length}">
+                            ${firstRow ? `<td class="ps-2 text-wrap align-middle" rowspan="${stockData.length}">
                                 <h6 class="text-sm font-weight-bold mb-0">${item.material_name}</h6>
                             </td>` : ''}
                             <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${item.gudang}</span></td>
@@ -321,6 +377,7 @@
                         </tr>
                     `;
                     stockTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                    firstRow = false;
                 });
             } else {
                 stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
@@ -341,9 +398,53 @@
                 renderStockTable(data);
             } catch (error) {
                 console.error('Fetch error:', error);
-                stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">${error.message}</td></tr>`;
+                stockTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>`;
+                stockTitle.innerText = `Data Error`;
             }
         }
+
+        // 📌 Simpan kapasitas material
+        saveCapacityBtn.addEventListener('click', async function() {
+            const materialName = stockSearchInput.value;
+            const capacity = capacityInput.value;
+
+            if (!materialName) {
+                Swal.fire('Peringatan!', 'Silakan pilih material terlebih dahulu.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/stock-capacity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        material_name: materialName,
+                        capacity: capacity
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                    // Perbarui teks kapasitas di UI
+                    capacityValueSpan.innerText = `/ ${formatNumber(capacity)}`;
+                } else {
+                    let errorMessage = 'Gagal menyimpan kapasitas.';
+                    if (data.errors) {
+                        const errors = Object.values(data.errors).flat();
+                        errorMessage += '<br>' + errors.join('<br>');
+                    }
+                    Swal.fire('Gagal!', errorMessage, 'error');
+                }
+            } catch (error) {
+                console.error('Save capacity error:', error);
+                Swal.fire('Gagal!', 'Terjadi kesalahan saat menyimpan data.', 'error');
+            }
+        });
+
 
         // 📌 Tampilkan suggestion nama material di search box
         function showSuggestions(searchTerm) {
@@ -404,5 +505,5 @@
         }
     });
 </script>
-{{-- UPP Material JS dihapus --}}
+{{-- UPP MATERIAL --}}
 @endpush

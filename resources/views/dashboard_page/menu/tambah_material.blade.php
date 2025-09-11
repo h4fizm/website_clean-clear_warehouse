@@ -27,20 +27,21 @@
                     <div class="col-12">
                         <label class="form-label">Kategori Material</label>
                         <div>
+                            {{-- ✅ PERBAIKAN: Mengganti label menjadi huruf kapital di awal --}}
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaru" value="baru" required>
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaru" value="Baru" required>
                                 <label class="form-check-label" for="kategoriBaru">Baru</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriAfkir" value="afkir" required>
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriAfkir" value="Afkir" required>
                                 <label class="form-check-label" for="kategoriAfkir">Afkir</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaik" value="baik" required>
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriBaik" value="Baik" required>
                                 <label class="form-check-label" for="kategoriBaik">Baik</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriRusak" value="rusak" required>
+                                <input class="form-check-input" type="radio" name="kategori_material" id="kategoriRusak" value="Rusak" required>
                                 <label class="form-check-label" for="kategoriRusak">Rusak</label>
                             </div>
                         </div>

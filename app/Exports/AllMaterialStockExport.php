@@ -43,32 +43,26 @@ class AllMaterialStockExport implements FromCollection, WithHeadings, WithMappin
         $start = $this->filters['start_date'] ?? null;
         $end = $this->filters['end_date'] ?? null;
 
-        // Ambil semua material unik
-        $materials = Item::selectRaw("TRIM(SUBSTRING_INDEX(nama_material, '-', 1)) as base_name")
-            ->distinct()
-            ->pluck('base_name');
+        // ✅ PERBAIKAN: Mengambil nama material unik secara langsung dari kolom yang ada
+        $materials = Item::select('nama_material')->distinct()->pluck('nama_material');
 
         $rows = new Collection();
 
         foreach ($materials as $material) {
-            // Ambil item sesuai filter tanggal
-            $items = Item::where('nama_material', 'like', $material . '%')
+            // Ambil item sesuai filter tanggal dan nama material
+            $items = Item::where('nama_material', $material)
                 ->when($start, fn($q) => $q->whereDate('created_at', '>=', $start))
                 ->when($end, fn($q) => $q->whereDate('created_at', '<=', $end))
                 ->get();
 
-            // Hitung stok meski kosong
+            // ✅ PERBAIKAN: Menggunakan kategori_material yang tersimpan di database
             $calculateStock = function ($collection) {
-                $stock = ['baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0];
+                $stock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
                 foreach ($collection as $item) {
-                    if (str_contains($item->nama_material, 'Baru'))
-                        $stock['baru'] += $item->stok_akhir;
-                    if (str_contains($item->nama_material, 'Baik'))
-                        $stock['baik'] += $item->stok_akhir;
-                    if (str_contains($item->nama_material, 'Rusak'))
-                        $stock['rusak'] += $item->stok_akhir;
-                    if (str_contains($item->nama_material, 'Afkir'))
-                        $stock['afkir'] += $item->stok_akhir;
+                    $kategori = $item->kategori_material;
+                    if (array_key_exists($kategori, $stock)) {
+                        $stock[$kategori] += $item->stok_akhir;
+                    }
                 }
                 return $stock;
             };
@@ -79,27 +73,28 @@ class AllMaterialStockExport implements FromCollection, WithHeadings, WithMappin
             $capacity = MaterialCapacity::where('material_base_name', $material)->value('capacity') ?? '-';
             $lastUpdate = $items->max('updated_at');
 
-            // Tetap tampilkan meskipun semua stok 0
+            // Baris untuk Gudang Region
             $rows->push([
                 'material' => $material,
                 'gudang' => 'Gudang Region',
-                'baru' => $pusatStock['baru'],
-                'baik' => $pusatStock['baik'],
-                'rusak' => $pusatStock['rusak'],
-                'afkir' => $pusatStock['afkir'],
-                'layak_edar' => $pusatStock['baru'] + $pusatStock['baik'],
+                'baru' => $pusatStock['Baru'],
+                'baik' => $pusatStock['Baik'],
+                'rusak' => $pusatStock['Rusak'],
+                'afkir' => $pusatStock['Afkir'],
+                'layak_edar' => $pusatStock['Baru'] + $pusatStock['Baik'],
                 'capacity' => $capacity,
                 'updated_at' => $lastUpdate,
             ]);
 
+            // Baris untuk SPBE/BPT (Global)
             $rows->push([
                 'material' => $material,
                 'gudang' => 'SPBE/BPT (Global)',
-                'baru' => $fasilitasStock['baru'],
-                'baik' => $fasilitasStock['baik'],
-                'rusak' => $fasilitasStock['rusak'],
-                'afkir' => $fasilitasStock['afkir'],
-                'layak_edar' => $fasilitasStock['baru'] + $fasilitasStock['baik'],
+                'baru' => $fasilitasStock['Baru'],
+                'baik' => $fasilitasStock['Baik'],
+                'rusak' => $fasilitasStock['Rusak'],
+                'afkir' => $fasilitasStock['Afkir'],
+                'layak_edar' => $fasilitasStock['Baru'] + $fasilitasStock['Baik'],
                 'capacity' => $capacity,
                 'updated_at' => $lastUpdate,
             ]);
