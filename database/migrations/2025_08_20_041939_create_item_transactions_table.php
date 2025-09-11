@@ -26,15 +26,20 @@ return new class extends Migration {
             $table->integer('jumlah');
             $table->integer('stok_awal_asal')->nullable()->comment('Stok asal SEBELUM transaksi');
             $table->integer('stok_akhir_asal')->nullable()->comment('Stok asal SETELAH transaksi');
+
+            // ✅ DITAMBAHKAN: Kolom untuk mencatat stok tujuan
+            $table->integer('stok_awal_tujuan')->nullable()->comment('Stok tujuan SEBELUM transaksi');
+            $table->integer('stok_akhir_tujuan')->nullable()->comment('Stok tujuan SETELAH transaksi');
+
             $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales', 'pemusnahan']);
             $table->string('tahapan')->nullable();
-            $table->string('status')->default('proses'); // misalnya
+            $table->string('status')->default('proses');
 
             // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
             $table->text('keterangan_transaksi')->nullable();
-            $table->string('penanggungjawab', 255)->nullable(); // Kolom penanggung jawab
+            $table->string('penanggungjawab', 255)->nullable();
 
             // Kolom Tambahan untuk Pemusnahan
             $table->date('tanggal_pemusnahan')->nullable();

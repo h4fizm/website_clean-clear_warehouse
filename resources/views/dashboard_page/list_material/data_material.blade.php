@@ -63,7 +63,6 @@
 
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-material">
-                        {{-- ... Thead ... --}}
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -73,7 +72,6 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Pemusnahan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
@@ -82,8 +80,8 @@
                         <tbody>
                             @forelse ($items as $item)
                                 @php
-                                    // Perhitungan stok akhir di sisi tampilan menggunakan data dari subquery
-                                    $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
+                                    // Perhitungan stok akhir di sisi tampilan
+                                    $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
                                     $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
                                 @endphp
                                 <tr>
@@ -96,7 +94,6 @@
                                     <td class="text-center"><span class="badge bg-gradient-primary text-white text-xs">{{ number_format($item->penerimaan_total) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-info text-white text-xs">{{ number_format($item->penyaluran_total) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($item->sales_total) }} pcs</span></td>
-                                    <td class="text-center"><span class="badge bg-gradient-danger text-white text-xs">{{ number_format($item->pemusnahan_total) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">{{ number_format($stok_akhir_calc) }} pcs</span></td>
                                     <td class="text-center">
                                         <p class="text-xs text-secondary font-weight-bold mb-0">
@@ -127,7 +124,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
+                                <tr><td colspan="10" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -203,24 +200,17 @@
                     @csrf
                     <input type="hidden" id="modal-item-id" name="item_id">
 
-                    {{-- File: resources/views/materials/index.blade.php (di dalam #transaksiMaterialModal) --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
-                                <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-transfer" value="transfer" checked>
+                                <label class="form-check-label" for="jenis-transfer">Transfer Material</label>
                             </div>
-                            <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
-                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
-                            </div>
-                            
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
                                 <label class="form-check-label" for="jenis-sales">Sales</label>
                             </div>
-
                         </div>
                     </div>
 
@@ -245,7 +235,7 @@
                             <input type="text" class="form-control" id="no-surat-persetujuan" name="no_surat_persetujuan" placeholder="(Opsional)">
                         </div>
                         <div class="col-md-6 mb-3">
-                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
                             <input type="text" class="form-control" id="no-ba-serah-terima" name="no_ba_serah_terima" placeholder="(Opsional)">
                         </div>
                     </div>
@@ -325,7 +315,7 @@
                     <input type="text" class="form-control facility-search" placeholder="Cari Lokasi..." autocomplete="off">
                     <input type="hidden" name="${nameAttr}">
                     <div class="list-group position-absolute w-100 shadow-sm facility-suggestions" 
-                         style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                            style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             `;
         }

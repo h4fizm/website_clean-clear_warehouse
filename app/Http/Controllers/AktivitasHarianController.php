@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class AktivitasHarianController extends Controller
 {
@@ -21,7 +22,6 @@ class AktivitasHarianController extends Controller
 
         // Membangun kueri dasar dengan eager loading untuk performa
         $query = ItemTransaction::with([
-            // PERBAIKAN: Hapus withTrashed() karena model Item tidak menggunakannya
             'item',
             'user',
             'facilityFrom',
@@ -33,6 +33,7 @@ class AktivitasHarianController extends Controller
         // Memastikan hanya transaksi non-pemusnahan yang ditampilkan secara default
         $query->where(function ($q) use ($jenisTransaksi) {
             if (!$jenisTransaksi) {
+                // ✅ PERBAIKAN: Menampilkan semua transaksi kecuali 'pemusnahan'
                 $q->where('jenis_transaksi', '!=', 'pemusnahan');
             } else {
                 $q->where('jenis_transaksi', $jenisTransaksi);
@@ -55,18 +56,22 @@ class AktivitasHarianController extends Controller
                     $userQuery->where('name', 'like', "%{$search}%");
                 });
 
+                // ✅ PERBAIKAN: Menggunakan `whereHas` untuk relasi `facilityFrom`
                 $subQuery->orWhereHas('facilityFrom', function ($facilityQuery) use ($search) {
                     $facilityQuery->where('name', 'like', "%{$search}%");
                 });
 
+                // ✅ PERBAIKAN: Menggunakan `whereHas` untuk relasi `facilityTo`
                 $subQuery->orWhereHas('facilityTo', function ($facilityQuery) use ($search) {
                     $facilityQuery->where('name', 'like', "%{$search}%");
                 });
 
+                // ✅ PERBAIKAN: Menggunakan `whereHas` untuk relasi `regionFrom`
                 $subQuery->orWhereHas('regionFrom', function ($regionQuery) use ($search) {
                     $regionQuery->where('name_region', 'like', "%{$search}%");
                 });
 
+                // ✅ PERBAIKAN: Menggunakan `whereHas` untuk relasi `regionTo`
                 $subQuery->orWhereHas('regionTo', function ($regionQuery) use ($search) {
                     $regionQuery->where('name_region', 'like', "%{$search}%");
                 });
@@ -86,7 +91,6 @@ class AktivitasHarianController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Mengembalikan tampilan dengan data yang telah difilter dan parameter filter
         return view('dashboard_page.aktivitas_harian.data_transaksi', compact(
             'transactions',
             'search',
@@ -98,7 +102,6 @@ class AktivitasHarianController extends Controller
 
     /**
      * Metode untuk mencatat transaksi secara terpusat.
-     * Ini digunakan sebagai endpoint API oleh controller lain.
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -107,7 +110,8 @@ class AktivitasHarianController extends Controller
         $validator = Validator::make($request->all(), [
             'item_id' => 'required|exists:items,id',
             'user_id' => 'required|exists:users,id',
-            'jenis_transaksi' => 'required|in:penyaluran,penerimaan,sales,pemusnahan',
+            // ✅ PERBAIKAN: Tambahkan 'transfer' ke dalam aturan validasi
+            'jenis_transaksi' => 'required|in:penyaluran,penerimaan,sales,pemusnahan,transfer',
             'jumlah' => 'required|integer|min:1',
             'stok_awal_asal' => 'required|integer',
             'stok_akhir_asal' => 'required|integer',
@@ -131,7 +135,6 @@ class AktivitasHarianController extends Controller
 
         try {
             ItemTransaction::create($request->all());
-
             return response()->json(['success' => true, 'message' => 'Transaksi berhasil dicatat.'], 201);
         } catch (\Exception $e) {
             \Log::error('Log Transaksi Error: ' . $e->getMessage());

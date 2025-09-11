@@ -21,6 +21,9 @@ class ItemTransaction extends Model
         'jumlah',
         'stok_awal_asal',
         'stok_akhir_asal',
+        // ✅ Perbaikan: Tambahkan kolom-kolom ini ke dalam fillable
+        'stok_awal_tujuan',
+        'stok_akhir_tujuan',
         'jenis_transaksi',
         'tujuan_sales',
         'no_surat_persetujuan',
