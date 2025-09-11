@@ -79,7 +79,7 @@ class UppMaterialController extends Controller
             'noSurat' => 'required|string|max:255|unique:item_transactions,no_surat_persetujuan',
             'tanggal' => 'required|date',
             'tahapan' => 'required|string|max:255',
-            'pjUser' => 'required|string|max:255',
+            'penanggungjawab' => 'required|string|max:255',
             'keterangan' => 'required|string',
             'materials' => 'required|array|min:1',
             'materials.*.id' => 'required|integer|exists:items,id',
@@ -99,6 +99,7 @@ class UppMaterialController extends Controller
 
             $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
             $userId = Auth::id();
+            $stockErrors = [];
 
             foreach ($request->materials as $materialData) {
                 $item = Item::findOrFail($materialData['id']);
@@ -107,19 +108,28 @@ class UppMaterialController extends Controller
                     throw new \Exception("Material {$item->nama_material} bukan kategori afkir.");
                 }
 
-                ItemTransaction::create([
-                    'item_id' => $item->id,
-                    'user_id' => $userId,
-                    'region_from' => $pusatRegion->id,
-                    'region_to' => $pusatRegion->id,
-                    'jumlah' => $materialData['jumlah_diambil'],
-                    'jenis_transaksi' => 'pemusnahan',
-                    'no_surat_persetujuan' => $request->noSurat,
-                    'keterangan_transaksi' => $request->keterangan,
-                    'tahapan' => $request->tahapan,
-                    'status' => 'proses',
-                    'created_at' => Carbon::parse($request->tanggal),
-                ]);
+                if ($item->stok_akhir < $materialData['jumlah_diambil']) {
+                    $stockErrors[] = "Stok material '{$item->nama_material}' tidak mencukupi. Stok tersedia: {$item->stok_akhir} pcs.";
+                } else {
+                    ItemTransaction::create([
+                        'item_id' => $item->id,
+                        'user_id' => $userId,
+                        'region_from' => $pusatRegion->id,
+                        'region_to' => $pusatRegion->id,
+                        'jumlah' => $materialData['jumlah_diambil'],
+                        'jenis_transaksi' => 'pemusnahan',
+                        'no_surat_persetujuan' => $request->noSurat,
+                        'keterangan_transaksi' => $request->keterangan,
+                        'tahapan' => $request->tahapan,
+                        'penanggungjawab' => $request->penanggungjawab,
+                        'status' => 'proses',
+                        'created_at' => Carbon::parse($request->tanggal),
+                    ]);
+                }
+            }
+
+            if (!empty($stockErrors)) {
+                throw new \Exception(implode("<br>", $stockErrors));
             }
 
             DB::commit();
@@ -133,7 +143,7 @@ class UppMaterialController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Gagal menyimpan pengajuan: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -168,7 +178,7 @@ class UppMaterialController extends Controller
      */
     public function edit($no_surat)
     {
-        $transactions = ItemTransaction::with('item', 'user')
+        $transactions = ItemTransaction::with('item')
             ->where('no_surat_persetujuan', $no_surat)
             ->where('jenis_transaksi', 'pemusnahan')
             ->get();
@@ -179,7 +189,6 @@ class UppMaterialController extends Controller
 
         $firstTransaction = $transactions->first();
 
-        // Perbaikan: Ambil stok akhir saat ini dari item
         $materialsWithCurrentStock = $transactions->map(function ($transaction) {
             $item = Item::find($transaction->item_id);
             $currentStock = $item->stok_akhir ?? 0;
@@ -199,19 +208,19 @@ class UppMaterialController extends Controller
             'keterangan' => $firstTransaction->keterangan_transaksi,
             'tanggal_pemusnahan' => $firstTransaction->tanggal_pemusnahan,
             'aktivitas_pemusnahan' => $firstTransaction->aktivitas_pemusnahan,
+            'penanggungjawab' => $firstTransaction->penanggungjawab,
             'materials' => $materialsWithCurrentStock,
             'status' => $firstTransaction->status,
         ];
 
-        $pjUser = $firstTransaction->user->name ?? '';   // kosongkan kalau null
-        $tahapan = $firstTransaction->tahapan ?? '';     // kosongkan kalau null
+        $tahapan = $firstTransaction->tahapan ?? '';
 
-        return view('dashboard_page.upp_material.preview_upp', compact('upp', 'pjUser', 'tahapan'));
-
+        return view('dashboard_page.upp_material.preview_upp', compact('upp', 'tahapan'));
     }
 
     /**
      * Memperbarui pengajuan UPP yang sudah ada.
+     * Metode ini hanya meng-update data, bukan status atau stok.
      */
     public function update(Request $request, $no_surat)
     {
@@ -219,9 +228,9 @@ class UppMaterialController extends Controller
             'no_surat_baru' => 'required|string|max:255',
             'tanggal_pengajuan' => 'required|date',
             'tahapan' => 'required|string|max:255',
-            'pj_user' => 'required|string|max:255',
-            'tanggal_pemusnahan' => 'required|date',
-            'aktivitas_pemusnahan' => 'required|string',
+            'penanggungjawab' => 'required|string|max:255',
+            'tanggal_pemusnahan' => 'nullable|date',
+            'aktivitas_pemusnahan' => 'nullable|string',
             'keterangan' => 'required|string',
             'materials' => 'required|array|min:1',
             'materials.*.item_id' => 'required|integer|exists:items,id',
@@ -249,6 +258,12 @@ class UppMaterialController extends Controller
                 }
             }
 
+            // Dapatkan status saat ini sebelum dihapus
+            $currentStatus = ItemTransaction::where('no_surat_persetujuan', $no_surat)
+                ->first()
+                ->status ?? 'proses';
+
+            // Hapus semua transaksi lama terkait nomor surat ini
             ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->delete();
@@ -256,31 +271,24 @@ class UppMaterialController extends Controller
             $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
             $userId = Auth::id();
 
+            // Buat transaksi baru dengan data yang di-update
             foreach ($request->materials as $materialData) {
                 $item = Item::findOrFail($materialData['item_id']);
 
-                if (strtolower($item->kategori_material) !== 'afkir') {
-                    throw new \Exception("Material {$item->nama_material} bukan kategori afkir.");
-                }
-
-                $stokAwalAsal = $item->stok_akhir;
-                $stokAkhirAsal = $stokAwalAsal - $materialData['jumlah'];
-
                 ItemTransaction::create([
                     'item_id' => $item->id,
-                    'pj_user' => $request->pjUser,
+                    'user_id' => $userId,
+                    'penanggungjawab' => $request->penanggungjawab,
                     'region_from' => $pusatRegion->id,
                     'region_to' => $pusatRegion->id,
                     'jumlah' => $materialData['jumlah'],
-                    'stok_awal_asal' => $stokAwalAsal,
-                    'stok_akhir_asal' => $stokAkhirAsal,
                     'jenis_transaksi' => 'pemusnahan',
                     'no_surat_persetujuan' => $request->no_surat_baru,
                     'keterangan_transaksi' => $request->keterangan,
                     'tanggal_pemusnahan' => $request->tanggal_pemusnahan,
                     'aktivitas_pemusnahan' => $request->aktivitas_pemusnahan,
                     'tahapan' => $request->tahapan,
-                    'status' => 'proses',
+                    'status' => $currentStatus, // Pertahankan status yang ada
                     'created_at' => Carbon::parse($request->tanggal_pengajuan),
                 ]);
             }
@@ -289,20 +297,20 @@ class UppMaterialController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Pengajuan UPP berhasil diperbarui dan stok universal telah disesuaikan.',
-                'redirect' => route('upp-material.index')
+                'message' => 'Pengajuan UPP berhasil diperbarui.',
+                'redirect' => route('upp-material.edit', $request->no_surat_baru)
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Gagal memperbarui pengajuan: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Metode untuk mengubah status UPP.
+     * Metode untuk mengubah status UPP dan memproses stok.
      */
     public function changeStatus(Request $request, $no_surat)
     {

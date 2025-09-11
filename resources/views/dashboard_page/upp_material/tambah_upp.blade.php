@@ -27,8 +27,8 @@
                             <input type="text" class="form-control" id="tahapan" name="tahapan" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="pjUser" class="form-label">Penanggung Jawab</label>
-                            <input type="text" class="form-control" id="pjUser" name="pjUser" required>
+                            <label for="penanggungjawab" class="form-label">Penanggung Jawab</label>
+                            <input type="text" class="form-control" id="penanggungjawab" name="penanggungjawab" required>
                         </div>
                     </div>
 
@@ -105,7 +105,6 @@
 @push('scripts')
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
     let keteranganEditor;
     let selectedMaterials = {};
@@ -201,12 +200,13 @@
                     <td>
                         <h6 class="mb-0 text-sm">${item.nama}</h6>
                         <p class="text-xs text-secondary mb-0">Kode: ${item.kode}</p>
+                        <input type="hidden" name="materials[${item.id}][item_id]" value="${item.id}">
                     </td>
                     <td>
                         <span>${item.stok} pcs</span>
                     </td>
                     <td>
-                        <input type="number" class="form-control form-control-sm jumlah-diambil" id="${uniqueId}" data-id="${item.id}" value="${item.jumlah_diambil || ''}" min="1" max="${item.stok}" required>
+                        <input type="number" class="form-control form-control-sm jumlah-diambil" id="${uniqueId}" data-id="${item.id}" name="materials[${item.id}][jumlah_diambil]" value="${item.jumlah_diambil || ''}" min="1" max="${item.stok}" required>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-sm remove-material-btn" data-id="${item.id}">
@@ -229,6 +229,10 @@
                 });
             });
             
+            attachRemoveListeners();
+        }
+
+        function attachRemoveListeners() {
             document.querySelectorAll('.remove-material-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -240,11 +244,19 @@
         
         document.getElementById('addSelectedMaterialsBtn').addEventListener('click', function() {
             const checkboxes = document.querySelectorAll('#materialList input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Pilih Material',
+                    text: 'Anda harus memilih setidaknya satu material.',
+                });
+                return;
+            }
             checkboxes.forEach(checkbox => {
                 const id = parseInt(checkbox.value);
                 const material = allMaterials.find(item => item.id === id);
                 if (material && !selectedMaterials[id]) {
-                    selectedMaterials[id] = { ...material, jumlah_diambil: '' };
+                    selectedMaterials[id] = { ...material, jumlah_diambil: 1 };
                 }
             });
             
@@ -263,25 +275,11 @@
             const noSurat = document.getElementById('noSurat').value;
             const tanggal = document.getElementById('tanggal').value;
             const tahapan = document.getElementById('tahapan').value;
-            const pjUser = document.getElementById('pjUser').value;
+            const penanggungjawab = document.getElementById('penanggungjawab').value;
             const keterangan = keteranganEditor.getData();
 
-            if (!noSurat || !tanggal || !tahapan || !pjUser || keterangan.trim() === '') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Form Belum Lengkap',
-                    text: 'Pastikan semua kolom form utama telah diisi.',
-                });
-                return;
-            }
-
             if (Object.keys(selectedMaterials).length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Material Belum Dipilih',
-                    text: 'Silakan pilih setidaknya satu material untuk diajukan.',
-                });
-                return;
+                return Swal.fire('Gagal!', 'Silakan pilih setidaknya satu material untuk diajukan.', 'error');
             }
             
             const materialsToSubmit = [];
@@ -291,11 +289,20 @@
                 const inputJumlah = document.getElementById(`jumlah-diambil-${id}`);
                 const value = parseInt(inputJumlah.value);
 
-                if (isNaN(value) || value <= 0 || value > item.stok) {
+                if (isNaN(value) || value <= 0) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Jumlah Tidak Valid',
-                        text: `Jumlah diambil untuk material "${item.nama}" tidak valid. Harap isi dengan angka antara 1 sampai ${item.stok}.`,
+                        text: `Jumlah diambil untuk material "${item.nama}" harus lebih dari 0.`,
+                    });
+                    isValid = false;
+                    break;
+                }
+                if (value > item.stok) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stok Tidak Cukup',
+                        text: `Jumlah diambil untuk material "${item.nama}" (${value}) tidak boleh melebihi stok yang tersedia (${item.stok}).`,
                     });
                     isValid = false;
                     break;
@@ -320,7 +327,7 @@
                         noSurat: noSurat,
                         tanggal: tanggal,
                         tahapan: tahapan,
-                        pjUser: pjUser,
+                        penanggungjawab: penanggungjawab,
                         keterangan: keterangan,
                         materials: materialsToSubmit,
                     };
@@ -337,12 +344,38 @@
                         body: JSON.stringify(formData)
                     })
                     .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(errorData => {
-                                throw new Error(errorData.message || 'Terjadi kesalahan saat menyimpan data.');
-                            });
-                        }
-                        return response.json();
+                        return response.json().then(data => {
+                            if (!response.ok) {
+                                let errorMessage = data.message || 'Terjadi kesalahan saat memproses permintaan.';
+                                if (data.errors) {
+                                    let errorsHtml = '<ul>';
+                                    for (const key in data.errors) {
+                                        if (data.errors.hasOwnProperty(key)) {
+                                            const errorMsg = data.errors[key][0];
+                                            let friendlyMsg = errorMsg;
+                                            if (errorMsg.includes('no surat persetujuan has already been taken')) {
+                                                friendlyMsg = "Nomor Surat sudah digunakan. Mohon gunakan nomor lain.";
+                                            } else if (errorMsg.includes('The no surat field is required')) {
+                                                friendlyMsg = "Kolom Nomor Surat wajib diisi.";
+                                            } else if (errorMsg.includes('materials.min')) {
+                                                friendlyMsg = "Anda harus memilih setidaknya satu material.";
+                                            }
+                                            errorsHtml += `<li>${friendlyMsg}</li>`;
+                                        }
+                                    }
+                                    errorsHtml += '</ul>';
+                                    errorMessage = errorsHtml;
+                                }
+
+                                Swal.fire({
+                                    title: 'Gagal!',
+                                    html: errorMessage,
+                                    icon: 'error'
+                                });
+                                throw new Error(errorMessage);
+                            }
+                            return data;
+                        });
                     })
                     .then(data => {
                         if (data.success) {
@@ -356,24 +389,16 @@
                                 window.location.href = data.redirect;
                             });
                         } else {
-                            let errorMessage = data.message || 'Terjadi kesalahan saat menyimpan data.';
-                            if (data.errors) {
-                                errorMessage = Object.values(data.errors).flat().join('<br>');
-                            }
                             Swal.fire({
                                 title: 'Gagal!',
-                                html: errorMessage,
+                                html: data.message,
                                 icon: 'error'
                             });
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Terjadi Kesalahan',
-                            text: error.message || 'Gagal terhubung ke server.',
-                            icon: 'error'
-                        });
+                        // Pesan sudah ditampilkan di then() sebelumnya, jadi tidak perlu di sini
                     });
                 }
             });
@@ -381,6 +406,11 @@
 
         // Set tanggal pengajuan default ke hari ini
         document.getElementById('tanggal').value = new Date().toISOString().slice(0, 10);
+        // Tanggal pengajuan harus dalam format hari, tanggal bulan tahun
+        const tanggalInput = document.getElementById('tanggal');
+        const today = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        tanggalInput.placeholder = today.toLocaleDateString('id-ID', options);
     });
 </script>
 @endpush

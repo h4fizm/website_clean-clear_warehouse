@@ -30,6 +30,7 @@ class ItemTransaction extends Model
         'status',
         'tanggal_pemusnahan',
         'aktivitas_pemusnahan',
+        'penanggungjawab',
     ];
 
     /*

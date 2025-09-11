@@ -34,6 +34,7 @@ return new class extends Migration {
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
             $table->text('keterangan_transaksi')->nullable();
+            $table->string('penanggungjawab', 255)->nullable(); // Kolom penanggung jawab
 
             // Kolom Tambahan untuk Pemusnahan
             $table->date('tanggal_pemusnahan')->nullable();
