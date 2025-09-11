@@ -192,6 +192,9 @@
                 <div class="card p-3 mb-3 bg-light border">
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">NAMA MATERIAL</p>
                     <p class="mb-2 text-sm font-weight-bold" id="modal-nama-material"></p>
+                    {{-- Tambahkan baris untuk Kode Material --}}
+                    <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">KODE MATERIAL</p>
+                    <p class="mb-2 text-sm font-weight-bold" id="modal-kode-material"></p>
                     <p class="mb-1 text-xs text-secondary font-weight-bolder opacity-7">STOK SAAT INI DI LOKASI INI</p>
                     <p class="mb-0 text-sm font-weight-bold" id="modal-stok-akhir"></p>
                 </div>
@@ -199,13 +202,18 @@
                 <form id="transaksiMaterialForm" onsubmit="return false;">
                     @csrf
                     <input type="hidden" id="modal-item-id" name="item_id">
+                    <input type="hidden" id="modal-kode-material-hidden" name="kode_material">
 
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-transfer" value="transfer" checked>
-                                <label class="form-check-label" for="jenis-transfer">Transfer Material</label>
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran</label>
+                            </div>
+                            <div class="form-check me-4">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
+                                <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
@@ -215,12 +223,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="asal-container" class="form-label">Asal Transaksi</label>
+                        <label id="asal-label" class="form-label">Asal Transaksi</label>
                         <div id="asal-container"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="tujuan-container" class="form-label">Tujuan Transaksi</label>
+                        <label id="tujuan-label" class="form-label">Tujuan Transaksi</label>
                         <div id="tujuan-container"></div>
                     </div>
                     
@@ -299,16 +307,19 @@
 {{-- Script Transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Asumsi variabel $locations dan $facility tersedia dari controller
         const locations = @json($locations);
         const currentFacility = @json($facility);
         const transaksiModal = document.getElementById('transaksiMaterialModal');
         const form = document.getElementById('transaksiMaterialForm');
 
+        // Fungsi untuk membuat input teks non-editable (readonly)
         const readonlyInputHTML = (loc, nameAttr) => `
             <input type="text" class="form-control" value="${loc.name}" readonly>
             <input type="hidden" name="${nameAttr}" value="${loc.id}">
         `;
 
+        // Fungsi untuk membuat input teks dengan fitur pencarian (autocomplete)
         function createSearchInputHTML(nameAttr) {
             return `
                 <div class="position-relative w-100">
@@ -319,15 +330,33 @@
                 </div>
             `;
         }
+
+        // Fungsi untuk membuat dropdown tujuan sales
+        function createSalesDropdownHTML(nameAttr) {
+            return `
+                <select class="form-select" name="${nameAttr}">
+                    <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
+                    <option value="Vendor UPP">Vendor UPP</option>
+                    <option value="Sales Agen">Sales Agen</option>
+                    <option value="Sales BPT">Sales BPT</option>
+                    <option value="Sales SPBE">Sales SPBE</option>
+                </select>
+            `;
+        }
         
+        // Fungsi untuk menginisialisasi fitur pencarian
         function initSearchbar(container, availableLocations, nameAttr) {
             const searchInput = container.querySelector(".facility-search");
             const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
             const suggestionsBox = container.querySelector(".facility-suggestions");
 
+            if (!searchInput) return;
+
             searchInput.addEventListener("input", function() {
                 const query = this.value.toLowerCase();
                 suggestionsBox.innerHTML = "";
+                hiddenInput.value = ""; // Reset hidden input saat mulai mengetik
+                
                 if (!query) {
                     suggestionsBox.style.display = "none";
                     return;
@@ -352,28 +381,29 @@
                     suggestionsBox.style.display = "none";
                 }
             });
-        }
 
-        function createSalesDropdownHTML(nameAttr) {
-            return `
-                <select class="form-select" name="${nameAttr}">
-                    <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
-                    <option value="Vendor UPP">Vendor UPP</option>
-                    <option value="Sales Agen">Sales Agen</option>
-                    <option value="Sales BPT">Sales BPT</option>
-                    <option value="Sales SPBE">Sales SPBE</option>
-                </select>
-            `;
+            document.addEventListener('click', function(e) {
+                if (!container.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
         }
-
+        
+        // Fungsi untuk memperbarui form UI berdasarkan jenis transaksi
         function updateFormUI() {
             const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
-            const asalLabel = document.querySelector('label[for="asal-container"]');
-            const tujuanLabel = document.querySelector('label[for="tujuan-container"]');
+            const asalLabel = document.getElementById('asal-label');
+            const tujuanLabel = document.getElementById('tujuan-label');
+            // Filter lokasi lain yang tidak sama dengan lokasi saat ini
             const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
 
+            // Hapus input yang ada di dalam container
+            asalContainer.innerHTML = '';
+            tujuanContainer.innerHTML = '';
+
+            // Tentukan form yang akan dimuat berdasarkan jenis transaksi
             if (selectedType === 'penyaluran') {
                 asalLabel.textContent = "Asal Penyaluran";
                 tujuanLabel.textContent = "Tujuan Penyaluran";
@@ -384,8 +414,8 @@
                 asalLabel.textContent = "Asal Penerimaan";
                 tujuanLabel.textContent = "Tujuan Penerimaan";
                 asalContainer.innerHTML = createSearchInputHTML("asal_id");
-                initSearchbar(asalContainer, otherLocations, "asal_id");
                 tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
+                initSearchbar(asalContainer, otherLocations, "asal_id");
             } else if (selectedType === 'sales') {
                 asalLabel.textContent = "Asal Transaksi";
                 tujuanLabel.textContent = "Tujuan Sales";
@@ -394,71 +424,127 @@
             }
         }
 
+        // Event listener saat modal transaksi terbuka
         transaksiModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             form.reset();
+
+            // Simpan item_id dan kode_material dari tombol yang diklik ke dataset form
+            form.dataset.itemId = button.getAttribute('data-item-id');
             form.dataset.kodeMaterial = button.getAttribute('data-kode-material');
 
+            // Set jenis transaksi default
             document.getElementById('jenis-penyaluran').checked = true;
             updateFormUI();
 
             document.getElementById('modal-item-id').value = button.getAttribute('data-item-id');
             document.getElementById('modal-nama-material').textContent = button.getAttribute('data-nama-material');
+            document.getElementById('modal-kode-material').textContent = button.getAttribute('data-kode-material');
             document.getElementById('modal-stok-akhir').textContent = `${parseInt(button.getAttribute('data-stok-akhir')).toLocaleString('id-ID')} pcs`;
-            document.getElementById('tanggal-transaksi').value = '2025-08-11';
+            
+            // Mengisi tanggal secara otomatis
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            document.getElementById('tanggal-transaksi').value = `${year}-${month}-${day}`;
         });
 
+        // Event listener saat radio button jenis transaksi berubah
         document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', updateFormUI);
         });
 
+        // Event listener untuk tombol submit
         document.getElementById('submitTransaksi').addEventListener('click', function() {
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
             data.kode_material = form.dataset.kodeMaterial;
+            const jenisTransaksi = document.querySelector('input[name="jenis_transaksi"]:checked').value;
+            data.jenis_transaksi = jenisTransaksi;
+
+            // Validasi di sisi klien
+            let isValid = true;
+            if (jenisTransaksi === 'penyaluran' && !data.tujuan_id) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih Tujuan Penyaluran!' });
+                isValid = false;
+            }
+            if (jenisTransaksi === 'penerimaan' && !data.asal_id) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih Asal Penerimaan!' });
+                isValid = false;
+            }
+            if (jenisTransaksi === 'sales' && !data.tujuan_sales) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih Tujuan Sales!' });
+                isValid = false;
+            }
+            if (!data.jumlah || data.jumlah <= 0) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Jumlah harus lebih dari 0!' });
+                isValid = false;
+            }
+            if (!data.tanggal_transaksi) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tanggal transaksi harus diisi!' });
+                isValid = false;
+            }
+
+            if (!isValid) return;
 
             fetch('{{ route("materials.transaction") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': data._token,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: result.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            bootstrap.Modal.getInstance(transaksiModal).hide();
-                            window.location.reload();
-                        });
-                    } else if (result.errors) {
-                        let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal Validasi',
-                            html: `<ul class="text-start mb-0 ps-3">${errorMessages}</ul>`
-                        });
-                    } else {
-                        throw new Error(result.message || 'Terjadi kesalahan.');
-                    }
-                })
-                .catch(error => {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': data._token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        let errorMessage = 'Terjadi kesalahan pada server. Mohon coba lagi.';
+                        if (errorData.message) {
+                            errorMessage = errorData.message;
+                        } else if (response.status === 422 && errorData.errors) {
+                             const validationErrors = Object.values(errorData.errors).flat().join('<br>');
+                             errorMessage = `<strong>Gagal Validasi:</strong><br>${validationErrors}`;
+                        }
+                        return Promise.reject(new Error(errorMessage));
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: result.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        bootstrap.Modal.getInstance(transaksiModal).hide();
+                        window.location.reload();
+                    });
+                } else if (result.errors) {
+                    let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops... Terjadi Kesalahan',
-                        text: error.message
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start mb-0 ps-3">${errorMessages}</ul>`
                     });
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops... Terjadi Kesalahan',
+                    html: error.message
                 });
+            });
         });
     });
 </script>
+
 @endpush
