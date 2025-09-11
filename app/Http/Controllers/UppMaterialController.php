@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\UppMaterialExport;
+use Illuminate\Validation\ValidationException;
 
 class UppMaterialController extends Controller
 {
@@ -55,16 +56,8 @@ class UppMaterialController extends Controller
     public function getMaterials()
     {
         $materials = Item::where('kategori_material', 'afkir')
-            ->get()
-            ->map(function ($item) {
-                // Menggunakan stok_akhir universal dari tabel items
-                return [
-                    'id' => $item->id,
-                    'nama_material' => $item->nama_material,
-                    'kode_material' => $item->kode_material,
-                    'stok_akhir' => $item->stok_akhir ?? 0,
-                ];
-            });
+            ->select('id', 'nama_material', 'kode_material', 'stok_akhir')
+            ->get();
 
         return response()->json($materials);
     }
@@ -186,6 +179,19 @@ class UppMaterialController extends Controller
 
         $firstTransaction = $transactions->first();
 
+        // Perbaikan: Ambil stok akhir saat ini dari item
+        $materialsWithCurrentStock = $transactions->map(function ($transaction) {
+            $item = Item::find($transaction->item_id);
+            $currentStock = $item->stok_akhir ?? 0;
+            return [
+                'id' => $transaction->item->id,
+                'nama_material' => $transaction->item->nama_material,
+                'kode_material' => $transaction->item->kode_material,
+                'stok_akhir_pusat' => $currentStock,
+                'jumlah_diajukan' => $transaction->jumlah,
+            ];
+        });
+
         $upp = [
             'no_surat' => $no_surat,
             'tgl_buat' => $transactions->min('created_at'),
@@ -193,14 +199,15 @@ class UppMaterialController extends Controller
             'keterangan' => $firstTransaction->keterangan_transaksi,
             'tanggal_pemusnahan' => $firstTransaction->tanggal_pemusnahan,
             'aktivitas_pemusnahan' => $firstTransaction->aktivitas_pemusnahan,
-            'materials' => $transactions,
+            'materials' => $materialsWithCurrentStock,
             'status' => $firstTransaction->status,
         ];
 
-        $pjUser = $firstTransaction->user->name ?? '-';
-        $tahapan = $firstTransaction->tahapan ?? '-';
+        $pjUser = $firstTransaction->user->name ?? '';   // kosongkan kalau null
+        $tahapan = $firstTransaction->tahapan ?? '';     // kosongkan kalau null
 
         return view('dashboard_page.upp_material.preview_upp', compact('upp', 'pjUser', 'tahapan'));
+
     }
 
     /**
@@ -219,7 +226,6 @@ class UppMaterialController extends Controller
             'materials' => 'required|array|min:1',
             'materials.*.item_id' => 'required|integer|exists:items,id',
             'materials.*.jumlah' => 'required|integer|min:1',
-            'status' => 'required|in:proses,done',
         ]);
 
         if ($validator->fails()) {
@@ -243,17 +249,6 @@ class UppMaterialController extends Controller
                 }
             }
 
-            $oldTransactions = ItemTransaction::where('no_surat_persetujuan', $no_surat)
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->get();
-
-            $currentStatus = $oldTransactions->first()->status ?? 'proses';
-            $newStatus = strtolower($request->status);
-
-            if ($currentStatus === 'done' && $newStatus === 'proses') {
-                $this->restoreStock($oldTransactions);
-            }
-
             ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->delete();
@@ -268,29 +263,26 @@ class UppMaterialController extends Controller
                     throw new \Exception("Material {$item->nama_material} bukan kategori afkir.");
                 }
 
-                if ($newStatus === 'done') {
-                    $this->reduceStock($item, $materialData['jumlah']);
-                }
+                $stokAwalAsal = $item->stok_akhir;
+                $stokAkhirAsal = $stokAwalAsal - $materialData['jumlah'];
 
                 ItemTransaction::create([
                     'item_id' => $item->id,
-                    'user_id' => $userId,
+                    'pj_user' => $request->pjUser,
                     'region_from' => $pusatRegion->id,
                     'region_to' => $pusatRegion->id,
                     'jumlah' => $materialData['jumlah'],
-                    'stok_awal_asal' => $item->stok_akhir,
-                    'stok_akhir_asal' => $item->stok_akhir,
+                    'stok_awal_asal' => $stokAwalAsal,
+                    'stok_akhir_asal' => $stokAkhirAsal,
                     'jenis_transaksi' => 'pemusnahan',
                     'no_surat_persetujuan' => $request->no_surat_baru,
                     'keterangan_transaksi' => $request->keterangan,
                     'tanggal_pemusnahan' => $request->tanggal_pemusnahan,
                     'aktivitas_pemusnahan' => $request->aktivitas_pemusnahan,
                     'tahapan' => $request->tahapan,
-                    'status' => $newStatus,
+                    'status' => 'proses',
                     'created_at' => Carbon::parse($request->tanggal_pengajuan),
                 ]);
-
-                $item->save();
             }
 
             DB::commit();
@@ -366,28 +358,6 @@ class UppMaterialController extends Controller
     }
 
     /**
-     * Metode baru untuk ekspor data UPP material ke Excel.
-     */
-    public function exportExcel(Request $request)
-    {
-        $request->validate([
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        $filters = [
-            'start_date' => $request->query('start_date'),
-            'end_date' => $request->query('end_date'),
-        ];
-
-        $startDate = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d-m-Y') : 'Awal';
-        $endDate = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d-m-Y') : 'Akhir';
-        $filename = "Laporan UPP Material ({$startDate} - {$endDate}).xlsx";
-
-        return Excel::download(new UppMaterialExport($filters), $filename);
-    }
-
-    /**
      * Mengurangi stok dari koleksi transaksi.
      * @param \Illuminate\Support\Collection $transactions
      * @throws \Exception
@@ -418,5 +388,27 @@ class UppMaterialController extends Controller
                 $item->increment('stok_akhir', $transaction->jumlah);
             }
         }
+    }
+
+    /**
+     * Metode baru untuk ekspor data UPP material ke Excel.
+     */
+    public function exportExcel(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $filters = [
+            'start_date' => $request->query('start_date'),
+            'end_date' => $request->query('end_date'),
+        ];
+
+        $startDate = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d-m-Y') : 'Awal';
+        $endDate = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d-m-Y') : 'Akhir';
+        $filename = "Laporan UPP Material ({$startDate} - {$endDate}).xlsx";
+
+        return Excel::download(new UppMaterialExport($filters), $filename);
     }
 }

@@ -7,6 +7,8 @@ use App\Models\ItemTransaction;
 use App\Exports\TransaksiLogExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class AktivitasHarianController extends Controller
 {
@@ -19,7 +21,8 @@ class AktivitasHarianController extends Controller
 
         // Membangun kueri dasar dengan eager loading untuk performa
         $query = ItemTransaction::with([
-            'item' => fn($q) => $q->withTrashed(),
+            // PERBAIKAN: Hapus withTrashed() karena model Item tidak menggunakannya
+            'item',
             'user',
             'facilityFrom',
             'facilityTo',
@@ -91,6 +94,49 @@ class AktivitasHarianController extends Controller
             'endDate',
             'jenisTransaksi'
         ));
+    }
+
+    /**
+     * Metode untuk mencatat transaksi secara terpusat.
+     * Ini digunakan sebagai endpoint API oleh controller lain.
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logTransaksi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'item_id' => 'required|exists:items,id',
+            'user_id' => 'required|exists:users,id',
+            'jenis_transaksi' => 'required|in:penyaluran,penerimaan,sales,pemusnahan',
+            'jumlah' => 'required|integer|min:1',
+            'stok_awal_asal' => 'required|integer',
+            'stok_akhir_asal' => 'required|integer',
+            'created_at' => 'required|date',
+            'updated_at' => 'required|date',
+            'facility_from' => 'nullable|exists:facilities,id',
+            'facility_to' => 'nullable|exists:facilities,id',
+            'region_from' => 'nullable|exists:regions,id',
+            'region_to' => 'nullable|exists:regions,id',
+            'no_surat_persetujuan' => 'nullable|string',
+            'no_ba_serah_terima' => 'nullable|string',
+            'tujuan_sales' => 'nullable|string|in:Vendor UPP,Sales Agen,Sales BPT,Sales SPBE',
+            'keterangan_transaksi' => 'nullable|string',
+            'tahapan' => 'nullable|string',
+            'status' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            ItemTransaction::create($request->all());
+
+            return response()->json(['success' => true, 'message' => 'Transaksi berhasil dicatat.'], 201);
+        } catch (\Exception $e) {
+            \Log::error('Log Transaksi Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Gagal mencatat transaksi.'], 500);
+        }
     }
 
     public function exportTransaksiExcel(Request $request)

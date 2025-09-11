@@ -266,8 +266,7 @@
             const pjUser = document.getElementById('pjUser').value;
             const keterangan = keteranganEditor.getData();
 
-            // Validasi form utama
-            if (!noSurat || !tanggal || !tahapan || !pjUser) {
+            if (!noSurat || !tanggal || !tahapan || !pjUser || keterangan.trim() === '') {
                 Swal.fire({
                     icon: 'error',
                     title: 'Form Belum Lengkap',
@@ -276,17 +275,6 @@
                 return;
             }
 
-            // Validasi keterangan pengajuan
-            if (keterangan.trim() === '') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Keterangan Kosong',
-                    text: 'Keterangan pengajuan wajib diisi.',
-                });
-                return;
-            }
-
-            // Validasi material dan jumlah
             if (Object.keys(selectedMaterials).length === 0) {
                 Swal.fire({
                     icon: 'error',
@@ -334,10 +322,9 @@
                         tahapan: tahapan,
                         pjUser: pjUser,
                         keterangan: keterangan,
-                        materials: materialsToSubmit
+                        materials: materialsToSubmit,
                     };
                     
-                    // Ambil CSRF token dari meta tag
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                     fetch('{{ route('upp-material.store') }}', {
@@ -345,11 +332,18 @@
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken // Menggunakan token CSRF yang baru diambil
+                            'X-CSRF-TOKEN': csrfToken
                         },
                         body: JSON.stringify(formData)
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => {
+                                throw new Error(errorData.message || 'Terjadi kesalahan saat menyimpan data.');
+                            });
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
@@ -377,7 +371,7 @@
                         console.error('Error:', error);
                         Swal.fire({
                             title: 'Terjadi Kesalahan',
-                            text: 'Gagal terhubung ke server.',
+                            text: error.message || 'Gagal terhubung ke server.',
                             icon: 'error'
                         });
                     });
@@ -385,7 +379,8 @@
             });
         });
 
-        renderSelectedMaterials();
+        // Set tanggal pengajuan default ke hari ini
+        document.getElementById('tanggal').value = new Date().toISOString().slice(0, 10);
     });
 </script>
 @endpush

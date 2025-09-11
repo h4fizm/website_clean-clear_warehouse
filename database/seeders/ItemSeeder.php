@@ -111,10 +111,12 @@ class ItemSeeder extends Seeder
             Item::create([
                 'region_id' => $pusatRegion->id,
                 'facility_id' => null,
-                'nama_material' => $item['nama_material'] . ' - ' . $item['kategori_material'],
+                'nama_material' => $item['nama_material'], // Hapus penambahan kategori di nama material
                 'kode_material' => $item['kode_material'],
                 'kategori_material' => $item['kategori_material'],
                 'stok_awal' => $item['stok_awal'],
+                // Perbaikan: Tambahkan stok_akhir
+                'stok_akhir' => $item['stok_awal'],
                 'created_at' => $item['date'],
                 'updated_at' => $item['date'],
             ]);

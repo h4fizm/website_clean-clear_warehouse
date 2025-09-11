@@ -155,9 +155,14 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:manage aktivitas harian');
 
     // Route untuk halaman log transaksi
-    Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'logTransaksi'])
-        ->name('aktivitas.transaksi') // Menambahkan nama route
-        ->middleware('can:manage aktivitas harian'); // Middleware di sini
+    Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'index'])
+        ->name('aktivitas.transaksi')
+        ->middleware('can:manage aktivitas harian');
+
+    // Route untuk memproses data transaksi (misalnya, dari POST request)
+    Route::post('/aktivitas-transaksi/log', [AktivitasHarianController::class, 'logTransaksi'])
+        ->name('aktivitas.transaksi.log')
+        ->middleware('can:manage aktivitas harian');
 
     // Halaman data UPP
     Route::get('/upp-material', [UppMaterialController::class, 'index'])

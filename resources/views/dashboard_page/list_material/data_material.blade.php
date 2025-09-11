@@ -25,16 +25,16 @@
                             <div class="d-flex align-items-center me-2 mb-3">
                                 <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
                                 <input type="date" name="start_date" id="startDate" 
-                                       class="form-control form-control-sm date-input" 
-                                       style="max-width: 160px;"
-                                       value="{{ $filters['start_date'] ?? '' }}">
+                                        class="form-control form-control-sm date-input" 
+                                        style="max-width: 160px;"
+                                        value="{{ $filters['start_date'] ?? '' }}">
                             </div>
                             <div class="d-flex align-items-center me-2 mb-3">
                                 <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
                                 <input type="date" name="end_date" id="endDate" 
-                                       class="form-control form-control-sm date-input" 
-                                       style="max-width: 160px;"
-                                       value="{{ $filters['end_date'] ?? '' }}">
+                                        class="form-control form-control-sm date-input" 
+                                        style="max-width: 160px;"
+                                        value="{{ $filters['end_date'] ?? '' }}">
                             </div>
                             <div class="align-self-end">
                                 <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
@@ -72,8 +72,8 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
-                                {{-- TAMBAHKAN INI --}}
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Pemusnahan</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
@@ -81,6 +81,11 @@
                         </thead>
                         <tbody>
                             @forelse ($items as $item)
+                                @php
+                                    // Perhitungan stok akhir di sisi tampilan menggunakan data dari subquery
+                                    $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
+                                    $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
+                                @endphp
                                 <tr>
                                     <td class="text-center">
                                         <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($items->currentPage() - 1) * $items->perPage() }}</p>
@@ -90,17 +95,19 @@
                                     <td class="text-center"><span class="badge bg-gradient-secondary text-white text-xs">{{ number_format($item->stok_awal) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-primary text-white text-xs">{{ number_format($item->penerimaan_total) }} pcs</span></td>
                                     <td class="text-center"><span class="badge bg-gradient-info text-white text-xs">{{ number_format($item->penyaluran_total) }} pcs</span></td>
-                                    {{-- TAMBAHKAN INI (Gunakan ?? 0 untuk mencegah error jika data belum ada) --}}
-                                    <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($item->sales_total ?? 0) }} pcs</span></td>
-                                    <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">{{ number_format($item->stok_akhir) }} pcs</span></td>
+                                    <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($item->sales_total) }} pcs</span></td>
+                                    <td class="text-center"><span class="badge bg-gradient-danger text-white text-xs">{{ number_format($item->pemusnahan_total) }} pcs</span></td>
+                                    <td class="text-center"><span class="badge bg-gradient-success text-white text-xs">{{ number_format($stok_akhir_calc) }} pcs</span></td>
                                     <td class="text-center">
                                         <p class="text-xs text-secondary font-weight-bold mb-0">
-                                            @php $tanggal = $item->latest_transaction_date ?? $item->updated_at; @endphp
-                                            {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                                            @if($latest_activity_date)
+                                                {{ \Carbon\Carbon::parse($latest_activity_date)->locale('id')->translatedFormat('l, d F Y') }}
+                                            @else
+                                                -
+                                            @endif
                                         </p>
                                     </td>
                                     <td class="align-middle text-center">
-                                        {{-- INI PERUBAHANNYA --}}
                                         <button type="button" class="btn btn-sm btn-success text-white me-1 transaksi-btn" 
                                             title="Transaksi Material"
                                             data-bs-toggle="modal" 
@@ -108,10 +115,9 @@
                                             data-item-id="{{ $item->id }}"
                                             data-nama-material="{{ $item->nama_material }}"
                                             data-kode-material="{{ $item->kode_material }}"
-                                            data-stok-akhir="{{ $item->stok_akhir }}">
+                                            data-stok-akhir="{{ $stok_akhir_calc }}">
                                             <i class="fas fa-exchange-alt"></i>
                                         </button>
-                                        {{-- AKHIR PERUBAHAN --}}
                                         <button type="button" class="btn btn-sm btn-info text-white me-1" title="Edit Data" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}"><i class="fas fa-edit"></i></button>
                                         <form action="{{ route('materials.destroy', $item) }}" method="POST" class="d-inline delete-form">
                                             @csrf
@@ -121,17 +127,15 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="10" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
+                                <tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data material untuk SPBE/BPT ini.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 
-                {{-- Container untuk Tombol Kembali dan Pagination --}}
                 <div class="mt-4 px-3 d-flex justify-content-between align-items-center">
                    @if ($items->hasPages())
                         @php $items->appends(request()->query()); @endphp
-                        {{-- ... kode pagination kustom Anda ... --}}
                         {{ $items->links('vendor.pagination.bootstrap-5-simple') }}
                    @endif
                 </div>
@@ -153,7 +157,6 @@
         @csrf
         @method('PATCH')
         <div class="modal-body">
-          {{-- Menggunakan gaya form-floating agar konsisten --}}
           <div class="form-floating mb-3">
             <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" id="nama_material-{{ $item->id }}" name="nama_material" value="{{ old('nama_material', $item->nama_material) }}" placeholder=" " required>
             <label for="nama_material-{{ $item->id }}">Nama Material</label>
@@ -164,15 +167,11 @@
             <label for="kode_material-{{ $item->id }}">Kode Material</label>
             @if($errors->has('kode_material') && session('error_item_id') == $item->id) <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> @endif
           </div>
-
-          {{-- Penambahan Form Stok Awal --}}
           <div class="form-floating mb-3">
             <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" id="stok_awal-{{ $item->id }}" name="stok_awal" value="{{ old('stok_awal', $item->stok_awal) }}" placeholder=" " min="0" required>
             <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
             @if($errors->has('stok_awal') && session('error_item_id') == $item->id) <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> @endif
           </div>
-          {{-- Akhir Penambahan --}}
-
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -212,12 +211,11 @@
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
                                 <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
-                            <div class="form-check me-4"> {{-- DIUBAH: Tambah class me-4 --}}
+                            <div class="form-check me-4">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
                                 <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
                             
-                            {{-- TAMBAHKAN INI --}}
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
                                 <label class="form-check-label" for="jenis-sales">Sales</label>
@@ -241,7 +239,6 @@
                         <input type="date" class="form-control" id="tanggal-transaksi" name="tanggal_transaksi" required>
                     </div>
                     
-                    {{-- Input No Surat & BA (tidak berubah) --}}
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
@@ -292,7 +289,6 @@
                 
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    // Teks disesuaikan dengan aksi di controller
                     text: "Seluruh data transaksi material ini akan dihapus dan stok awal akan di-reset menjadi 0.",
                     icon: 'warning',
                     showCancelButton: true,
@@ -311,7 +307,6 @@
 </script>
 
 {{-- Script Transaksi --}}
-{{-- Script Transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const locations = @json($locations);
@@ -319,13 +314,11 @@
         const transaksiModal = document.getElementById('transaksiMaterialModal');
         const form = document.getElementById('transaksiMaterialForm');
 
-        // ✅ DIKEMBALIKAN: Template input dengan hidden value untuk asal/tujuan
         const readonlyInputHTML = (loc, nameAttr) => `
             <input type="text" class="form-control" value="${loc.name}" readonly>
             <input type="hidden" name="${nameAttr}" value="${loc.id}">
         `;
 
-        // ✅ DIKEMBALIKAN: Template untuk search bar lokasi
         function createSearchInputHTML(nameAttr) {
             return `
                 <div class="position-relative w-100">
@@ -337,7 +330,6 @@
             `;
         }
         
-        // ✅ DIKEMBALIKAN: Fungsi untuk mengaktifkan search bar
         function initSearchbar(container, availableLocations, nameAttr) {
             const searchInput = container.querySelector(".facility-search");
             const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
@@ -372,7 +364,6 @@
             });
         }
 
-        // 🔹 Template dropdown sales (tidak berubah)
         function createSalesDropdownHTML(nameAttr) {
             return `
                 <select class="form-select" name="${nameAttr}">
@@ -385,7 +376,6 @@
             `;
         }
 
-        // ✅ FUNGSI UTAMA DIPERBARUI untuk menggunakan search bar
         function updateFormUI() {
             const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             const asalContainer = document.getElementById('asal-container');
@@ -414,34 +404,28 @@
             }
         }
 
-        // ✅ Saat modal dibuka, simpan juga KODE MATERIAL
         transaksiModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             form.reset();
-            form.dataset.kodeMaterial = button.getAttribute('data-kode-material'); // Simpan kode material
+            form.dataset.kodeMaterial = button.getAttribute('data-kode-material');
 
-            // Default ke penyaluran
             document.getElementById('jenis-penyaluran').checked = true;
             updateFormUI();
 
-            // Isi info material & tanggal
             document.getElementById('modal-item-id').value = button.getAttribute('data-item-id');
             document.getElementById('modal-nama-material').textContent = button.getAttribute('data-nama-material');
             document.getElementById('modal-stok-akhir').textContent = `${parseInt(button.getAttribute('data-stok-akhir')).toLocaleString('id-ID')} pcs`;
-            document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('tanggal-transaksi').value = '2025-08-11';
         });
 
-        // Event listener untuk radio button
         document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', updateFormUI);
         });
 
-        // ✅ Saat submit, data kini lebih dinamis
         document.getElementById('submitTransaksi').addEventListener('click', function() {
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            // Tambahkan kode_material dari data yang disimpan saat modal dibuka
             data.kode_material = form.dataset.kodeMaterial;
 
             fetch('{{ route("materials.transaction") }}', {
@@ -487,7 +471,4 @@
         });
     });
 </script>
-
-
-
 @endpush

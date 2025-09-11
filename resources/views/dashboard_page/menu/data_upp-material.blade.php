@@ -110,7 +110,6 @@
                                     </p>
                                 </td>
                                 <td class="text-center">
-                                    {{-- HANYA TAMPILKAN TOMBOL PREVIEW --}}
                                     <button type="button" class="btn btn-sm btn-info text-white preview-btn" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;">
                                         <i class="fas fa-eye me-1"></i> Preview
                                     </button>
@@ -280,8 +279,6 @@
             badge.addEventListener('click', function() {
                 const noSurat = this.getAttribute('data-no-surat');
                 const statusSekarang = this.getAttribute('data-status-sekarang');
-                const nextStatus = statusSekarang.toLowerCase() === 'proses' ? 'done' : 'proses';
-                const nextStatusText = nextStatus.toUpperCase();
 
                 Swal.fire({
                     title: `Ubah Status`,
@@ -296,9 +293,6 @@
                     confirmButtonColor: '#28a745',
                     denyButtonColor: '#ffc107',
                     showLoaderOnConfirm: true,
-                    preConfirm: (result) => {
-                        // Tidak ada preConfirm di sini, karena tombol akan langsung mengirim
-                    },
                     allowOutsideClick: () => !Swal.isLoading()
                 }).then((result) => {
                     let newStatus = '';

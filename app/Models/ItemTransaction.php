@@ -38,37 +38,31 @@ class ItemTransaction extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Relasi ke Item
     public function item()
     {
         return $this->belongsTo(Item::class, 'item_id');
     }
 
-    // Relasi ke User (Penanggung Jawab)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Asal facility
     public function facilityFrom()
     {
         return $this->belongsTo(Facility::class, 'facility_from');
     }
 
-    // Tujuan facility
     public function facilityTo()
     {
         return $this->belongsTo(Facility::class, 'facility_to');
     }
 
-    // Asal region (khusus P. Layang)
     public function regionFrom()
     {
         return $this->belongsTo(Region::class, 'region_from');
     }
 
-    // Tujuan region (khusus P. Layang)
     public function regionTo()
     {
         return $this->belongsTo(Region::class, 'region_to');
