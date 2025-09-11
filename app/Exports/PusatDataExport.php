@@ -7,10 +7,11 @@ use App\Models\ItemTransaction;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
-class PusatDataExport implements FromQuery, WithHeadings, WithMapping
+class PusatDataExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
     protected $filters;
 
@@ -25,14 +26,15 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
      */
     public function headings(): array
     {
-        // UBAH INI: Tambahkan kolom "Total Sales"
+        // UBAH INI: Tambahkan kolom "Total Sales" dan "Total Pemusnahan"
         return [
             'Kode Material',
             'Nama Material',
             'Stok Awal',
             'Total Penerimaan',
             'Total Penyaluran',
-            'Total Sales', // <-- KOLOM BARU
+            'Total Sales',
+            'Total Pemusnahan',
             'Stok Akhir',
             'Update Terakhir'
         ];
@@ -43,19 +45,20 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
      */
     public function map($item): array
     {
-        // UBAH INI: Sesuaikan perhitungan stok akhir dengan menyertakan sales
-        $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
+        // UBAH INI: Sesuaikan perhitungan stok akhir dengan menyertakan sales dan pemusnahan
+        $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
 
-        // UBAH INI: Tambahkan data sales_total ke baris Excel
+        // UBAH INI: Tambahkan data sales_total dan pemusnahan_total ke baris Excel
         return [
             $item->kode_material,
             $item->nama_material,
             $item->stok_awal,
             $item->penerimaan_total,
             $item->penyaluran_total,
-            $item->sales_total, // <-- DATA BARU
+            $item->sales_total,
+            $item->pemusnahan_total,
             $stokAkhir, // Gunakan hasil kalkulasi baru
-            Carbon::parse($item->updated_at)->format('d-m-Y H:i:s'),
+            Carbon::parse($item->updated_at)->locale('id')->translatedFormat('l, d F Y'),
         ];
     }
 
@@ -101,7 +104,7 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
             });
         });
 
-        // UBAH INI: Tambahkan subquery untuk `sales_total`
+        // UBAH INI: Tambahkan subquery untuk `sales_total` dan `pemusnahan_total`
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::query()
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
@@ -129,6 +132,17 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping
             'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'sales')
+                ->when($filters['start_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '>=', $date);
+                })
+                ->when($filters['end_date'], function ($subQ, $date) {
+                    $subQ->whereDate('created_at', '<=', $date);
+                }),
+
+            // TAMBAHKAN INI: Subquery untuk menghitung total pemusnahan
+            'pemusnahan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+                ->where('jenis_transaksi', 'pemusnahan')
                 ->when($filters['start_date'], function ($subQ, $date) {
                     $subQ->whereDate('created_at', '>=', $date);
                 })

@@ -162,7 +162,7 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
                     <h6 class="text-uppercase fw-bold mb-0" style="font-size: 14px;">DAFTAR STOK MATERIAL SELURUH REGIONAL</h6>
                     <div class="col-12 col-md-auto">
-                        <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
+                        <span id="openExportMaterialModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
                                 style="cursor: pointer; font-size: 0.875rem; font-weight: bold; white-space: nowrap;">
                             <i class="fas fa-file-excel me-2"></i> Export Excel
                         </span>
@@ -246,30 +246,179 @@
     </div>
 </div>
 
-{{-- MODAL EXPORT EXCEL --}}
-<div class="modal fade" id="exportExcelModal" tabindex="-1" role="dialog" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
+{{-- Modal Export Excel --}}
+<div class="modal fade" id="exportExcelMaterialModal" tabindex="-1" role="dialog" aria-labelledby="exportExcelMaterialModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exportExcelModalLabel">Export Data Stok</h5>
+                <h5 class="modal-title" id="exportExcelMaterialModalLabel">Export Data Stok</h5>
                 <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Pilih rentang tanggal untuk data yang akan diexport.</p>
                 <form id="exportForm">
                     <div class="mb-3">
-                        <label for="exportStartDate" class="form-label">Tanggal Mulai:</label>
-                        <input type="date" class="form-control" id="exportStartDate" required>
+                        <label for="exportStartDateMaterial" class="form-label">Tanggal Mulai:</label>
+                        <input type="date" class="form-control" id="exportStartDateMaterial" required>
                     </div>
                     <div class="mb-3">
-                        <label for="exportEndDate" class="form-label">Tanggal Selesai:</label>
-                        <input type="date" class="form-control" id="exportEndDate" required>
+                        <label for="exportEndDateMaterial" class="form-label">Tanggal Selesai:</label>
+                        <input type="date" class="form-control" id="exportEndDateMaterial" required>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn bg-gradient-success" id="confirmExportBtn">Export</button>
+                <button type="button" class="btn bg-gradient-success" id="confirmExportMaterialBtn">Export</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Tabel Data UPP Material --}}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow mb-4" style="min-height: 450px;">
+            <div class="card-header pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="me-md-auto mb-2 mb-md-0">
+                    <h4 class="mb-0">Tabel Data UPP Material</h4>
+                    <p class="mt-3 text-xs font-italic text-secondary">
+                        Tabel ini menampilkan data pengajuan UPP material.
+                    </p>
+                </div>
+            </div>
+            
+            {{-- Form Pencarian dan Filter --}}
+            <div class="px-4 py-2">
+                <form method="GET" action="{{ route('dashboard') }}">
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-12 col-md-4 mb-2 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="search_upp" id="searchInput" 
+                                    class="form-control" 
+                                    placeholder="Cari No. Surat..." 
+                                    value="{{ request('search_upp') }}">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-8 d-flex flex-wrap justify-content-md-end">
+                            <div class="d-flex align-items-center me-2">
+                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                                <input type="date" name="start_date_upp" id="startDateUpp" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ request('start_date_upp') }}">
+                            </div>
+                            <div class="d-flex align-items-center me-2">
+                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                                <input type="date" name="end_date_upp" id="endDateUpp" 
+                                    class="form-control form-control-sm date-input" 
+                                    style="max-width: 160px;"
+                                    value="{{ request('end_date_upp') }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm px-3" style="margin-top: 15px;">Filter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            {{-- Tabel utama --}}
+            <div class="card-body px-0 pt-0 pb-5">
+                <div class="table-responsive p-0">
+                    <table class="table align-items-center mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">No. Surat</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tahapan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tanggal Buat</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tanggal Update Terakhir</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($upps as $upp)
+                            <tr>
+                                <td class="text-center">
+                                    <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($upps->currentPage() - 1) * $upps->perPage() }}</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat_persetujuan }}</p>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p class="text-xs text-secondary mb-0">{{ $upp->tahapan }}</p>
+                                </td>
+                                <td class="text-center">
+                                    @php
+                                        $statusText = strtolower($upp->status) === 'done' ? 'Done' : 'Proses';
+                                        $statusColor = strtolower($upp->status) === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
+                                    @endphp
+                                    <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold">
+                                        {{ $statusText }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <p class="text-xs text-secondary font-weight-bold mb-0">
+                                        {{ \Carbon\Carbon::parse($upp->tgl_buat)->translatedFormat('l, d F Y') }}
+                                    </p>
+                                </td>
+                                <td class="text-center">
+                                    <p class="text-xs text-secondary font-weight-bold mb-0">
+                                        {{ \Carbon\Carbon::parse($upp->tgl_update)->translatedFormat('l, d F Y') }}
+                                    </p>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">Data Kosong</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- PAGINATION YANG DIPERBAIKI --}}
+                @if ($upps->hasPages())
+                <div class="mt-4 px-3 d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            @php
+                                $total = $upps->lastPage();
+                                $current = $upps->currentPage();
+                                $window = 1; 
+                            @endphp
+                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url(1) }}">&laquo;</a>
+                            </li>
+                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->previousPageUrl() }}">&lsaquo;</a>
+                            </li>
+                            @php $wasGap = false; @endphp
+                            @for ($i = 1; $i <= $total; $i++)
+                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
+                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                    @php $wasGap = false; @endphp
+                                @else
+                                    @if (!$wasGap)
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        @php $wasGap = true; @endphp
+                                    @endif
+                                @endif
+                            @endfor
+                            <li class="page-item {{ $upps->hasMorePages() ? '' : 'disabled' }}">
+                                <a class="page-link" href="{{ $upps->nextPageUrl() }}">&rsaquo;</a>
+                            </li>
+                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($total) }}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -302,21 +451,21 @@
         const monthSelect = document.getElementById('month-select');
         const yearSelect = document.getElementById('year-select');
 
-        // 🔹 Modal Export Excel
-        const openExportModalBtn = document.getElementById('openExportModalBtn');
-        const exportExcelModalEl = document.getElementById('exportExcelModal');
-        const confirmExportBtn = document.getElementById('confirmExportBtn');
-        const exportExcelModal = new bootstrap.Modal(exportExcelModalEl);
-        
-        // 📌 Buka modal export
-        openExportModalBtn.addEventListener('click', function() {
-            exportExcelModal.show();
+        // 🔹 Modal Export Excel untuk Material
+        const openExportMaterialModalBtn = document.getElementById('openExportMaterialModalBtn');
+        const exportExcelMaterialModalEl = document.getElementById('exportExcelMaterialModal');
+        const confirmExportMaterialBtn = document.getElementById('confirmExportMaterialBtn');
+        const exportExcelMaterialModal = new bootstrap.Modal(exportExcelMaterialModalEl);
+
+        // 📌 Buka modal export material
+        openExportMaterialModalBtn.addEventListener('click', function() {
+            exportExcelMaterialModal.show();
         });
 
-        // 📌 Jalankan export Excel
-        confirmExportBtn.addEventListener('click', function() {
-            const startDate = document.getElementById('exportStartDate').value;
-            const endDate = document.getElementById('exportEndDate').value;
+        // 📌 Jalankan export Excel material
+        confirmExportMaterialBtn.addEventListener('click', function() {
+            const startDate = document.getElementById('exportStartDateMaterial').value;
+            const endDate = document.getElementById('exportEndDateMaterial').value;
 
             if (!startDate || !endDate) {
                 Swal.fire('Peringatan!', 'Silakan pilih rentang tanggal terlebih dahulu.', 'warning');
@@ -324,7 +473,7 @@
             }
 
             window.location.href = `/export-excel?start_date=${startDate}&end_date=${endDate}`;
-            exportExcelModal.hide();
+            exportExcelMaterialModal.hide();
         });
 
         // 📌 Format angka dengan pemisah ribuan
@@ -445,7 +594,6 @@
             }
         });
 
-
         // 📌 Tampilkan suggestion nama material di search box
         function showSuggestions(searchTerm) {
             const filteredNames = allMaterialNames.filter(name =>
@@ -505,5 +653,4 @@
         }
     });
 </script>
-{{-- UPP MATERIAL --}}
 @endpush

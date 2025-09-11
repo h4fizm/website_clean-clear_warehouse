@@ -8,6 +8,7 @@ use App\Models\ItemTransaction;
 use App\Models\MaterialCapacity;
 use App\Models\Region;
 use App\Exports\AllMaterialStockExport;
+use App\Exports\UppMaterialExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
@@ -109,7 +110,7 @@ class DashboardController extends Controller
         // Data tabel material
         // ============================
         $query = Item::query()
-            ->selectRaw('nama_material, kode_material, SUM(stok_akhir) as total_stok_akhir') // ✅ PERBAIKAN: Menggunakan stok_akhir
+            ->selectRaw('nama_material, kode_material, SUM(stok_akhir) as total_stok_akhir')
             ->groupBy('nama_material', 'kode_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
                 $q->where('nama_material', 'like', '%' . $request->search_material . '%')
@@ -123,6 +124,30 @@ class DashboardController extends Controller
         $defaultMaterialName = $materialList->first() ?? null;
         $initialStockData = $defaultMaterialName ? $this->getFormattedStockData($defaultMaterialName) : [];
 
+        // ✅ PERBAIKAN: Menggunakan created_at dan updated_at
+        $queryUpp = ItemTransaction::query()
+            ->whereNotNull('no_surat_persetujuan')
+            ->where('no_surat_persetujuan', '!=', '')
+            ->select(
+                'no_surat_persetujuan',
+                DB::raw('MIN(created_at) as tgl_buat'),
+                DB::raw('MAX(updated_at) as tgl_update'),
+                DB::raw('MAX(tahapan) as tahapan'),
+                DB::raw('MAX(status) as status')
+            )
+            ->groupBy('no_surat_persetujuan')
+            ->when($request->filled('search_upp'), function ($q) use ($request) {
+                $q->having('no_surat_persetujuan', 'like', '%' . $request->search_upp . '%');
+            })
+            ->when($request->filled(['start_date_upp', 'end_date_upp']), function ($q) use ($request) {
+                $startDate = Carbon::parse($request->start_date_upp)->startOfDay();
+                $endDate = Carbon::parse($request->end_date_upp)->endOfDay();
+                $q->havingRaw('MIN(created_at) >= ? AND MAX(updated_at) <= ?', [$startDate, $endDate]);
+            })
+            ->orderByRaw('MIN(created_at) DESC');
+
+        $upps = $queryUpp->paginate(10)->appends($request->only(['search_upp', 'start_date_upp', 'end_date_upp']));
+
         return view('dashboard_page.menu.dashboard', [
             'user' => $user,
             'roleName' => $roleName,
@@ -131,6 +156,7 @@ class DashboardController extends Controller
             'materialList' => $materialList,
             'initialStockData' => $initialStockData,
             'defaultMaterialName' => $defaultMaterialName,
+            'upps' => $upps,
         ]);
     }
 
@@ -233,15 +259,6 @@ class DashboardController extends Controller
         ];
     }
 
-    public function getStockDataApi($materialBaseName, Request $request)
-    {
-        $month = $request->get('month');
-        $year = $request->get('year');
-
-        $data = $this->getFormattedStockData($materialBaseName, $month, $year);
-        return response()->json($data);
-    }
-
     public function exportExcel(Request $request)
     {
         $filters = [
@@ -251,4 +268,22 @@ class DashboardController extends Controller
 
         return Excel::download(new AllMaterialStockExport($filters), 'Total Stok Material.xlsx');
     }
+
+    // Metode ini tidak lagi diperlukan karena tombolnya sudah dihapus
+    // public function exportUppMaterial(Request $request)
+    // {
+    //     // ...
+    // }
+
+    // Metode ini tidak lagi diperlukan karena tombolnya sudah dihapus
+    // public function preview($noSurat)
+    // {
+    //     // ...
+    // }
+
+    // Metode ini tidak lagi diperlukan karena badge sudah tidak bisa diklik
+    // public function changeStatus(Request $request, $noSurat)
+    // {
+    //     // ...
+    // }
 }
