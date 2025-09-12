@@ -377,6 +377,23 @@
                         @endif
                     </div>
                     
+                    {{-- Field Kategori Material --}}
+                    <div class="form-floating mb-3">
+                        <select class="form-select @if($errors->has('kategori_material') && session('error_item_id') == $item->id) is-invalid @endif"
+                                id="kategori_material-{{ $item->id }}" name="kategori_material" required>
+                            <option value="" disabled>-- Pilih Kategori --</option>
+                            <option value="Baru" {{ old('kategori_material', $item->kategori_material) == 'Baru' ? 'selected' : '' }}>Baru</option>
+                            <option value="Baik" {{ old('kategori_material', $item->kategori_material) == 'Baik' ? 'selected' : '' }}>Baik</option>
+                            <option value="Rusak" {{ old('kategori_material', $item->kategori_material) == 'Rusak' ? 'selected' : '' }}>Rusak</option>
+                            <option value="Afkir" {{ old('kategori_material', $item->kategori_material) == 'Afkir' ? 'selected' : '' }}>Afkir</option>
+                        </select>
+                        <label for="kategori_material-{{ $item->id }}">Kategori Material</label>
+                        @if($errors->has('kategori_material') && session('error_item_id') == $item->id)
+                            <div class="invalid-feedback">{{ $errors->first('kategori_material') }}</div>
+                        @endif
+                    </div>
+                    
+                    {{-- Field Stok Awal --}}
                     <div class="form-floating mb-3">
                         <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
                                 id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
