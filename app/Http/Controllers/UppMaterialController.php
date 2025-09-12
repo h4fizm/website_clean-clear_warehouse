@@ -51,11 +51,20 @@ class UppMaterialController extends Controller
     }
 
     /**
-     * Mengambil data material afkir untuk ditampilkan di modal.
+     * Mengambil data material afkir yang hanya berada di pusat.
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getMaterials()
     {
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
+        if (!$pusatRegion) {
+            return response()->json([]);
+        }
+
         $materials = Item::where('kategori_material', 'afkir')
+            ->where('region_id', $pusatRegion->id)
             ->select('id', 'nama_material', 'kode_material', 'stok_akhir')
             ->get();
 
@@ -102,10 +111,16 @@ class UppMaterialController extends Controller
             $stockErrors = [];
 
             foreach ($request->materials as $materialData) {
-                $item = Item::findOrFail($materialData['id']);
+                $item = Item::find($materialData['id']);
 
-                if (strtolower($item->kategori_material) !== 'afkir') {
-                    throw new \Exception("Material {$item->nama_material} bukan kategori afkir.");
+                if (!$item || strtolower($item->kategori_material) !== 'afkir') {
+                    $stockErrors[] = "Material {$item->nama_material} tidak valid atau bukan kategori afkir.";
+                    continue;
+                }
+
+                if ($item->region_id !== $pusatRegion->id) {
+                    $stockErrors[] = "Material {$item->nama_material} tidak berada di pusat.";
+                    continue;
                 }
 
                 if ($item->stok_akhir < $materialData['jumlah_diambil']) {
@@ -258,12 +273,10 @@ class UppMaterialController extends Controller
                 }
             }
 
-            // Dapatkan status saat ini sebelum dihapus
             $currentStatus = ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->first()
                 ->status ?? 'proses';
 
-            // Hapus semua transaksi lama terkait nomor surat ini
             ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->delete();
@@ -271,7 +284,6 @@ class UppMaterialController extends Controller
             $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
             $userId = Auth::id();
 
-            // Buat transaksi baru dengan data yang di-update
             foreach ($request->materials as $materialData) {
                 $item = Item::findOrFail($materialData['item_id']);
 
@@ -288,7 +300,7 @@ class UppMaterialController extends Controller
                     'tanggal_pemusnahan' => $request->tanggal_pemusnahan,
                     'aktivitas_pemusnahan' => $request->aktivitas_pemusnahan,
                     'tahapan' => $request->tahapan,
-                    'status' => $currentStatus, // Pertahankan status yang ada
+                    'status' => $currentStatus,
                     'created_at' => Carbon::parse($request->tanggal_pengajuan),
                 ]);
             }
