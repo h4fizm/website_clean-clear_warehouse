@@ -29,6 +29,13 @@ class DashboardController extends Controller
         $totalSpbe = Facility::where('type', 'SPBE')->count();
         $totalBpt = Facility::where('type', 'BPT')->count();
 
+        // ✅ PERBAIKAN: Hitung total material yang di-UPP-kan
+        $totalUppMaterial = ItemTransaction::query()
+            ->where('jenis_transaksi', 'pemusnahan')
+            ->where('status', 'done')
+            ->sum('jumlah');
+
+        // Hitung total UPP dari dokumen
         $totalUpp = ItemTransaction::query()
             ->whereNotNull('no_surat_persetujuan')
             ->where('no_surat_persetujuan', '!=', '')
@@ -41,7 +48,6 @@ class DashboardController extends Controller
             ->whereIn('jenis_transaksi', ['transfer', 'sales'])
             ->get();
 
-        // Perbaikan logika hitungan transaksi
         $totalPenyaluran = 0;
         $totalPenerimaan = 0;
         foreach ($allTransactions as $trx) {
@@ -57,36 +63,39 @@ class DashboardController extends Controller
             }
         }
 
-        // ============================
-        // Card Dashboard
-        // ============================
+        // ✅ PERBAIKAN: Menambahkan card untuk Total Material UPP
         $cards = [
             ['title' => 'Total SPBE', 'value' => number_format($totalSpbe), 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => number_format($totalBpt), 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
             ['title' => 'Transaksi Penerimaan', 'value' => number_format($totalPenerimaan), 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
             ['title' => 'Transaksi Penyaluran', 'value' => number_format($totalPenyaluran), 'icon' => 'fas fa-arrow-up', 'bg' => 'danger', 'link' => '#'],
-            ['title' => 'UPP Material', 'value' => number_format($totalUpp), 'icon' => 'fas fa-sync-alt', 'bg' => 'warning', 'link' => '#'],
+            ['title' => 'Total Material UPP', 'value' => number_format($totalUppMaterial), 'icon' => 'fas fa-trash-alt', 'bg' => 'warning', 'link' => '#'],
         ];
 
         // ============================
-        // Data tabel material
+        // Data tabel material (global)
         // ============================
         $query = Item::query()
             ->selectRaw('nama_material, kode_material, kategori_material, SUM(stok_akhir) as total_stok_akhir')
             ->groupBy('nama_material', 'kode_material', 'kategori_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
-                $q->where('nama_material', 'like', '%' . $request->search_material . '%')
-                    ->orWhere('kode_material', 'like', '%' . $request->search_material . '%');
+                $q->having('nama_material', 'like', '%' . $request->search_material . '%')
+                    ->orHaving('kode_material', 'like', '%' . $request->search_material . '%');
             })
             ->orderBy('nama_material');
 
         $items = $query->paginate(5)->appends($request->only('search_material'));
 
+        // ============================
+        // Logika untuk tabel stok material per regional (tabel kedua)
+        // ============================
         $materialList = $this->getUniqueMaterialBaseNames();
-        $defaultMaterialName = $materialList->first() ?? null;
-        $initialStockData = $defaultMaterialName ? $this->getFormattedStockData($defaultMaterialName) : [];
+        $defaultMaterialName = $request->input('material_name', $materialList->first());
+        $initialStockData = $defaultMaterialName ? $this->getFormattedStockData($defaultMaterialName, $request->input('month'), $request->input('year')) : [];
 
-        // ✅ PERBAIKAN: Menggunakan created_at dan updated_at
+        // ============================
+        // Logika untuk tabel UPP
+        // ============================
         $queryUpp = ItemTransaction::query()
             ->whereNotNull('no_surat_persetujuan')
             ->where('no_surat_persetujuan', '!=', '')
@@ -96,7 +105,9 @@ class DashboardController extends Controller
                 DB::raw('MIN(created_at) as tgl_buat'),
                 DB::raw('MAX(updated_at) as tgl_update'),
                 DB::raw('MAX(tahapan) as tahapan'),
-                DB::raw('MAX(status) as status')
+                DB::raw('MAX(status) as status'),
+                // ✅ TAMBAHAN: Menghitung total jumlah material per UPP
+                DB::raw('SUM(jumlah) as total_material_upp')
             )
             ->groupBy('no_surat_persetujuan')
             ->when($request->filled('search_upp'), function ($q) use ($request) {
@@ -126,8 +137,10 @@ class DashboardController extends Controller
     public function updateCapacityApi(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'material_name' => 'required|string|max:255',
+            'material_base_name' => 'required|string|max:255',
             'capacity' => 'required|integer|min:0',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000',
         ]);
 
         if ($validator->fails()) {
@@ -135,7 +148,11 @@ class DashboardController extends Controller
         }
 
         MaterialCapacity::updateOrCreate(
-            ['material_base_name' => $request->material_name],
+            [
+                'material_base_name' => $request->material_base_name,
+                'month' => $request->month,
+                'year' => $request->year,
+            ],
             ['capacity' => $request->capacity]
         );
 
@@ -174,56 +191,109 @@ class DashboardController extends Controller
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
 
-        // Mendapatkan semua item yang relevan
-        $allItemsQuery = Item::where('nama_material', 'like', $materialBaseName . '%')
-            ->with([
-                'transactions' => function ($query) use ($month, $year) {
-                    $query->whereMonth('created_at', $month)->whereYear('created_at', $year);
-                }
-            ]);
+        $endOfMonth = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth();
 
-        $items = $allItemsQuery->get();
+        $allItems = Item::where('nama_material', 'like', $materialBaseName . '%')->get();
 
-        // Menggunakan array untuk menampung total stok per kategori
         $pusatStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
         $fasilitasStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
 
-        // Hitung stok dari data item, bukan dari transaksi
-        foreach ($items as $item) {
+        $pusatPergerakanBulanIni = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
+        $fasilitasPergerakanBulanIni = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
+
+        if ($allItems->isEmpty()) {
+            $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->value('capacity');
+
+            return [
+                'stock' => [
+                    ['material_name' => $materialBaseName, 'gudang' => 'Gudang Regional', 'baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0, 'layak_edar' => 0],
+                    ['material_name' => $materialBaseName, 'gudang' => 'SPBE/BPT (Global)', 'baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0, 'layak_edar' => 0]
+                ],
+                'capacity' => $capacity ?? 0,
+                'month' => $month,
+                'year' => $year,
+            ];
+        }
+
+        foreach ($allItems as $item) {
+            $stokAwalBulanIni = $item->stok_awal +
+                ItemTransaction::whereHas('item', fn($q) => $q->where('kode_material', $item->kode_material))
+                    ->where('facility_to', $item->facility_id)
+                    ->where('created_at', '<', $startOfMonth)
+                    ->sum('jumlah') -
+                ItemTransaction::where('item_id', $item->id)
+                    ->where('created_at', '<', $startOfMonth)
+                    ->whereIn('jenis_transaksi', ['transfer', 'sales', 'pemusnahan'])
+                    ->sum('jumlah');
+
+            $penerimaanBulanIni = ItemTransaction::whereHas('item', fn($q) => $q->where('kode_material', $item->kode_material))
+                ->where('facility_to', $item->facility_id)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->sum('jumlah');
+
+            $penyaluranBulanIni = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'transfer')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->sum('jumlah');
+
+            $salesBulanIni = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'sales')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->sum('jumlah');
+
+            $pemusnahanBulanIni = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->where('status', 'done')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->sum('jumlah');
+
+            $stokAkhir = $stokAwalBulanIni + $penerimaanBulanIni - $penyaluranBulanIni - $salesBulanIni - $pemusnahanBulanIni;
+
             $kategori = $item->kategori_material;
             if ($item->region_id === $pusatRegionId && is_null($item->facility_id)) {
                 if (array_key_exists($kategori, $pusatStock)) {
-                    $pusatStock[$kategori] += $item->stok_akhir;
+                    $pusatStock[$kategori] = $stokAkhir;
+                    $pusatPergerakanBulanIni[$kategori] = $penerimaanBulanIni + $penyaluranBulanIni + $salesBulanIni + $pemusnahanBulanIni;
                 }
             } else if (!is_null($item->facility_id)) {
                 if (array_key_exists($kategori, $fasilitasStock)) {
-                    $fasilitasStock[$kategori] += $item->stok_akhir;
+                    $fasilitasStock[$kategori] = $stokAkhir;
+                    $fasilitasPergerakanBulanIni[$kategori] = $penerimaanBulanIni + $penyaluranBulanIni + $salesBulanIni + $pemusnahanBulanIni;
                 }
             }
         }
+
+        $isAnyTransactionThisMonth = array_sum($pusatPergerakanBulanIni) > 0 || array_sum($fasilitasPergerakanBulanIni) > 0;
 
         $data = [
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'Gudang Regional',
-                'baru' => $pusatStock['Baru'],
-                'baik' => $pusatStock['Baik'],
-                'rusak' => $pusatStock['Rusak'],
-                'afkir' => $pusatStock['Afkir'],
-                'layak_edar' => $pusatStock['Baru'] + $pusatStock['Baik'],
+                'baru' => $isAnyTransactionThisMonth ? $pusatStock['Baru'] : 0,
+                'baik' => $isAnyTransactionThisMonth ? $pusatStock['Baik'] : 0,
+                'rusak' => $isAnyTransactionThisMonth ? $pusatStock['Rusak'] : 0,
+                'afkir' => $isAnyTransactionThisMonth ? $pusatStock['Afkir'] : 0,
+                'layak_edar' => $isAnyTransactionThisMonth ? ($pusatStock['Baru'] + $pusatStock['Baik']) : 0,
             ],
             [
                 'material_name' => $materialBaseName,
                 'gudang' => 'SPBE/BPT (Global)',
-                'baru' => $fasilitasStock['Baru'],
-                'baik' => $fasilitasStock['Baik'],
-                'rusak' => $fasilitasStock['Rusak'],
-                'afkir' => $fasilitasStock['Afkir'],
-                'layak_edar' => $fasilitasStock['Baru'] + $fasilitasStock['Baik'],
+                'baru' => $isAnyTransactionThisMonth ? $fasilitasStock['Baru'] : 0,
+                'baik' => $isAnyTransactionThisMonth ? $fasilitasStock['Baik'] : 0,
+                'rusak' => $isAnyTransactionThisMonth ? $fasilitasStock['Rusak'] : 0,
+                'afkir' => $isAnyTransactionThisMonth ? $fasilitasStock['Afkir'] : 0,
+                'layak_edar' => $isAnyTransactionThisMonth ? ($fasilitasStock['Baru'] + $fasilitasStock['Baik']) : 0,
             ],
         ];
 
-        $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)->value('capacity');
+        $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->value('capacity');
 
         return [
             'stock' => $data,
@@ -235,11 +305,20 @@ class DashboardController extends Controller
 
     public function exportExcel(Request $request)
     {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
         $filters = [
             'start_date' => $request->input('start_date'),
             'end_date' => $request->input('end_date'),
         ];
 
-        return Excel::download(new AllMaterialStockExport($filters), 'Total Stok Material.xlsx');
+        $startDate = $filters['start_date'] ? Carbon::parse($filters['start_date'])->format('d-m-Y') : 'Awal';
+        $endDate = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d-m-Y') : 'Akhir';
+        $filename = "Laporan Total Stok Material ({$startDate} - {$endDate}).xlsx";
+
+        return Excel::download(new AllMaterialStockExport($filters), $filename);
     }
 }

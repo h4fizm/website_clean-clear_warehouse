@@ -391,15 +391,27 @@ class PusatController extends Controller
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
     }
 
+    // ... (Bagian atas kode controller tetap sama)
+
     public function destroy(Item $item)
     {
-        if ($item->transactions()->exists()) {
-            return redirect()->route('pusat.index')->with('error', 'Gagal menghapus! Material ini memiliki riwayat transaksi.');
-        }
+        // Simpan nama material sebelum dihapus
+        $materialName = $item->nama_material;
 
-        $item->delete();
-        return redirect()->route('pusat.index')->with('success', 'Data material berhasil dihapus!');
+        // Gunakan DB Transaction untuk memastikan kedua operasi berhasil atau gagal bersamaan
+        DB::transaction(function () use ($item) {
+            // Hapus semua transaksi yang terhubung dengan item ini terlebih dahulu
+            $item->transactions()->delete();
+
+            // Setelah transaksi dihapus, hapus item itu sendiri
+            $item->delete();
+        });
+
+        // Kirimkan pesan sukses dengan menyertakan nama material yang dihapus
+        return redirect()->route('pusat.index')->with('success', "Material '{$materialName}' dan seluruh riwayat transaksinya berhasil dihapus secara permanen!");
     }
+
+    // ... (Bagian bawah kode controller tetap sama)
 
     public function exportExcel(Request $request)
     {

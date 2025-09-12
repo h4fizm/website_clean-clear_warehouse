@@ -192,7 +192,7 @@
                                     <button type="button" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline delete-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger text-white delete-btn" title="Hapus">
@@ -471,25 +471,46 @@
                 event.preventDefault(); 
                 const form = this.closest('form');
                 
+                // SweetAlert Pertama: Peringatan dan Ajak untuk Backup
                 Swal.fire({
-                    title: 'Apakah Anda yakin?',
-                    text: "Data material ini akan dihapus secara permanen!",
+                    title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
+                    html: `
+                        <p class="text-start">
+                            Penghapusan ini akan menghapus seluruh data material ini, termasuk semua riwayat transaksi dan stoknya secara permanen. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        </p>
+                        <p class="text-start mb-0">
+                            <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
+                        </p>
+                    `,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
+                    confirmButtonColor: '#007bff', // Warna tombol sesuai tema
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, hapus!',
+                    confirmButtonText: 'Ya, Saya Sudah Backup!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit(); 
+                        // Jika pengguna mengkonfirmasi di pop-up pertama, tampilkan yang kedua
+                        Swal.fire({
+                            title: 'Konfirmasi Terakhir',
+                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen.",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33', // Warna merah untuk aksi berbahaya
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, Hapus Sekarang!',
+                            cancelButtonText: 'Kembali'
+                        }).then((secondResult) => {
+                            if (secondResult.isConfirmed) {
+                                form.submit(); // Kirimkan form untuk menghapus data
+                            }
+                        });
                     }
                 });
             });
         });
     });
 </script>
-
 
 {{-- script transaksi --}}
 <script>

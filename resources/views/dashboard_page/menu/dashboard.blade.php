@@ -539,11 +539,9 @@
             try {
                 const month = monthSelect.value;
                 const year = yearSelect.value;
-
-                const response = await fetch(`/api/stock-data/${encodeURIComponent(materialName)}?month=${month}&year=${year}`);
+                const response = await fetch(`/api/stock-data?material_base_name=${encodeURIComponent(materialName)}&month=${month}&year=${year}`);
                 if (!response.ok) throw new Error('Gagal mengambil data.');
                 const data = await response.json();
-
                 renderStockTable(data);
             } catch (error) {
                 console.error('Fetch error:', error);
@@ -556,6 +554,8 @@
         saveCapacityBtn.addEventListener('click', async function() {
             const materialName = stockSearchInput.value;
             const capacity = capacityInput.value;
+            const month = monthSelect.value;
+            const year = yearSelect.value;
 
             if (!materialName) {
                 Swal.fire('Peringatan!', 'Silakan pilih material terlebih dahulu.', 'warning');
@@ -570,8 +570,10 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: JSON.stringify({
-                        material_name: materialName,
-                        capacity: capacity
+                        material_base_name: materialName,
+                        capacity: capacity,
+                        month: month, // ✅ TAMBAHAN: Kirim bulan dan tahun
+                        year: year,   // ✅ TAMBAHAN: Kirim bulan dan tahun
                     })
                 });
 
@@ -579,7 +581,7 @@
                 if (data.success) {
                     Swal.fire('Berhasil!', data.message, 'success');
                     // Perbarui teks kapasitas di UI
-                    capacityValueSpan.innerText = `/ ${formatNumber(capacity)}`;
+                    capacityValueSpan.innerText = `/ ${formatNumber(capacity)} pcs`;
                 } else {
                     let errorMessage = 'Gagal menyimpan kapasitas.';
                     if (data.errors) {
@@ -628,7 +630,9 @@
         });
         
         // 📌 Event input search
-        stockSearchInput.addEventListener('keyup', function() { showSuggestions(this.value); });
+        stockSearchInput.addEventListener('keyup', function() { 
+            showSuggestions(this.value); 
+        });
 
         // 📌 Event filter bulan & tahun
         monthSelect.addEventListener('change', function () {
@@ -642,7 +646,7 @@
                 fetchStockData(stockSearchInput.value);
             }
         });
-
+        
         // 📌 Inisialisasi awal
         if (defaultMaterialName && initialStockData.stock) {
             renderStockTable(initialStockData);

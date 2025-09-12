@@ -11,17 +11,22 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('material_capacities', function (Blueprint $table) {
-            $table->id(); // Kolom ID standar
+            $table->id();
 
             // Kolom ini akan menyimpan nama dasar material, contoh: 'Tabung LPG 3 Kg'
-            // Dibuat unik agar tidak ada duplikasi data kapasitas untuk material yang sama.
-            $table->string('material_base_name')->unique();
+            $table->string('material_base_name');
 
             // Kolom ini untuk menyimpan angka kapasitasnya.
-            // Dibuat unsigned agar nilainya tidak bisa negatif.
             $table->unsignedInteger('capacity')->default(0);
 
-            $table->timestamps(); // Kolom created_at dan updated_at
+            // ✅ TAMBAHAN: Kolom untuk menyimpan bulan dan tahun.
+            $table->unsignedTinyInteger('month');
+            $table->year('year');
+
+            // ✅ PERBAIKAN: Buat kombinasi unik untuk mencegah duplikasi.
+            $table->unique(['material_base_name', 'month', 'year'], 'material_capacity_unique');
+
+            $table->timestamps();
         });
     }
 

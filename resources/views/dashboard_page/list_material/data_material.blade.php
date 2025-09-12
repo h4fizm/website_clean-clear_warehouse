@@ -283,20 +283,42 @@
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.delete-form').forEach(form => {
             form.addEventListener('submit', function (event) {
-                event.preventDefault(); 
-                
+                event.preventDefault(); // Mencegah form dikirimkan secara langsung
+
+                // SweetAlert Pertama: Peringatan dan Ajak untuk Backup
                 Swal.fire({
-                    title: 'Apakah Anda yakin?',
-                    text: "Seluruh data transaksi material ini akan dihapus dan stok awal akan di-reset menjadi 0.",
+                    title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
+                    html: `
+                        <p class="text-start">
+                            Penghapusan ini akan menghapus seluruh data material ini, termasuk semua riwayat transaksi dan stoknya secara permanen. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        </p>
+                        <p class="text-start mb-0">
+                            <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
+                        </p>
+                    `,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
+                    confirmButtonColor: '#007bff', // Warna tombol sesuai tema
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, reset!',
+                    confirmButtonText: 'Ya, Saya Sudah Backup!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit(); 
+                        // Jika pengguna mengkonfirmasi di pop-up pertama, tampilkan yang kedua
+                        Swal.fire({
+                            title: 'Konfirmasi Terakhir',
+                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen.",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33', // Warna merah untuk aksi berbahaya
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, Hapus Sekarang!',
+                            cancelButtonText: 'Kembali'
+                        }).then((secondResult) => {
+                            if (secondResult.isConfirmed) {
+                                form.submit(); // Kirimkan form untuk menghapus data
+                            }
+                        });
                     }
                 });
             });
