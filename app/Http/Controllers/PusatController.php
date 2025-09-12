@@ -26,6 +26,8 @@ class PusatController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
         $query = Item::query()
             ->whereNull('facility_id')
             ->select('items.*');
@@ -57,13 +59,14 @@ class PusatController extends Controller
         });
 
         $query->addSelect([
-            'penerimaan_total' => ItemTransaction::query()
-                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
-                ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.region_to', 'items.region_id')
-                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '>=', $date))
-                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '<=', $date))
-                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
+            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('region_to', 'items.region_id')
+                ->where('jenis_transaksi', 'transfer') // PERBAIKAN: Hanya hitung transaksi transfer yang masuk
+                ->whereHas('item', function ($q) {
+                    $q->whereNotNull('facility_id');
+                })
+                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('created_at', '>=', $date))
+                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('created_at', '<=', $date)),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->where('jenis_transaksi', 'transfer')
@@ -77,7 +80,14 @@ class PusatController extends Controller
                 ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
                 ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
 
-            'pemusnahan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+            'pemusnahan_total_proses' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->whereColumn('item_id', 'items.id')
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->where('status', 'proses')
+                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
+                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+
+            'pemusnahan_total_done' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->where('status', 'done')
@@ -109,8 +119,7 @@ class PusatController extends Controller
         ]);
     }
 
-
-    // ... kode di atas tidak berubah ...
+    // ... bagian lain dari controller tidak berubah ...
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [

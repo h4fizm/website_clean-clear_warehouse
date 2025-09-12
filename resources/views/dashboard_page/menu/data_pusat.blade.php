@@ -130,8 +130,12 @@
                         <tbody>
                             @forelse ($items as $item)
                             @php
-                                // Perhitungan stok akhir secara dinamis di Blade
-                                $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
+                                // Mengambil total pemusnahan dari status 'proses' dan 'done'
+                                $pemusnahan_total = $item->pemusnahan_total_proses + $item->pemusnahan_total_done;
+                                
+                                // Perhitungan stok akhir secara dinamis di Blade dengan pemusnahan yang diperbarui
+                                $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $pemusnahan_total;
+                                
                                 $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
                             @endphp
                             <tr>
@@ -159,10 +163,11 @@
                                     <span class="badge bg-gradient-warning text-white text-xs">{{ $item->sales_total ?? 0 }} pcs</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-gradient-danger text-white text-xs">{{ $item->pemusnahan_total ?? 0 }} pcs</span>
+                                    {{-- Menampilkan total pemusnahan (proses + selesai) --}}
+                                    <span class="badge bg-gradient-danger text-white text-xs">{{ $pemusnahan_total }} pcs</span>
                                 </td>
                                 <td class="text-center">
-                                    {{-- Perbaikan: Gunakan perhitungan dinamis untuk menampilkan stok akhir --}}
+                                    {{-- Perbaikan: Gunakan perhitungan dinamis yang sudah diperbarui --}}
                                     <span class="badge bg-gradient-success text-white text-xs">{{ $stok_akhir_calc }} pcs</span>
                                 </td>
                                 <td class="text-center">

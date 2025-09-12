@@ -65,6 +65,7 @@ class UppMaterialController extends Controller
 
         $materials = Item::where('kategori_material', 'afkir')
             ->where('region_id', $pusatRegion->id)
+            ->where('stok_akhir', '>', 0)
             ->select('id', 'nama_material', 'kode_material', 'stok_akhir')
             ->get();
 
@@ -337,9 +338,11 @@ class UppMaterialController extends Controller
         try {
             DB::beginTransaction();
 
+            // Kunci baris transaksi agar tidak ada perubahan data lain saat proses ini
             $transactions = ItemTransaction::with('item')
                 ->where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
+                ->lockForUpdate() // Tambahkan penguncian baris di sini
                 ->get();
 
             if ($transactions->isEmpty()) {
@@ -355,9 +358,9 @@ class UppMaterialController extends Controller
                 return response()->json(['message' => "Status sudah **{$newStatus}**. Tidak ada perubahan yang dilakukan."]);
             }
 
-            if ($newStatus === 'done') {
+            if ($newStatus === 'done' && $currentStatus === 'proses') {
                 $this->reduceStock($transactions);
-            } else if ($newStatus === 'proses') {
+            } else if ($newStatus === 'proses' && $currentStatus === 'done') {
                 $this->restoreStock($transactions);
             }
 
@@ -384,15 +387,24 @@ class UppMaterialController extends Controller
      */
     private function reduceStock($transactions)
     {
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
         foreach ($transactions as $transaction) {
-            $item = Item::find($transaction->item_id);
+            $item = Item::where('id', $transaction->item_id)
+                ->lockForUpdate() // Kunci item juga saat diupdate
+                ->first();
+
             if (!$item) {
                 throw new \Exception("Material dengan ID {$transaction->item_id} tidak ditemukan.");
             }
-            if ($item->stok_akhir < $transaction->jumlah) {
-                throw new \Exception("Stok {$item->nama_material} tidak mencukupi untuk pemusnahan.");
+
+            // Verifikasi bahwa ini adalah item afkir di gudang pusat
+            if ($item->region_id === $pusatRegion->id && $item->kategori_material === 'Afkir') {
+                if ($item->stok_akhir < $transaction->jumlah) {
+                    throw new \Exception("Stok {$item->nama_material} tidak mencukupi untuk pemusnahan.");
+                }
+                $item->decrement('stok_akhir', $transaction->jumlah);
             }
-            $item->decrement('stok_akhir', $transaction->jumlah);
         }
     }
 
@@ -402,17 +414,21 @@ class UppMaterialController extends Controller
      */
     private function restoreStock($transactions)
     {
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
         foreach ($transactions as $transaction) {
-            $item = Item::find($transaction->item_id);
-            if ($item) {
+            $item = Item::where('id', $transaction->item_id)
+                ->lockForUpdate()
+                ->first();
+
+            // Verifikasi bahwa ini adalah item afkir di gudang pusat
+            if ($item && $item->region_id === $pusatRegion->id && $item->kategori_material === 'Afkir') {
                 $item->increment('stok_akhir', $transaction->jumlah);
             }
         }
     }
 
-    /**
-     * Metode baru untuk ekspor data UPP material ke Excel.
-     */
+    // ... metode lain tidak berubah ...
     public function exportExcel(Request $request)
     {
         $request->validate([
