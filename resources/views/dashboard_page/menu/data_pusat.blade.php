@@ -130,10 +130,10 @@
                         <tbody>
                             @forelse ($items as $item)
                             @php
-                                // Mengambil total pemusnahan dari status 'proses' dan 'done'
-                                $pemusnahan_total = $item->pemusnahan_total_proses + $item->pemusnahan_total_done;
+                                // Perbaikan Logika: Pemusnahan sekarang hanya dihitung jika statusnya "done"
+                                $pemusnahan_total = $item->pemusnahan_total_done;
                                 
-                                // Perhitungan stok akhir secara dinamis di Blade dengan pemusnahan yang diperbarui
+                                // Perhitungan stok akhir secara dinamis di Blade
                                 $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $pemusnahan_total;
                                 
                                 $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
@@ -163,7 +163,7 @@
                                     <span class="badge bg-gradient-warning text-white text-xs">{{ $item->sales_total ?? 0 }} pcs</span>
                                 </td>
                                 <td class="text-center">
-                                    {{-- Menampilkan total pemusnahan (proses + selesai) --}}
+                                    {{-- Menampilkan total pemusnahan yang selesai --}}
                                     <span class="badge bg-gradient-danger text-white text-xs">{{ $pemusnahan_total }} pcs</span>
                                 </td>
                                 <td class="text-center">
@@ -184,7 +184,7 @@
                                     <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" 
                                         data-id="{{ $item->id }}" 
                                         data-kode-material="{{ $item->kode_material }}"
-                                        data-stok-akhir="{{ $stok_akhir_calc }}"
+                                        data-stok-akhir="{{ $item->stok_akhir }}" {{-- KEMBALI MENGGUNAKAN STOK DARI DB --}}
                                         data-nama-material="{{ $item->nama_material }}"
                                         data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
                                         <i class="fas fa-paper-plane"></i>

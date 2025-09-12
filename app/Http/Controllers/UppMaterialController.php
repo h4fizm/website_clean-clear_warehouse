@@ -264,6 +264,7 @@ class UppMaterialController extends Controller
         try {
             DB::beginTransaction();
 
+            // Cek apakah ada perubahan nomor surat dan pastikan nomor baru tidak ada di database
             if ($request->no_surat_baru !== $no_surat) {
                 $existingSurat = ItemTransaction::where('no_surat_persetujuan', $request->no_surat_baru)->first();
                 if ($existingSurat) {
@@ -274,10 +275,12 @@ class UppMaterialController extends Controller
                 }
             }
 
+            // Dapatkan status saat ini untuk dipertahankan setelah update
             $currentStatus = ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->first()
                 ->status ?? 'proses';
 
+            // Hapus semua transaksi lama yang terkait dengan nomor surat ini
             ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->delete();
@@ -287,6 +290,11 @@ class UppMaterialController extends Controller
 
             foreach ($request->materials as $materialData) {
                 $item = Item::findOrFail($materialData['item_id']);
+
+                // Pengecekan stok saat melakukan pembaruan jika status sudah "done"
+                if ($currentStatus === 'done' && $item->stok_akhir < $materialData['jumlah']) {
+                    throw new \Exception("Stok material '{$item->nama_material}' tidak mencukupi untuk pembaruan. Stok tersedia: {$item->stok_akhir}.");
+                }
 
                 ItemTransaction::create([
                     'item_id' => $item->id,
@@ -304,6 +312,11 @@ class UppMaterialController extends Controller
                     'status' => $currentStatus,
                     'created_at' => Carbon::parse($request->tanggal_pengajuan),
                 ]);
+            }
+
+            // Jika status sudah "done" dan tidak ada kesalahan stok, kurangi stok
+            if ($currentStatus === 'done') {
+                $this->reduceStock(ItemTransaction::where('no_surat_persetujuan', $request->no_surat_baru)->get());
             }
 
             DB::commit();
@@ -338,7 +351,6 @@ class UppMaterialController extends Controller
         try {
             DB::beginTransaction();
 
-            // Kunci baris transaksi agar tidak ada perubahan data lain saat proses ini
             $transactions = ItemTransaction::with('item')
                 ->where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
@@ -358,12 +370,16 @@ class UppMaterialController extends Controller
                 return response()->json(['message' => "Status sudah **{$newStatus}**. Tidak ada perubahan yang dilakukan."]);
             }
 
+            // Logika utama:
             if ($newStatus === 'done' && $currentStatus === 'proses') {
+                // Kurangi stok jika status berubah dari proses ke done
                 $this->reduceStock($transactions);
             } else if ($newStatus === 'proses' && $currentStatus === 'done') {
+                // Kembalikan stok jika status berubah dari done ke proses
                 $this->restoreStock($transactions);
             }
 
+            // Perbarui status semua transaksi yang terkait
             ItemTransaction::where('no_surat_persetujuan', $no_surat)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->update([
@@ -388,6 +404,9 @@ class UppMaterialController extends Controller
     private function reduceStock($transactions)
     {
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+        if (!$pusatRegion) {
+            throw new \Exception("Region 'P.Layang (Pusat)' tidak ditemukan.");
+        }
 
         foreach ($transactions as $transaction) {
             $item = Item::where('id', $transaction->item_id)
@@ -398,13 +417,14 @@ class UppMaterialController extends Controller
                 throw new \Exception("Material dengan ID {$transaction->item_id} tidak ditemukan.");
             }
 
-            // Verifikasi bahwa ini adalah item afkir di gudang pusat
-            if ($item->region_id === $pusatRegion->id && $item->kategori_material === 'Afkir') {
-                if ($item->stok_akhir < $transaction->jumlah) {
-                    throw new \Exception("Stok {$item->nama_material} tidak mencukupi untuk pemusnahan.");
-                }
-                $item->decrement('stok_akhir', $transaction->jumlah);
+            if ($item->region_id !== $pusatRegion->id || strtolower($item->kategori_material) !== 'afkir') {
+                throw new \Exception("Material {$item->nama_material} tidak valid untuk pemusnahan.");
             }
+
+            if ($item->stok_akhir < $transaction->jumlah) {
+                throw new \Exception("Stok {$item->nama_material} tidak mencukupi untuk pemusnahan.");
+            }
+            $item->decrement('stok_akhir', $transaction->jumlah);
         }
     }
 
@@ -415,14 +435,17 @@ class UppMaterialController extends Controller
     private function restoreStock($transactions)
     {
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+        if (!$pusatRegion) {
+            // Jika region pusat tidak ditemukan, jangan lakukan apa-apa, atau lempar exception
+            return;
+        }
 
         foreach ($transactions as $transaction) {
             $item = Item::where('id', $transaction->item_id)
                 ->lockForUpdate()
                 ->first();
 
-            // Verifikasi bahwa ini adalah item afkir di gudang pusat
-            if ($item && $item->region_id === $pusatRegion->id && $item->kategori_material === 'Afkir') {
+            if ($item && $item->region_id === $pusatRegion->id && strtolower($item->kategori_material) === 'afkir') {
                 $item->increment('stok_akhir', $transaction->jumlah);
             }
         }

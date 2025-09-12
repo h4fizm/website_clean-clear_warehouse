@@ -58,7 +58,7 @@ class PusatController extends Controller
             });
         });
 
-        // ✅ PERBAIKAN: Menggunakan JOIN untuk memastikan total penerimaan yang akurat.
+        // ✅ PERBAIKAN: Subquery untuk pemusnahan, hanya mengambil yang berstatus 'done'
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
@@ -68,21 +68,18 @@ class PusatController extends Controller
                 ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '>=', $date))
                 ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '<=', $date)),
 
-            // Subquery untuk menghitung total penyaluran
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->where('jenis_transaksi', 'transfer')
                 ->whereColumn('item_id', 'items.id')
                 ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
                 ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
 
-            // Subquery untuk menghitung total sales
             'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'sales')
                 ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
                 ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
 
-            // Subquery untuk menghitung total pemusnahan (dalam proses)
             'pemusnahan_total_proses' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'pemusnahan')
@@ -90,7 +87,6 @@ class PusatController extends Controller
                 ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
                 ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
 
-            // Subquery untuk menghitung total pemusnahan (selesai)
             'pemusnahan_total_done' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'pemusnahan')
@@ -354,7 +350,7 @@ class PusatController extends Controller
                 })
                 ->sum('jumlah');
 
-            // Hitung total penyaluran dan sales berdasarkan ITEM ID saat ini
+            // Hitung total penyaluran, sales, dan pemusnahan (DONE) berdasarkan ITEM ID saat ini
             $totalPenyaluran = ItemTransaction::where('item_id', $item->id)
                 ->where('jenis_transaksi', 'transfer')
                 ->sum('jumlah');
@@ -363,7 +359,6 @@ class PusatController extends Controller
                 ->where('jenis_transaksi', 'sales')
                 ->sum('jumlah');
 
-            // Hitung total pemusnahan
             $totalPemusnahan = ItemTransaction::where('item_id', $item->id)
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->where('status', 'done')
