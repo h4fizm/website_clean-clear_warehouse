@@ -337,12 +337,18 @@ class PusatController extends Controller
         $stokAwalBaru = $request->stok_awal;
         $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales - $totalPemusnahan;
 
+        // Perbarui item yang spesifik terlebih dahulu
         $item->update([
             'stok_awal' => $stokAwalBaru,
             'stok_akhir' => $stokAkhirBaru,
-            'nama_material' => $request->input('nama_material'),
-            'kode_material' => $request->input('kode_material'),
         ]);
+
+        // Tambahkan logika ini untuk memperbarui item lain dengan kode material yang sama
+        Item::where('kode_material', $oldKode)
+            ->update([
+                'nama_material' => $request->input('nama_material'),
+                'kode_material' => $request->input('kode_material'),
+            ]);
 
         return redirect()
             ->route('pusat.index')

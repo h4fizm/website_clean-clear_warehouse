@@ -37,6 +37,7 @@ class DashboardController extends Controller
         $totalUpp = ItemTransaction::query()
             ->whereNotNull('no_surat_persetujuan')
             ->where('no_surat_persetujuan', '!=', '')
+            ->where('jenis_transaksi', 'pemusnahan') // Perbaikan utama: tambahkan filter ini
             ->where('status', 'done')
             ->distinct('no_surat_persetujuan')
             ->count('no_surat_persetujuan');
@@ -128,6 +129,7 @@ class DashboardController extends Controller
         $queryUpp = ItemTransaction::query()
             ->whereNotNull('no_surat_persetujuan')
             ->where('no_surat_persetujuan', '!=', '')
+            ->where('jenis_transaksi', 'pemusnahan') // Perbaikan utama: tambahkan filter ini
             ->select(
                 'no_surat_persetujuan',
                 DB::raw('MIN(created_at) as tgl_buat'),
@@ -268,22 +270,4 @@ class DashboardController extends Controller
 
         return Excel::download(new AllMaterialStockExport($filters), 'Total Stok Material.xlsx');
     }
-
-    // Metode ini tidak lagi diperlukan karena tombolnya sudah dihapus
-    // public function exportUppMaterial(Request $request)
-    // {
-    //     // ...
-    // }
-
-    // Metode ini tidak lagi diperlukan karena tombolnya sudah dihapus
-    // public function preview($noSurat)
-    // {
-    //     // ...
-    // }
-
-    // Metode ini tidak lagi diperlukan karena badge sudah tidak bisa diklik
-    // public function changeStatus(Request $request, $noSurat)
-    // {
-    //     // ...
-    // }
 }
