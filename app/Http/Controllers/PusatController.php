@@ -18,6 +18,10 @@ use App\Models\Region;
 
 class PusatController extends Controller
 {
+    /**
+     * Menampilkan daftar stok material di gudang pusat.
+     * Query telah diperbarui untuk hanya menampilkan item yang aktif.
+     */
     public function index(Request $request)
     {
         $filters = [
@@ -30,6 +34,7 @@ class PusatController extends Controller
 
         $query = Item::query()
             ->whereNull('facility_id') // Hanya ambil item yang ada di gudang pusat
+            ->where('is_active', true) // ✅ PERBAIKAN: Hanya ambil yang aktif
             ->select('items.*');
 
         $query->when($filters['search'], function ($q, $search) {
@@ -58,7 +63,6 @@ class PusatController extends Controller
             });
         });
 
-        // ✅ PERBAIKAN: Subquery untuk pemusnahan, hanya mengambil yang berstatus 'done'
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
@@ -119,6 +123,10 @@ class PusatController extends Controller
         ]);
     }
 
+    /**
+     * Metode untuk melakukan transaksi transfer, penerimaan, atau sales.
+     * Tidak ada perubahan logika besar yang diperlukan di sini terkait bug, tetapi menambahkan 'is_active'.
+     */
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -169,7 +177,8 @@ class PusatController extends Controller
                             'stok_awal' => 0,
                             'stok_akhir' => 0,
                             'region_id' => $facilityTujuan->region_id,
-                            'kategori_material' => $itemPusat->kategori_material
+                            'kategori_material' => $itemPusat->kategori_material,
+                            'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
                         ]
                     );
 
@@ -277,7 +286,10 @@ class PusatController extends Controller
         }
     }
 
-
+    /**
+     * Menambahkan material baru di gudang pusat.
+     * Tidak ada perubahan logika besar yang diperlukan di sini terkait bug, tetapi menambahkan 'is_active'.
+     */
     public function create()
     {
         return view('dashboard_page.menu.tambah_material');
@@ -304,11 +316,16 @@ class PusatController extends Controller
             'stok_akhir' => $request->total_stok,
             'facility_id' => null,
             'region_id' => 1,
+            'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
         ]);
 
         return response()->json(['success' => true, 'message' => 'Data material berhasil ditambahkan!', 'redirect_url' => route('pusat.index')], 201);
     }
 
+    /**
+     * Memperbarui data material.
+     * Tidak ada perubahan logika besar yang diperlukan di sini terkait bug.
+     */
     public function update(Request $request, Item $item)
     {
         $validator = Validator::make($request->all(), [
@@ -341,7 +358,6 @@ class PusatController extends Controller
             $newName = $request->input('nama_material');
             $newKategori = $request->input('kategori_material');
 
-            // Hitung total penerimaan berdasarkan KODE MATERIAL LAMA
             $totalPenerimaan = ItemTransaction::where('region_to', $item->region_id)
                 ->where(function ($query) use ($oldKode) {
                     $query->whereHas('item', function ($q) use ($oldKode) {
@@ -350,7 +366,6 @@ class PusatController extends Controller
                 })
                 ->sum('jumlah');
 
-            // Hitung total penyaluran, sales, dan pemusnahan (DONE) berdasarkan ITEM ID saat ini
             $totalPenyaluran = ItemTransaction::where('item_id', $item->id)
                 ->where('jenis_transaksi', 'transfer')
                 ->sum('jumlah');
@@ -367,7 +382,6 @@ class PusatController extends Controller
             $stokAwalBaru = $request->stok_awal;
             $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales - $totalPemusnahan;
 
-            // Perbarui item saat ini dengan data dari request
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
@@ -376,7 +390,6 @@ class PusatController extends Controller
                 'stok_akhir' => $stokAkhirBaru,
             ]);
 
-            // Jika kode, nama, atau kategori material berubah, perbarui juga item lain yang terkait (di fasilitas)
             if ($oldKode !== $newKode || $item->wasChanged('nama_material') || $item->wasChanged('kategori_material')) {
                 Item::where('kode_material', $oldKode)
                     ->where('id', '!=', $item->id)
@@ -391,28 +404,34 @@ class PusatController extends Controller
         return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
     }
 
-    // ... (Bagian atas kode controller tetap sama)
-
+    /**
+     * ✅ PERBAIKAN TOTAL: Mengarsipkan material (soft delete) daripada menghapusnya permanen (hard delete).
+     * Material hanya dapat diarsipkan jika stoknya 0.
+     */
     public function destroy(Item $item)
     {
-        // Simpan nama material sebelum dihapus
         $materialName = $item->nama_material;
 
-        // Gunakan DB Transaction untuk memastikan kedua operasi berhasil atau gagal bersamaan
-        DB::transaction(function () use ($item) {
-            // Hapus semua transaksi yang terhubung dengan item ini terlebih dahulu
-            $item->transactions()->delete();
+        try {
+            DB::transaction(function () use ($item) {
+                // Periksa apakah item memiliki stok akhir > 0
+                if ($item->stok_akhir > 0) {
+                    throw new \Exception("Stok material '{$item->nama_material}' masih {$item->stok_akhir}. Tidak dapat diarsipkan jika stok tidak nol.");
+                }
 
-            // Setelah transaksi dihapus, hapus item itu sendiri
-            $item->delete();
-        });
-
-        // Kirimkan pesan sukses dengan menyertakan nama material yang dihapus
-        return redirect()->route('pusat.index')->with('success', "Material '{$materialName}' dan seluruh riwayat transaksinya berhasil dihapus secara permanen!");
+                // Ubah status item menjadi tidak aktif
+                $item->update(['is_active' => false]);
+            });
+            return redirect()->route('pusat.index')->with('success', "Material '{$materialName}' berhasil dihapus.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Gagal mengarsipkan material: " . $e->getMessage());
+        }
     }
 
-    // ... (Bagian bawah kode controller tetap sama)
-
+    /**
+     * Mengekspor data material ke Excel.
+     * Tidak ada perubahan logika di sini.
+     */
     public function exportExcel(Request $request)
     {
         $request->validate([

@@ -16,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class MaterialController extends Controller
 {
+    /**
+     * Menampilkan daftar stok material untuk fasilitas tertentu.
+     * Mencakup perbaikan filter dan query untuk menampilkan data yang lebih akurat.
+     */
     public function index(Facility $facility, Request $request)
     {
         $filters = [
@@ -24,7 +28,9 @@ class MaterialController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
-        $itemsQuery = $facility->items()->select('items.*');
+        // ✅ PERBAIKAN: Tambahkan kondisi untuk hanya mengambil item yang aktif
+        $itemsQuery = $facility->items()->select('items.*')
+            ->where('is_active', true);
 
         $itemsQuery->when($filters['search'], function ($query, $search) {
             return $query->where(function ($q) use ($search) {
@@ -106,6 +112,10 @@ class MaterialController extends Controller
         ]);
     }
 
+    /**
+     * Memperbarui data material.
+     * Tidak ada perubahan logika besar di sini.
+     */
     public function update(Request $request, Item $item)
     {
         $validator = Validator::make($request->all(), [
@@ -131,27 +141,23 @@ class MaterialController extends Controller
                 ->with('error_item_id', $item->id);
         }
 
-        // Mulai perbaikan logika di dalam transaction
         DB::transaction(function () use ($request, $item) {
             $oldKode = $item->kode_material;
             $newKode = $request->input('kode_material');
             $newName = $request->input('nama_material');
             $stokAwalBaru = $request->stok_awal;
 
-            // Hitung total penerimaan berdasarkan kode material dan facility_id tujuan
             $totalPenerimaan = ItemTransaction::whereHas('item', function ($query) use ($item) {
                 $query->where('kode_material', $item->kode_material);
             })
                 ->where('facility_to', $item->facility_id)
                 ->sum('jumlah');
 
-            // Hitung total penyaluran dan sales berdasarkan ID item saat ini
             $totalPenyaluran = $item->transactions()->where('jenis_transaksi', 'transfer')->sum('jumlah');
             $totalSales = $item->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
 
             $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales;
 
-            // Update item saat ini
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
@@ -159,7 +165,6 @@ class MaterialController extends Controller
                 'stok_akhir' => $stokAkhirBaru,
             ]);
 
-            // Jika kode material berubah, update juga item di lokasi lain
             if ($oldKode !== $newKode) {
                 Item::where('kode_material', $oldKode)
                     ->where('id', '!=', $item->id)
@@ -168,7 +173,6 @@ class MaterialController extends Controller
                         'kode_material' => $newKode,
                     ]);
             } else {
-                // Jika kode material tidak berubah, hanya update nama_material
                 Item::where('kode_material', $oldKode)
                     ->where('id', '!=', $item->id)
                     ->update([
@@ -180,29 +184,34 @@ class MaterialController extends Controller
         return redirect()->route('materials.index', $item->facility_id)->with('success', 'Data material berhasil diperbarui!');
     }
 
+    /**
+     * ✅ PERBAIKAN TOTAL: Mengarsipkan material (soft delete) daripada menghapusnya permanen (hard delete).
+     * Material hanya dapat diarsipkan jika stoknya 0.
+     */
     public function destroy(Item $item)
     {
         $facilityId = $item->facility_id;
-
-        // Simpan nama material sebelum dihapus
         $materialName = $item->nama_material;
 
-        // Gunakan DB Transaction untuk memastikan kedua operasi berhasil atau gagal bersamaan
-        DB::transaction(function () use ($item) {
-            // Hapus semua transaksi yang terhubung dengan item ini terlebih dahulu
-            $item->transactions()->delete();
+        try {
+            DB::transaction(function () use ($item) {
+                // Periksa apakah item memiliki stok akhir > 0
+                if ($item->stok_akhir > 0) {
+                    throw new \Exception("Stok material '{$item->nama_material}' masih {$item->stok_akhir}. Tidak dapat diarsipkan jika stok tidak nol.");
+                }
 
-            // Setelah transaksi dihapus, hapus item itu sendiri
-            $item->delete();
-        });
-
-        // Kirimkan pesan sukses dengan menyertakan nama material yang dihapus
-        return redirect()->route('materials.index', $facilityId)->with('success', "Material '{$materialName}' dan seluruh riwayat transaksinya berhasil dihapus secara permanen!");
+                // Ubah status item menjadi tidak aktif
+                $item->update(['is_active' => false]);
+            });
+            return redirect()->route('materials.index', $facilityId)->with('success', "Material '{$materialName}' berhasil dihapus.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Gagal mengarsipkan material: " . $e->getMessage());
+        }
     }
 
     /**
      * ✅ FUNGSI DIROMBAK TOTAL: Menangani semua jenis transaksi secara fleksibel.
-     * Termasuk sales, transfer antar fasilitas, dan transfer ke/dari pusat.
+     * Mencakup sales, transfer antar fasilitas, dan transfer ke/dari pusat.
      */
     public function processTransaction(Request $request)
     {
@@ -240,7 +249,7 @@ class MaterialController extends Controller
                     }
 
                     $stokAwal = $item->stok_akhir;
-                    $item->decrement('stok_akhir', $jumlah); // ✅ PERBAIKAN: Gunakan decrement
+                    $item->decrement('stok_akhir', $jumlah);
 
                     ItemTransaction::create([
                         'item_id' => $item->id,
@@ -283,20 +292,20 @@ class MaterialController extends Controller
                             'stok_akhir' => 0,
                             'kategori_material' => $itemAsal->kategori_material,
                             'region_id' => Facility::findOrFail($request->tujuan_id)->region_id,
+                            'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
                         ]
                     );
 
-                // ✅ PERBAIKAN: Pastikan item tujuan di-lock setelah dibuat.
+                // Pastikan item tujuan di-lock setelah dibuat.
                 $itemTujuan->lockForUpdate();
 
                 $stokAwalAsal = $itemAsal->stok_akhir;
                 $stokAwalTujuan = $itemTujuan->stok_akhir;
 
-                // ✅ PERBAIKAN: Gunakan decrement/increment.
                 $itemAsal->decrement('stok_akhir', $jumlah);
                 $itemTujuan->increment('stok_akhir', $jumlah);
 
-                // ✅ PERBAIKAN: Logika pencatatan transaksi yang lebih sederhana
+                // Logika pencatatan transaksi yang lebih sederhana
                 ItemTransaction::create([
                     'item_id' => $itemAsal->id,
                     'user_id' => Auth::id(),

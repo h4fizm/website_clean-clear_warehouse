@@ -12,6 +12,7 @@ class Item extends Model
     protected $fillable = [
         'facility_id',
         'region_id',
+        'is_active', // ✅ Kolom 'is_active' ditambahkan di sini
         'nama_material',
         'kode_material',
         'kategori_material',
@@ -39,18 +40,4 @@ class Item extends Model
     {
         return $this->hasMany(ItemTransaction::class, 'item_id');
     }
-
-    // Perbaikan: Hapus relasi incomingTransfers() yang membingungkan.
-    // Relasi 'transactions' sudah cukup untuk semua perhitungan.
-
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS & HELPERS
-    |--------------------------------------------------------------------------
-    */
-
-    // Perbaikan: Hapus accessor ini karena perhitungannya tidak akurat.
-    // Kita akan melakukan perhitungan di Controller untuk memastikan data yang ditampilkan selalu akurat.
-    // Jika Anda benar-benar membutuhkan ini, logika yang benar akan jauh lebih kompleks
-    // dan harus mencakup semua jenis transaksi yang memengaruhi stok.
 }
