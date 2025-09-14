@@ -174,26 +174,8 @@
 
                 {{-- Baris 3: Filter Bulan/Tahun (kiri) & Search Bar (kanan) --}}
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                    {{-- ✅ PERBAIKAN: Seluruh div filter bulan & tahun DIHAPUS --}}
                     
-                    {{-- Pilihan Bulan & Tahun --}}
-                    <div class="d-flex align-items-center mb-2 mb-md-0">
-                        <select id="month-select" class="form-select form-select-sm me-2" style="width: auto;">
-                            @for ($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
-                                </option>
-                            @endfor
-                        </select>
-
-                        <select id="year-select" class="form-select form-select-sm" style="width: auto;">
-                            @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>
-                                    {{ $y }}
-                                </option>
-                            @endfor
-                        </select>
-                    </div>
-
                     {{-- Search Bar --}}
                     <div class="position-relative">
                         <div class="input-group input-group-sm" style="width: 250px;">
@@ -442,16 +424,12 @@
         const stockTitle = document.getElementById('stock-title');
         const materialSuggestionsContainer = document.getElementById('material-suggestions');
         
-        // ✅ Elemen untuk Kapasitas
+        // Elemen untuk Kapasitas
         const capacityInput = document.getElementById('material-capacity-input');
         const saveCapacityBtn = document.getElementById('save-capacity-btn');
         const capacityValueSpan = document.getElementById('capacity-value');
 
-        // 🔹 Dropdown bulan & tahun
-        const monthSelect = document.getElementById('month-select');
-        const yearSelect = document.getElementById('year-select');
-
-        // 🔹 Modal Export Excel untuk Material
+        // Modal Export Excel untuk Material
         const openExportMaterialModalBtn = document.getElementById('openExportMaterialModalBtn');
         const exportExcelMaterialModalEl = document.getElementById('exportExcelMaterialModal');
         const confirmExportMaterialBtn = document.getElementById('confirmExportMaterialBtn');
@@ -491,16 +469,17 @@
         function renderStockTable(data) {
             stockTableBody.innerHTML = '';
             const materialName = data?.stock?.[0]?.material_name;
-            const month = data?.month;
-            const year = data?.year;
-            const bulanNama = getMonthName(parseInt(month));
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1;
+            const currentYear = today.getFullYear();
+            const bulanNama = getMonthName(currentMonth);
 
-            // Set judul tabel
+            // ✅ PERBAIKAN: Menyesuaikan judul tabel untuk menampilkan bulan dan tahun terkini
             if (materialName) {
-                stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${year}`;
+                stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${currentYear}`;
                 stockSearchInput.value = materialName;
             } else {
-                stockTitle.innerText = `Stok ${bulanNama} ${year}`;
+                stockTitle.innerText = `Stok Material Saat Ini - ${bulanNama} ${currentYear}`;
             }
 
             // Update nilai input kapasitas
@@ -533,13 +512,11 @@
             }
         }
 
-        // 📌 Ambil data stok berdasarkan material + bulan + tahun
+        // 📌 Ambil data stok berdasarkan material saja (tanpa bulan & tahun)
         async function fetchStockData(materialName) {
             stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>';
             try {
-                const month = monthSelect.value;
-                const year = yearSelect.value;
-                const response = await fetch(`/api/stock-data?material_base_name=${encodeURIComponent(materialName)}&month=${month}&year=${year}`);
+                const response = await fetch(`/api/stock-data?material_base_name=${encodeURIComponent(materialName)}`);
                 if (!response.ok) throw new Error('Gagal mengambil data.');
                 const data = await response.json();
                 renderStockTable(data);
@@ -554,8 +531,8 @@
         saveCapacityBtn.addEventListener('click', async function() {
             const materialName = stockSearchInput.value;
             const capacity = capacityInput.value;
-            const month = monthSelect.value;
-            const year = yearSelect.value;
+            const month = (new Date()).getMonth() + 1;
+            const year = (new Date()).getFullYear();
 
             if (!materialName) {
                 Swal.fire('Peringatan!', 'Silakan pilih material terlebih dahulu.', 'warning');
@@ -572,15 +549,14 @@
                     body: JSON.stringify({
                         material_base_name: materialName,
                         capacity: capacity,
-                        month: month, // ✅ TAMBAHAN: Kirim bulan dan tahun
-                        year: year,   // ✅ TAMBAHAN: Kirim bulan dan tahun
+                        month: month,
+                        year: year,
                     })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     Swal.fire('Berhasil!', data.message, 'success');
-                    // Perbarui teks kapasitas di UI
                     capacityValueSpan.innerText = `/ ${formatNumber(capacity)} pcs`;
                 } else {
                     let errorMessage = 'Gagal menyimpan kapasitas.';
@@ -634,26 +610,17 @@
             showSuggestions(this.value); 
         });
 
-        // 📌 Event filter bulan & tahun
-        monthSelect.addEventListener('change', function () {
-            if (stockSearchInput.value) {
-                fetchStockData(stockSearchInput.value);
-            }
-        });
-
-        yearSelect.addEventListener('change', function () {
-            if (stockSearchInput.value) {
-                fetchStockData(stockSearchInput.value);
-            }
-        });
-        
         // 📌 Inisialisasi awal
         if (defaultMaterialName && initialStockData.stock) {
             renderStockTable(initialStockData);
         } else {
-            const bulanNama = getMonthName(parseInt(monthSelect.value));
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1;
+            const currentYear = today.getFullYear();
+            const bulanNama = getMonthName(currentMonth);
+
             stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Belum ada material yang dapat ditampilkan.</td></tr>';
-            stockTitle.innerText = `Stok ${bulanNama} ${yearSelect.value}`;
+            stockTitle.innerText = `Stok Material Saat Ini - ${bulanNama} ${currentYear}`;
         }
     });
 </script>
