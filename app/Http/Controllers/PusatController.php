@@ -127,6 +127,10 @@ class PusatController extends Controller
      * Metode untuk melakukan transaksi transfer, penerimaan, atau sales.
      * Tidak ada perubahan logika besar yang diperlukan di sini terkait bug, tetapi menambahkan 'is_active'.
      */
+    /**
+     * Metode untuk melakukan transaksi transfer, penerimaan, atau sales.
+     * Perbaikan: Menangani kasus penerimaan material yang sudah tidak aktif.
+     */
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -169,7 +173,6 @@ class PusatController extends Controller
                     }
 
                     $facilityTujuan = Facility::findOrFail($request->facility_id_selected);
-
                     $itemTujuan = Item::firstOrCreate(
                         ['facility_id' => $facilityTujuan->id, 'kode_material' => $itemPusat->kode_material],
                         [
@@ -178,11 +181,15 @@ class PusatController extends Controller
                             'stok_akhir' => 0,
                             'region_id' => $facilityTujuan->region_id,
                             'kategori_material' => $itemPusat->kategori_material,
-                            'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
+                            'is_active' => true
                         ]
                     );
 
                     $itemTujuan->lockForUpdate();
+
+                    if (!$itemTujuan->is_active) {
+                        $itemTujuan->update(['is_active' => true]);
+                    }
 
                     $stokAwalPusat = $itemPusat->stok_akhir;
                     $stokAwalTujuan = $itemTujuan->stok_akhir;
@@ -219,6 +226,11 @@ class PusatController extends Controller
 
                     if ($itemAsal->stok_akhir < $jumlah) {
                         throw ValidationException::withMessages(['jumlah' => "Stok di fasilitas asal tidak mencukupi untuk pengiriman!"]);
+                    }
+
+                    // Perbaikan: Mengaktifkan item pusat jika statusnya tidak aktif
+                    if (!$itemPusat->is_active) {
+                        $itemPusat->update(['is_active' => true]);
                     }
 
                     $stokAwalAsal = $itemAsal->stok_akhir;

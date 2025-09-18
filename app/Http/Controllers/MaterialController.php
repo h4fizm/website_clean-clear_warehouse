@@ -213,6 +213,10 @@ class MaterialController extends Controller
      * ✅ FUNGSI DIROMBAK TOTAL: Menangani semua jenis transaksi secara fleksibel.
      * Mencakup sales, transfer antar fasilitas, dan transfer ke/dari pusat.
      */
+    /**
+     * ✅ FUNGSI DIROMBAK TOTAL: Menangani semua jenis transaksi secara fleksibel.
+     * Mencakup sales, transfer antar fasilitas, dan transfer ke/dari pusat.
+     */
     public function processTransaction(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -282,20 +286,28 @@ class MaterialController extends Controller
                     throw ValidationException::withMessages(['jumlah' => "Stok di {$lokasi} tidak mencukupi!"]);
                 }
 
+                // PERBAIKAN: Cari item tujuan termasuk yang tidak aktif
                 $itemTujuan = $tujuanIsPusat
                     ? Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->lockForUpdate()->firstOrFail()
-                    : Item::firstOrCreate(
-                        ['facility_id' => $request->tujuan_id, 'kode_material' => $kodeMaterial],
-                        [
-                            'nama_material' => $itemAsal->nama_material,
-                            'stok_awal' => 0,
-                            'stok_akhir' => 0,
-                            'kategori_material' => $itemAsal->kategori_material,
-                            'region_id' => Facility::findOrFail($request->tujuan_id)->region_id,
-                            'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
-                        ]
-                    );
+                    : Item::where('facility_id', $request->tujuan_id)->where('kode_material', $kodeMaterial)->lockForUpdate()->first();
 
+                // Jika item tujuan tidak ditemukan, buat item baru
+                if (!$itemTujuan) {
+                    $itemTujuan = Item::create([
+                        'facility_id' => $request->tujuan_id,
+                        'kode_material' => $kodeMaterial,
+                        'nama_material' => $itemAsal->nama_material,
+                        'stok_awal' => 0,
+                        'stok_akhir' => 0,
+                        'kategori_material' => $itemAsal->kategori_material,
+                        'region_id' => Facility::findOrFail($request->tujuan_id)->region_id,
+                        'is_active' => true,
+                    ]);
+                }
+                // Jika item tujuan ditemukan tetapi tidak aktif, aktifkan kembali
+                else if (!$itemTujuan->is_active) {
+                    $itemTujuan->update(['is_active' => true]);
+                }
                 // Pastikan item tujuan di-lock setelah dibuat.
                 $itemTujuan->lockForUpdate();
 
