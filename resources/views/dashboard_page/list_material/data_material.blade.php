@@ -130,12 +130,46 @@
                     </table>
                 </div>
                 
-                <div class="mt-4 px-3 d-flex justify-content-between align-items-center">
-                   @if ($items->hasPages())
-                        @php $items->appends(request()->query()); @endphp
-                        {{ $items->links('vendor.pagination.bootstrap-5-simple') }}
-                   @endif
+                {{-- PAGINATION --}}
+                @if ($items->hasPages())
+                <div class="mt-4 px-3 d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            @php
+                                $total = $items->lastPage();
+                                $current = $items->currentPage();
+                                $window = 1; 
+                            @endphp
+                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->url(1) }}">&laquo;</a>
+                            </li>
+                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->previousPageUrl() }}">&lsaquo;</a>
+                            </li>
+                            @php $wasGap = false; @endphp
+                            @for ($i = 1; $i <= $total; $i++)
+                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
+                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
+                                        <a class="page-link" href="{{ $items->url($i) }}">{{ $i }}</a>
+                                    </li>
+                                    @php $wasGap = false; @endphp
+                                @else
+                                    @if (!$wasGap)
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        @php $wasGap = true; @endphp
+                                    @endif
+                                @endif
+                            @endfor
+                            <li class="page-item {{ $items->hasMorePages() ? '' : 'disabled' }}">
+                                <a class="page-link" href="{{ $items->nextPageUrl() }}">&rsaquo;</a>
+                            </li>
+                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $items->url($total) }}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -266,6 +300,7 @@
 @endsection
 
 @push('scripts')
+{{-- Perbaikan: Import file CSS Bootstrap 5 yang lengkap untuk paginasi --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 {{-- Script untuk membuka kembali modal jika ada error validasi --}}
@@ -527,8 +562,8 @@
                         if (errorData.message) {
                             errorMessage = errorData.message;
                         } else if (response.status === 422 && errorData.errors) {
-                             const validationErrors = Object.values(errorData.errors).flat().join('<br>');
-                             errorMessage = `<strong>Gagal Validasi:</strong><br>${validationErrors}`;
+                            const validationErrors = Object.values(errorData.errors).flat().join('<br>');
+                            errorMessage = `<strong>Gagal Validasi:</strong><br>${validationErrors}`;
                         }
                         return Promise.reject(new Error(errorMessage));
                     });
