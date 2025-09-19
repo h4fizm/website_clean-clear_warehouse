@@ -23,12 +23,13 @@ use App\Http\Controllers\AktivitasHarianController;
 // ROUTE PUBLIK (Tidak Perlu Login)
 // ===================================================================
 
-Route::get('/', function () {
-    return view('landing');
-});
+// Landing Page
+// Route::get('/', function () {
+//     return view('landing');
+// });
 
 // --- Autentikasi ---
-Route::get('/login', [AuthController::class, 'index'])->name('login');
+Route::get('/', [AuthController::class, 'index'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
 
 // --- Registrasi ---
