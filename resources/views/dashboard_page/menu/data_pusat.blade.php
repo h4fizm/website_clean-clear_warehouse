@@ -720,6 +720,7 @@
                             icon: 'error',
                             title: 'Oops...',
                             text: 'Terjadi kesalahan pada server. Mohon coba lagi.',
+                            // footer: '<a href="javascript:void(0)" onclick="document.querySelector(\'#error-details\').style.display=\'block\'">Lihat Detail Error</a><div id="error-details" style="display:none; text-align: left; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">' + text + '</div>'
                         });
                         throw new Error('Server returned HTML instead of JSON');
                     });
