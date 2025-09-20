@@ -29,7 +29,9 @@ use App\Http\Controllers\AktivitasHarianController;
 // });
 
 // --- Autentikasi ---
+// Login
 Route::get('/', [AuthController::class, 'index'])->name('login');
+Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
 
 // --- Registrasi ---

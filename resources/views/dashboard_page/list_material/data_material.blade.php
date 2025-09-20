@@ -563,7 +563,7 @@
                             errorMessage = errorData.message;
                         } else if (response.status === 422 && errorData.errors) {
                             const validationErrors = Object.values(errorData.errors).flat().join('<br>');
-                            errorMessage = `<strong>Gagal Validasi:</strong><br>${validationErrors}`;
+                            errorMessage = `<strong>Gagal Validasi :</strong><br>${validationErrors}`;
                         }
                         return Promise.reject(new Error(errorMessage));
                     });
