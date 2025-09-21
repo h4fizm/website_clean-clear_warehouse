@@ -28,6 +28,12 @@ class MaterialController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
+        // If no date filter is applied, default to the current month
+        if (empty($filters['start_date']) && empty($filters['end_date'])) {
+            $filters['start_date'] = \Carbon\Carbon::now()->startOfMonth()->toDateString();
+            $filters['end_date'] = \Carbon\Carbon::now()->endOfMonth()->toDateString();
+        }
+
         // ✅ PERBAIKAN: Tambahkan kondisi untuk hanya mengambil item yang aktif
         $itemsQuery = $facility->items()->select('items.*')
             ->where('is_active', true);

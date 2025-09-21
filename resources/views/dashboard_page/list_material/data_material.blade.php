@@ -81,7 +81,7 @@
                             @forelse ($items as $item)
                                 @php
                                     // Perhitungan stok akhir di sisi tampilan
-                                    $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
+                                    $stok_akhir_calc = $item->stok_akhir;
                                     $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
                                 @endphp
                                 <tr>

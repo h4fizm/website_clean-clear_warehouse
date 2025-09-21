@@ -30,6 +30,12 @@ class PusatController extends Controller
             'end_date' => $request->query('end_date'),
         ];
 
+        // If no date filter is applied, default to the current month
+        if (empty($filters['start_date']) && empty($filters['end_date'])) {
+            $filters['start_date'] = Carbon::now()->startOfMonth()->toDateString();
+            $filters['end_date'] = Carbon::now()->endOfMonth()->toDateString();
+        }
+
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
 
         $query = Item::query()
@@ -173,39 +179,59 @@ class PusatController extends Controller
                     }
 
                     $facilityTujuan = Facility::findOrFail($request->facility_id_selected);
-                    $itemTujuan = Item::firstOrCreate(
-                        ['facility_id' => $facilityTujuan->id, 'kode_material' => $itemPusat->kode_material],
-                        [
+                    
+                    // Lock the source item and get its stock before decrementing
+                    $itemPusat->lockForUpdate();
+                    $stokAwalPusat = $itemPusat->stok_akhir;
+                    
+                    // Find the destination item
+                    $itemTujuan = Item::where('facility_id', $facilityTujuan->id)
+                                      ->where('kode_material', $itemPusat->kode_material)
+                                      ->lockForUpdate() // Lock the destination item (or table for insert)
+                                      ->first();
+                    
+                    $stokAwalTujuan = 0;
+
+                    // Decrement stock from the source (Pusat) AFTER finding destination item
+                    $itemPusat->decrement('stok_akhir', $jumlah);
+
+                    if ($itemTujuan === null) {
+                        // Item does not exist at destination, so create it.
+                        $itemTujuan = Item::create([
+                            'facility_id' => $facilityTujuan->id,
+                            'kode_material' => $itemPusat->kode_material,
                             'nama_material' => $itemPusat->nama_material,
-                            'stok_awal' => 0,
-                            'stok_akhir' => 0,
+                            'stok_awal' => $jumlah,
+                            'stok_akhir' => $jumlah,
                             'region_id' => $facilityTujuan->region_id,
                             'kategori_material' => $itemPusat->kategori_material,
-                            'is_active' => true
-                        ]
-                    );
+                            'is_active' => true,
+                        ]);
+                        // The stock at the destination before this transaction was 0
+                        $stokAwalTujuan = 0;
+                    } else {
+                        // Item exists, so update it based on the user's cumulative logic.
+                        $stokAwalTujuan = $itemTujuan->stok_akhir; // Get stock before incrementing
+                        
+                        $itemTujuan->increment('stok_awal', $jumlah);
+                        $itemTujuan->increment('stok_akhir', $jumlah);
 
-                    $itemTujuan->lockForUpdate();
-
-                    if (!$itemTujuan->is_active) {
-                        $itemTujuan->update(['is_active' => true]);
+                        // If it was inactive, reactivate it.
+                        if (!$itemTujuan->is_active) {
+                            $itemTujuan->update(['is_active' => true]);
+                        }
                     }
 
-                    $stokAwalPusat = $itemPusat->stok_akhir;
-                    $stokAwalTujuan = $itemTujuan->stok_akhir;
-
-                    $itemPusat->decrement('stok_akhir', $jumlah);
-                    $itemTujuan->increment('stok_akhir', $jumlah);
-
+                    // Create the transaction log
                     ItemTransaction::create([
                         'item_id' => $itemPusat->id,
                         'user_id' => Auth::id(),
                         'jenis_transaksi' => 'transfer',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalPusat,
-                        'stok_akhir_asal' => $stokAwalPusat - $jumlah,
+                        'stok_akhir_asal' => $itemPusat->stok_akhir,
                         'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $stokAwalTujuan + $jumlah,
+                        'stok_akhir_tujuan' => $itemTujuan->fresh()->stok_akhir, // Get the fresh value after increments
                         'facility_from' => null,
                         'region_from' => $pusatRegion->id,
                         'facility_to' => $facilityTujuan->id,

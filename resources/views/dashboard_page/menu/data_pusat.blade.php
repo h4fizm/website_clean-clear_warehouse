@@ -134,7 +134,7 @@
                                 $pemusnahan_total = $item->pemusnahan_total_done;
                                 
                                 // Perhitungan stok akhir secara dinamis di Blade
-                                $stok_akhir_calc = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $pemusnahan_total;
+                                $stok_akhir_calc = $item->stok_akhir;
                                 
                                 $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
                             @endphp
