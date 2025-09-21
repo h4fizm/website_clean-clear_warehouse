@@ -8,8 +8,8 @@
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-0">
             <div class="text-center text-md-end mb-3 mb-md-0 order-md-2 ms-md-auto me-md-4">
                 <img src="{{ asset('dashboard_template/assets/img/icon.png') }}"
-                     alt="Branch Icon"
-                     class="welcome-card-icon">
+                    alt="Branch Icon"
+                    class="welcome-card-icon">
             </div>
             <div class="w-100 order-md-1 text-center text-md-start">
                 <h4 class="mb-1 fw-bold" id="summary-title">
@@ -68,7 +68,7 @@
                         @endif
                     </div>
                     
-                   <div class="row mb-3 align-items-start">
+                    <div class="row mb-3 align-items-start">
                         {{-- Input Search --}}
                         <div class="col-12 col-md-4 mb-3 mb-md-0">
                             <div class="input-group">
@@ -112,22 +112,32 @@
             <div class="card-body px-0 pt-0 pb-5">
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Material</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
-                                </tr>
-                            </thead>
+                        <thead>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nama Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Kode Material</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Awal</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penerimaan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Penyaluran</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Sales</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Pemusnahan</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Stok Akhir</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tgl. Transaksi Terakhir</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             @forelse ($items as $item)
+                            @php
+                                // Perbaikan Logika: Pemusnahan sekarang hanya dihitung jika statusnya "done"
+                                $pemusnahan_total = $item->pemusnahan_total_done;
+                                
+                                // Perhitungan stok akhir secara dinamis di Blade
+                                $stok_akhir_calc = $item->stok_akhir;
+                                
+                                $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
+                            @endphp
                             <tr>
                                 <td class="text-center">
                                     <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($items->currentPage() - 1) * $items->perPage() }}</p>
@@ -149,31 +159,40 @@
                                 <td class="text-center">
                                     <span class="badge bg-gradient-info text-white text-xs">{{ $item->penyaluran_total }} pcs</span>
                                 </td>
-                                {{-- DIUBAH: Menampilkan data sales --}}
                                 <td class="text-center">
                                     <span class="badge bg-gradient-warning text-white text-xs">{{ $item->sales_total ?? 0 }} pcs</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-gradient-success text-white text-xs">{{ $item->stok_akhir }} pcs</span>
+                                    {{-- Menampilkan total pemusnahan yang selesai --}}
+                                    <span class="badge bg-gradient-danger text-white text-xs">{{ $pemusnahan_total }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    {{-- Perbaikan: Gunakan perhitungan dinamis yang sudah diperbarui --}}
+                                    <span class="badge bg-gradient-success text-white text-xs">{{ $stok_akhir_calc }} pcs</span>
                                 </td>
                                 <td class="text-center">
                                     <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        @php
-                                            $tanggal = $item->latest_transaction_date ?? $item->updated_at;
-                                        @endphp
-                                        {{-- Format tanggal ini sudah sesuai preferensi Anda --}}
-                                        {{ \Carbon\Carbon::parse($tanggal)->locale('id')->translatedFormat('l, d F Y') }}
+                                        @if($latest_activity_date)
+                                            {{ \Carbon\Carbon::parse($latest_activity_date)->locale('id')->translatedFormat('l, d F Y') }}
+                                        @else
+                                            -
+                                        @endif
                                     </p>
                                 </td>
                                 <td class="text-center">
                                     {{-- Tombol Aksi --}}
-                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" data-id="{{ $item->id }}" data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
+                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" 
+                                        data-id="{{ $item->id }}" 
+                                        data-kode-material="{{ $item->kode_material }}"
+                                        data-stok-akhir="{{ $item->stok_akhir }}" {{-- KEMBALI MENGGUNAKAN STOK DARI DB --}}
+                                        data-nama-material="{{ $item->nama_material }}"
+                                        data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline delete-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger text-white delete-btn" title="Hapus">
@@ -184,8 +203,7 @@
                             </tr>
                             @empty
                             <tr>
-                                {{-- colspan menjadi 10 karena ada 1 kolom baru --}}
-                                <td colspan="10" class="text-center text-muted py-4">Data Kosong</td>
+                                <td colspan="11" class="text-center text-muted py-4">Data Kosong</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -259,24 +277,23 @@
                 {{-- Form Transaksi --}}
                 <form id="kirimMaterialForm" onsubmit="return false;">
                     @csrf
-                    <input type="hidden" id="item-id-pusat">
-                    <input type="hidden" id="kode-material-selected">
+                    <input type="hidden" id="item-id-pusat" name="item_id_pusat">
+                    <input type="hidden" id="kode-material-selected" name="kode_material">
 
                     {{-- Pilihan Jenis Transaksi --}}
                     <div class="mb-3">
                         <label class="form-label">Jenis Transaksi</label>
                         <div class="d-flex">
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penyaluran" value="penyaluran" checked>
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
                                 <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
                             <div class="form-check me-4">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-penerimaan" value="penerimaan">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
                                 <label class="form-check-label" for="jenis-penerimaan">Penerimaan</label>
                             </div>
-                            {{-- Button baru ditambahkan di sini --}}
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="jenisTransaksi" id="jenis-sales" value="sales">
+                                <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-sales" value="sales">
                                 <label class="form-check-label" for="jenis-sales">Sales</label>
                             </div>
                         </div>
@@ -286,36 +303,40 @@
                     <div class="mb-3">
                         <label id="asal-label" class="form-label">Asal Transaksi</label>
                         <div id="asal-container">
-                            {{-- Akan diisi oleh JavaScript --}}
+                            <input type="text" class="form-control" value="P.Layang (Pusat)" readonly>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label id="tujuan-label" class="form-label">Tujuan Transaksi</label>
                         <div id="tujuan-container">
-                             {{-- Akan diisi oleh JavaScript --}}
+                            <div class="position-relative w-100">
+                                <input type="text" class="form-control" id="facility-search" placeholder="Cari SPBE/BPT...">
+                                <input type="hidden" id="facility-id-hidden" name="facility_id_selected">
+                                <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="tanggal-transaksi" class="form-label">Tanggal Transaksi</label>
-                        <input type="date" class="form-control" id="tanggal-transaksi" required>
+                        <input type="date" class="form-control" id="tanggal-transaksi" name="tanggal_transaksi" required>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="no-surat-persetujuan" class="form-label">No. Surat Persetujuan</label>
-                            <input type="text" class="form-control" id="no-surat-persetujuan" placeholder="(Opsional)">
+                            <input type="text" class="form-control" id="no-surat-persetujuan" name="no_surat_persetujuan" placeholder="(Opsional)">
                         </div>
                         <div class="col-md-6 mb-3">
-                             <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
-                            <input type="text" class="form-control" id="no-ba-serah-terima" placeholder="(Opsional)">
+                            <label for="no-ba-serah-terima" class="form-label">No. BA Serah Terima</label>
+                            <input type="text" class="form-control" id="no-ba-serah-terima" name="no_ba_serah_terima" placeholder="(Opsional)">
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="jumlah-stok" class="form-label">Jumlah (pcs)</label>
-                        <input type="number" class="form-control" id="jumlah-stok" min="1" required>
+                        <input type="number" class="form-control" id="jumlah-stok" name="jumlah" min="1" required>
                     </div>
                 </form>
             </div>
@@ -332,55 +353,70 @@
 {{-- Modal Edit dibuat di dalam Loop --}}
 @foreach ($items as $item)
 <div class="modal fade" id="editMaterialModal-{{ $item->id }}" tabindex="-1" aria-labelledby="editMaterialModalLabel-{{ $item->id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form action="{{ route('pusat.update', $item->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="modal-body">
-          <div class="form-floating mb-3">
-            <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
-                   value="{{ old('nama_material', $item->nama_material) }}">
-            <label for="nama_material-{{ $item->id }}">Nama Material</label>
-            @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
-            @endif
-          </div>
-          <div class="form-floating mb-3">
-            <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
-                   value="{{ old('kode_material', $item->kode_material) }}">
-            <label for="kode_material-{{ $item->id }}">Kode Material</label>
-            @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
-            @endif
-          </div>
-          
-          {{-- Penambahan Form Stok Awal --}}
-          <div class="form-floating mb-3">
-            <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
-                   id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
-                   value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
-            <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
-            @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
-              <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
-            @endif
-          </div>
-          {{-- Akhir Penambahan --}}
-          
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('pusat.update', $item->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
+                                value="{{ old('nama_material', $item->nama_material) }}">
+                        <label for="nama_material-{{ $item->id }}">Nama Material</label>
+                        @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
+                        @endif
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
+                                value="{{ old('kode_material', $item->kode_material) }}">
+                        <label for="kode_material-{{ $item->id }}">Kode Material</label>
+                        @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
+                        @endif
+                    </div>
+                    
+                    {{-- Field Kategori Material --}}
+                    <div class="form-floating mb-3">
+                        <select class="form-select @if($errors->has('kategori_material') && session('error_item_id') == $item->id) is-invalid @endif"
+                                id="kategori_material-{{ $item->id }}" name="kategori_material" required>
+                            <option value="" disabled>-- Pilih Kategori --</option>
+                            <option value="Baru" {{ old('kategori_material', $item->kategori_material) == 'Baru' ? 'selected' : '' }}>Baru</option>
+                            <option value="Baik" {{ old('kategori_material', $item->kategori_material) == 'Baik' ? 'selected' : '' }}>Baik</option>
+                            <option value="Rusak" {{ old('kategori_material', $item->kategori_material) == 'Rusak' ? 'selected' : '' }}>Rusak</option>
+                            <option value="Afkir" {{ old('kategori_material', $item->kategori_material) == 'Afkir' ? 'selected' : '' }}>Afkir</option>
+                        </select>
+                        <label for="kategori_material-{{ $item->id }}">Kategori Material</label>
+                        @if($errors->has('kategori_material') && session('error_item_id') == $item->id)
+                            <div class="invalid-feedback">{{ $errors->first('kategori_material') }}</div>
+                        @endif
+                    </div>
+                    
+                    {{-- Field Stok Awal --}}
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
+                                id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
+                                value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
+                        <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
+                        @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
+                            <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
+                        @endif
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
 @endforeach
 
@@ -435,18 +471,40 @@
                 event.preventDefault(); 
                 const form = this.closest('form');
                 
+                // SweetAlert Pertama: Peringatan dan Ajak untuk Backup
                 Swal.fire({
-                    title: 'Apakah Anda yakin?',
-                    text: "Data material ini akan dihapus secara permanen!",
+                    title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
+                    html: `
+                        <p class="text-start">
+                            Penghapusan ini akan menghapus seluruh data material ini, termasuk semua riwayat transaksi dan stoknya secara permanen. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        </p>
+                        <p class="text-start mb-0">
+                            <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
+                        </p>
+                    `,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
+                    confirmButtonColor: '#007bff', // Warna tombol sesuai tema
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, hapus!',
+                    confirmButtonText: 'Ya, Saya Sudah Backup!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit(); 
+                        // Jika pengguna mengkonfirmasi di pop-up pertama, tampilkan yang kedua
+                        Swal.fire({
+                            title: 'Konfirmasi Terakhir',
+                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen.",
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33', // Warna merah untuk aksi berbahaya
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, Hapus Sekarang!',
+                            cancelButtonText: 'Kembali'
+                        }).then((secondResult) => {
+                            if (secondResult.isConfirmed) {
+                                form.submit(); // Kirimkan form untuk menghapus data
+                            }
+                        });
                     }
                 });
             });
@@ -454,31 +512,29 @@
     });
 </script>
 
-
 {{-- script transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Ambil data facilities dari Controller
         const facilities = @json($facilities);
+        const kirimModal = document.getElementById('kirimMaterialModal');
+        const form = document.getElementById('kirimMaterialForm');
 
-        // 🔹 Template HTML untuk setiap jenis input
-        const readonlyInputHTML = `<input type="text" class="form-control" value="P.Layang (Pusat)" readonly>`;
+        const readonlyInputHTML = (locName) => `<input type="text" class="form-control" value="${locName}" readonly>`;
+        const hiddenInputHTML = (nameAttr, value) => `<input type="hidden" name="${nameAttr}" value="${value}">`;
 
-        // DIUBAH: Template Searchbar untuk Penyaluran & Penerimaan
         function createFacilitySearchInputHTML() {
             return `
                 <div class="position-relative w-100">
-                    <input type="text" class="form-control" id="facility-search" placeholder="Cari SPBE/BPT...">
-                    <input type="hidden" id="facility-id-hidden">
+                    <input type="text" class="form-control" id="facility-search" placeholder="Cari SPBE/BPT..." autocomplete="off">
+                    <input type="hidden" id="facility-id-hidden" name="facility_id_selected">
                     <div id="facility-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
                 </div>
             `;
         }
         
-        // BARU: Template Dropdown untuk Sales
         function createSalesDropdownHTML() {
             return `
-                <select class="form-select" id="tujuan-sales-select">
+                <select class="form-select" id="tujuan-sales-select" name="tujuan_sales">
                     <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
                     <option value="Vendor UPP">Vendor UPP</option>
                     <option value="Sales Agen">Sales Agen</option>
@@ -488,33 +544,70 @@
             `;
         }
 
-        // 🔹 Fungsi untuk update form sesuai jenis transaksi
         function updateFormUI(type) {
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
             const asalLabel = document.getElementById('asal-label');
             const tujuanLabel = document.getElementById('tujuan-label');
 
-            // Reset label
+            // Hapus input hidden item_id_pusat sebelum mengisi ulang
+            const existingItemIdInput = document.getElementById('item-id-pusat');
+            if (existingItemIdInput) {
+                existingItemIdInput.remove();
+            }
+
             asalLabel.textContent = "Asal Transaksi";
             tujuanLabel.textContent = "Tujuan Transaksi";
 
-            // DIUBAH: Logika diperbarui untuk menangani 'sales'
+            const kodeMaterialInput = document.getElementById('kode-material-selected');
+            if (kodeMaterialInput) {
+                // Hapus input kode material yang lama jika ada
+                kodeMaterialInput.remove();
+            }
+
+            // Tambahkan kembali input kode material ke form
+            const newKodeMaterialInput = document.createElement('input');
+            newKodeMaterialInput.type = 'hidden';
+            newKodeMaterialInput.id = 'kode-material-selected';
+            newKodeMaterialInput.name = 'kode_material';
+            newKodeMaterialInput.value = form.dataset.kodeMaterial;
+            form.appendChild(newKodeMaterialInput);
+
             if (type === 'penyaluran') {
-                asalContainer.innerHTML = readonlyInputHTML;
+                asalContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
                 tujuanContainer.innerHTML = createFacilitySearchInputHTML();
-                initFacilitySearchbar(); // aktifkan searchbar
+                initFacilitySearchbar();
+
+                // Tambahkan kembali input hidden item_id_pusat untuk penyaluran
+                const newItemIdInput = document.createElement('input');
+                newItemIdInput.type = 'hidden';
+                newItemIdInput.id = 'item-id-pusat';
+                newItemIdInput.name = 'item_id_pusat';
+                newItemIdInput.value = form.dataset.itemId;
+                form.appendChild(newItemIdInput);
+
             } else if (type === 'penerimaan') {
                 asalContainer.innerHTML = createFacilitySearchInputHTML();
-                tujuanContainer.innerHTML = readonlyInputHTML;
-                initFacilitySearchbar(); // aktifkan searchbar
+                tujuanContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
+                initFacilitySearchbar();
+
+                // Untuk penerimaan, kita tidak perlu item_id_pusat karena backend akan mencari berdasarkan kode material
+                // Jadi, kita tidak perlu menambahkannya kembali ke form.
+
             } else if (type === 'sales') {
-                asalContainer.innerHTML = readonlyInputHTML;
+                asalContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
                 tujuanContainer.innerHTML = createSalesDropdownHTML();
+                
+                // Tambahkan kembali input hidden item_id_pusat untuk sales
+                const newItemIdInput = document.createElement('input');
+                newItemIdInput.type = 'hidden';
+                newItemIdInput.id = 'item-id-pusat';
+                newItemIdInput.name = 'item_id_pusat';
+                newItemIdInput.value = form.dataset.itemId;
+                form.appendChild(newItemIdInput);
             }
         }
 
-        // 🔹 Fungsi Searchbar Autocomplete untuk Facility
         function initFacilitySearchbar() {
             const searchInput = document.getElementById("facility-search");
             const hiddenInput = document.getElementById("facility-id-hidden");
@@ -525,6 +618,7 @@
             searchInput.addEventListener("input", function() {
                 const query = this.value.toLowerCase();
                 suggestionsBox.innerHTML = "";
+                hiddenInput.value = ""; 
 
                 if (!query) {
                     suggestionsBox.style.display = "none";
@@ -554,165 +648,142 @@
                     suggestionsBox.style.display = "none";
                 }
             });
-             // Sembunyikan suggestion box jika klik di luar
+
             document.addEventListener('click', function(e) {
                 if (!searchInput.contains(e.target)) {
                     suggestionsBox.style.display = 'none';
                 }
             });
         }
+        
+        kirimModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            form.reset();
 
-        // 🔹 Radio button listener
-        document.querySelectorAll('input[name="jenisTransaksi"]').forEach(radio => {
+            // Simpan item_id dan kode_material dari tombol yang diklik ke dataset form
+            form.dataset.itemId = button.dataset.id;
+            form.dataset.kodeMaterial = button.dataset.kodeMaterial;
+
+            document.getElementById('jenis-penyaluran').checked = true;
+            updateFormUI('penyaluran');
+
+            document.getElementById('modal-nama-material-display').textContent = button.dataset.namaMaterial;
+            document.getElementById('modal-kode-material-display').textContent = button.dataset.kodeMaterial;
+            document.getElementById('modal-stok-akhir-display').textContent = button.dataset.stokAkhir + ' pcs';
+            
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
+        });
+
+        document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', (event) => {
                 updateFormUI(event.target.value);
             });
         });
 
-        // 🔹 Saat klik tombol kirim (di tabel)
-        document.querySelectorAll('.kirim-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const row = this.closest('tr');
-                // Mengambil stok dari kolom ke-8 (index 7) karena Sales ditambahkan
-                const stokCellIndex = 7; 
-                document.getElementById('item-id-pusat').value = this.getAttribute('data-id');
-                document.getElementById('modal-nama-material-display').textContent = row.cells[1].innerText;
-                document.getElementById('modal-kode-material-display').textContent = row.cells[2].innerText;
-                document.getElementById('modal-stok-akhir-display').textContent = row.cells[stokCellIndex].innerText;
-                document.getElementById('kode-material-selected').value = row.cells[2].innerText;
-                document.getElementById('tanggal-transaksi').value = new Date().toISOString().slice(0, 10);
-                
-                // Reset form ke default (Penyaluran/Produk Transfer)
-                document.getElementById('jenis-penyaluran').checked = true;
-                updateFormUI('penyaluran');
-            });
-        });
-
-        // 🔹 Submit button
         document.getElementById('submitKirim').addEventListener('click', function() {
-            const jenisTransaksi = document.querySelector('input[name="jenisTransaksi"]:checked').value;
+            const jenisTransaksi = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             let isValid = true;
             
-            // DIUBAH: Menyesuaikan data yang dikirim berdasarkan jenis transaksi
-            const formData = {
-                _token: document.querySelector('#kirimMaterialForm input[name="_token"]').value,
-                item_id_pusat: document.getElementById('item-id-pusat').value,
-                kode_material: document.getElementById('kode-material-selected').value,
-                jenis_transaksi: jenisTransaksi,
-                jumlah: document.getElementById('jumlah-stok').value,
-                tanggal_transaksi: document.getElementById('tanggal-transaksi').value,
-                no_surat_persetujuan: document.getElementById('no-surat-persetujuan').value,
-                no_ba_serah_terima: document.getElementById('no-ba-serah-terima').value,
-            };
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
 
+            // Validasi khusus untuk setiap jenis transaksi
             if (jenisTransaksi === 'sales') {
-                const tujuanSales = document.getElementById('tujuan-sales-select').value;
-                if (!tujuanSales) {
+                if (!data.tujuan_sales) {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih tujuan sales!' });
                     isValid = false;
                 }
-                formData.tujuan_sales = tujuanSales; // BARU: Tambah data tujuan sales
-            } else { // Penyaluran atau Penerimaan
-                const selectedFacilityId = document.getElementById('facility-id-hidden')?.value;
-                if (!selectedFacilityId) {
+            } else if (jenisTransaksi === 'penyaluran' || jenisTransaksi === 'penerimaan') {
+                if (!data.facility_id_selected) {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: 'Anda harus memilih satu SPBE/BPT!' });
                     isValid = false;
                 }
-                formData.facility_id_selected = selectedFacilityId;
             }
 
             if (!isValid) return;
 
             fetch('{{ route('pusat.transfer') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': formData._token
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: data.message
-                        }).then(() => window.location.reload());
-                    } else if (data.errors) {
-                        let errorMessages = Object.values(data.errors).map(error => `<li>${error[0]}</li>`).join('');
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': data._token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Gagal Validasi',
-                            html: `<ul class="text-start">${errorMessages}</ul>`
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan pada server. Mohon coba lagi.',
+                            // footer: '<a href="javascript:void(0)" onclick="document.querySelector(\'#error-details\').style.display=\'block\'">Lihat Detail Error</a><div id="error-details" style="display:none; text-align: left; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">' + text + '</div>'
                         });
-                    } else {
-                        throw new Error(data.message || 'Terjadi kesalahan.');
-                    }
-                })
-                .catch(error => {
+                        throw new Error('Server returned HTML instead of JSON');
+                    });
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: result.message
+                    }).then(() => window.location.reload());
+                } else if (result.errors) {
+                    let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Validasi',
+                        html: `<ul class="text-start">${errorMessages}</ul>`
+                    });
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan.');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Server returned HTML instead of JSON') {
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
                         text: error.message
                     });
-                });
+                }
+            });
         });
     });
 </script>
 
-{{-- modal export excel --}}
+{{-- Script untuk Export Excel --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi modal Bootstrap
-        const exportModalElement = document.getElementById('exportExcelModal');
-        const exportModal = new bootstrap.Modal(exportModalElement);
-
-        // Cari tombol untuk membuka modal
-        const openExportModalBtn = document.getElementById('openExportModalBtn');
-        // Cari tombol konfirmasi export di dalam modal
+    document.addEventListener('DOMContentLoaded', function () {
+        const exportModal = new bootstrap.Modal(document.getElementById('exportExcelModal'));
+        const openExportBtn = document.getElementById('openExportModalBtn');
         const confirmExportBtn = document.getElementById('confirmExportBtn');
 
-        // Tambahkan event listener saat tombol untuk membuka modal di-klik
-        if (openExportModalBtn) {
-            openExportModalBtn.addEventListener('click', function() {
-                // Tampilkan modal
-                exportModal.show();
-            });
-        }
+        openExportBtn.addEventListener('click', function () {
+            exportModal.show();
+        });
 
-        // Tambahkan event listener untuk tombol "Export" di dalam modal
-        if (confirmExportBtn) {
-            confirmExportBtn.addEventListener('click', function() {
-                // 1. Ambil nilai dari input tanggal
-                const startDate = document.getElementById('exportStartDate').value;
-                const endDate = document.getElementById('exportEndDate').value;
+        confirmExportBtn.addEventListener('click', function () {
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
 
-                // 2. Siapkan URL dasar dari route Laravel
-                const baseUrl = "{{ route('pusat.export') }}";
+            if (!startDate || !endDate) {
+                Swal.fire('Peringatan!', 'Silakan pilih rentang tanggal terlebih dahulu.', 'warning');
+                return;
+            }
 
-                // 3. Buat URLSearchParams untuk menambahkan parameter tanggal
-                const params = new URLSearchParams();
-                if (startDate) {
-                    params.append('start_date', startDate);
-                }
-                if (endDate) {
-                    params.append('end_date', endDate);
-                }
-
-                // 4. Gabungkan URL dasar dengan parameter
-                const exportUrl = `${baseUrl}?${params.toString()}`;
-
-                // 5. Sembunyikan modal
-                exportModal.hide();
-
-                // 6. Arahkan browser ke URL export untuk memulai download
-                window.location.href = exportUrl;
-            });
-        }
+            const url = '{{ route('pusat.export') }}' + `?start_date=${startDate}&end_date=${endDate}`;
+            window.location.href = url;
+            exportModal.hide();
+        });
     });
 </script>
-
 @endpush
 
 {{-- CSS Lengkap --}}

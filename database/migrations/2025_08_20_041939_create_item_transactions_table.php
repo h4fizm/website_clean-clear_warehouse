@@ -20,17 +20,31 @@ return new class extends Migration {
             $table->unsignedBigInteger('facility_to')->nullable();
             $table->unsignedBigInteger('region_from')->nullable();
             $table->unsignedBigInteger('region_to')->nullable();
-            $table->string('tujuan_sales')->nullable(); // DIUBAH: Method ->after() dihapus
+            $table->string('tujuan_sales')->nullable();
 
             // Kolom Kuantitas & Jenis Transaksi
             $table->integer('jumlah');
             $table->integer('stok_awal_asal')->nullable()->comment('Stok asal SEBELUM transaksi');
             $table->integer('stok_akhir_asal')->nullable()->comment('Stok asal SETELAH transaksi');
-            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales']);
+
+            // ✅ DITAMBAHKAN: Kolom untuk mencatat stok tujuan
+            $table->integer('stok_awal_tujuan')->nullable()->comment('Stok tujuan SEBELUM transaksi');
+            $table->integer('stok_akhir_tujuan')->nullable()->comment('Stok tujuan SETELAH transaksi');
+
+            $table->enum('jenis_transaksi', ['penerimaan', 'penyaluran', 'transfer', 'sales', 'pemusnahan']);
+            $table->string('tahapan')->nullable();
+            $table->string('status')->default('proses');
 
             // Kolom Dokumen & Timestamps
             $table->string('no_surat_persetujuan', 100)->nullable();
             $table->string('no_ba_serah_terima', 100)->nullable();
+            $table->text('keterangan_transaksi')->nullable();
+            $table->string('penanggungjawab', 255)->nullable();
+
+            // Kolom Tambahan untuk Pemusnahan
+            $table->date('tanggal_pemusnahan')->nullable();
+            $table->text('aktivitas_pemusnahan')->nullable();
+
             $table->timestamps();
 
             // Definisi Foreign Keys

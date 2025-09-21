@@ -10,55 +10,110 @@ use Carbon\Carbon;
 
 class ItemSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
+        // Temukan region 'P.Layang (Pusat)'
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
-        $sumselRegion = Region::where('name_region', 'SA Sumsel')->firstOrFail();
-        $spbeSumsel = Facility::where('kode_plant', 'SSL001')->firstOrFail();
 
-        // mapping bulan khusus untuk tiap material
-        $materials = [
-            'LPG 3 Kg' => [
-                'date' => Carbon::create(2025, 7, 15, 10, 0, 0), // Juli
-                'items' => [
-                    ['condition' => 'Baru', 'code' => 'LPG3K-BARU', 'stock' => 150, 'location' => 'pusat'],
-                    ['condition' => 'Baik', 'code' => 'LPG3K-BAIK', 'stock' => 200, 'location' => 'pusat'],
-                    ['condition' => 'Rusak', 'code' => 'LPG3K-RUSAK', 'stock' => 50, 'location' => 'fasilitas'],
-                    ['condition' => 'Afkir', 'code' => 'LPG3K-AFKIR', 'stock' => 25, 'location' => 'fasilitas'],
-                ]
+        // Temukan facility dengan ID 1
+        $facility = Facility::findOrFail(1);
+
+        // Data material untuk Gudang Region (Pusat)
+        $pusatItems = [
+            // Kategori 'Baru'
+            [
+                'nama_material' => 'Gas LPG 3 Kg',
+                'kategori_material' => 'Baru',
+                'kode_material' => 'LPG3K-BARU',
             ],
-            'LPG 12 Kg' => [
-                'date' => Carbon::create(2025, 8, 15, 10, 0, 0), // Agustus
-                'items' => [
-                    ['condition' => 'Baru', 'code' => 'LPG12K-BARU', 'stock' => 300, 'location' => 'pusat'],
-                    ['condition' => 'Baik', 'code' => 'LPG12K-BAIK', 'stock' => 450, 'location' => 'fasilitas'],
-                    ['condition' => 'Rusak', 'code' => 'LPG12K-RUSAK', 'stock' => 120, 'location' => 'pusat'],
-                    ['condition' => 'Afkir', 'code' => 'LPG12K-AFKIR', 'stock' => 80, 'location' => 'fasilitas'],
-                ]
+            // Kategori 'Baik'
+            [
+                'nama_material' => 'LPG 12 Kg',
+                'kategori_material' => 'Baik',
+                'kode_material' => 'LPG12K-BAIK',
             ],
-            'Bright Gas 5.5 Kg' => [
-                'date' => Carbon::create(2025, 6, 15, 10, 0, 0), // Juni
-                'items' => [
-                    ['condition' => 'Baru', 'code' => 'BG55K-BARU', 'stock' => 500, 'location' => 'pusat'],
-                    ['condition' => 'Baik', 'code' => 'BG55K-BAIK', 'stock' => 600, 'location' => 'pusat'],
-                    ['condition' => 'Rusak', 'code' => 'BG55K-RUSAK', 'stock' => 75, 'location' => 'fasilitas'],
-                    ['condition' => 'Afkir', 'code' => 'BG55K-AFKIR', 'stock' => 30, 'location' => 'fasilitas'],
-                ]
+            // Kategori 'Rusak'
+            [
+                'nama_material' => 'Solar Industri',
+                'kategori_material' => 'Rusak',
+                'kode_material' => 'SIL-RUSAK',
+            ],
+            // Kategori 'Afkir'
+            [
+                'nama_material' => 'Avtur',
+                'kategori_material' => 'Afkir',
+                'kode_material' => 'AVTR-AFKIR',
+            ],
+            [
+                'nama_material' => 'Pertalite',
+                'kategori_material' => 'Afkir',
+                'kode_material' => 'PRTL-AFKIR',
             ],
         ];
 
-        foreach ($materials as $baseName => $data) {
-            foreach ($data['items'] as $item) {
-                Item::create([
-                    'region_id' => $item['location'] === 'pusat' ? $pusatRegion->id : $sumselRegion->id,
-                    'facility_id' => $item['location'] === 'fasilitas' ? $spbeSumsel->id : null,
-                    'nama_material' => $baseName . ' - ' . $item['condition'],
-                    'kode_material' => $item['code'],
-                    'stok_awal' => $item['stock'],
-                    'created_at' => $data['date'],
-                    'updated_at' => $data['date'],
-                ]);
-            }
+        // Data material untuk Fasilitas (SPBE/BPT)
+        $facilityItems = [
+            // Kategori 'Baru'
+            [
+                'nama_material' => 'Bright Gas 5.5 Kg',
+                'kategori_material' => 'Baru',
+                'kode_material' => 'BG55K-BARU',
+            ],
+            // Kategori 'Baik'
+            [
+                'nama_material' => 'Elpiji Industri 50 Kg',
+                'kategori_material' => 'Baik',
+                'kode_material' => 'ELI50K-BAIK',
+            ],
+            // Kategori 'Rusak'
+            [
+                'nama_material' => 'Oli Mesin',
+                'kategori_material' => 'Rusak',
+                'kode_material' => 'OLM-RUSAK',
+            ],
+            // Kategori 'Afkir'
+            [
+                'nama_material' => 'Pelumas Fastron',
+                'kategori_material' => 'Afkir',
+                'kode_material' => 'PFAS-AFKIR',
+            ],
+            [
+                'nama_material' => 'Aspal Curah',
+                'kategori_material' => 'Afkir',
+                'kode_material' => 'ASPC-AFKIR',
+            ],
+        ];
+
+        // Mengisi data untuk Gudang Region (Pusat)
+        foreach ($pusatItems as $item) {
+            Item::create([
+                'region_id' => $pusatRegion->id,
+                'facility_id' => null,
+                'nama_material' => $item['nama_material'],
+                'kode_material' => $item['kode_material'],
+                'kategori_material' => $item['kategori_material'],
+                'stok_awal' => 1000,
+                'stok_akhir' => 1000,
+            ]);
+        }
+
+        // Mengisi data untuk Fasilitas (ID 1)
+        foreach ($facilityItems as $item) {
+            Item::create([
+                'region_id' => null,
+                'facility_id' => $facility->id,
+                'nama_material' => $item['nama_material'],
+                'kode_material' => $item['kode_material'],
+                'kategori_material' => $item['kategori_material'],
+                'stok_awal' => 1000,
+                'stok_akhir' => 1000,
+            ]);
         }
     }
 }

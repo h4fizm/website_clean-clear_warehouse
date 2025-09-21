@@ -66,13 +66,13 @@
             </div>
           </div>
           
-          {{-- GANTI DENGAN KODE INI UNTUK OPSI 2 --}}
-          <div class="text-center mt-4">
+          {{-- BUTTON KEMBALI --}}
+          {{-- <div class="text-center mt-4">
               <a href="/" class="btn bg-gradient-secondary">
                   <i class="fas fa-home me-1"></i>
                   Kembali ke Beranda
               </a>
-          </div>
+          </div> --}}
 
         </div>
       </div>

@@ -17,6 +17,7 @@ class MaterialCapacity extends Model
     protected $fillable = [
         'material_base_name',
         'capacity',
+        'month',  // ✅ TAMBAHAN: Kolom bulan
+        'year',   // ✅ TAMBAHAN: Kolom tahun
     ];
 }
-

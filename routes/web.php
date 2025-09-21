@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PusatController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\UppMaterialController;
 use App\Http\Controllers\AktivitasHarianController;
 
 /*
@@ -22,11 +23,14 @@ use App\Http\Controllers\AktivitasHarianController;
 // ROUTE PUBLIK (Tidak Perlu Login)
 // ===================================================================
 
-Route::get('/', function () {
-    return view('landing');
-});
+// Landing Page
+// Route::get('/', function () {
+//     return view('landing');
+// });
 
 // --- Autentikasi ---
+// Login
+Route::get('/', [AuthController::class, 'index'])->name('login');
 Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
 
@@ -54,10 +58,10 @@ Route::middleware(['auth'])->group(function () {
     // --- Halaman Utama Setelah Login ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // --- API untuk data stok ---
-    Route::get('/api/stock-data/{materialBaseName}', [DashboardController::class, 'getStockDataApi'])->name('api.stock.data');
+    // --- API untuk data stok berdasarkan nama material, bulan, dan tahun ---
+    Route::get('/api/stock-data', [DashboardController::class, 'getStockDataApi'])->name('api.stock.data');
 
-    // --- [TAMBAHKAN INI] API untuk MENYIMPAN kapasitas ---
+    // --- API untuk MENYIMPAN kapasitas ---
     Route::post('/api/stock-capacity', [DashboardController::class, 'updateCapacityApi'])->name('api.capacity.update');
 
     // ALL MATERIAL EXPORT EXCEL
@@ -148,43 +152,68 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
-    // Route untuk halaman menu utama aktivitas
-    Route::get('/aktivitas', [AktivitasHarianController::class, 'index'])
-        ->name('aktivitas.index') // Menambahkan nama route
-        ->middleware('can:manage aktivitas harian'); // Middleware di sini
-
     // ===== TAMBAHKAN ROUTE DI BAWAH INI =====
     Route::get('/aktivitas/transaksi/export', [AktivitasHarianController::class, 'exportTransaksiExcel'])
         ->name('aktivitas.transaksi.export')
         ->middleware('can:manage aktivitas harian');
 
     // Route untuk halaman log transaksi
-    Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'logTransaksi'])
-        ->name('aktivitas.transaksi') // Menambahkan nama route
-        ->middleware('can:manage aktivitas harian'); // Middleware di sini
+    Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'index'])
+        ->name('aktivitas.transaksi')
+        ->middleware('can:manage aktivitas harian');
+
+    // Route untuk memproses data transaksi (misalnya, dari POST request)
+    Route::post('/aktivitas-transaksi/log', [AktivitasHarianController::class, 'logTransaksi'])
+        ->name('aktivitas.transaksi.log')
+        ->middleware('can:manage aktivitas harian');
+
+    // Halaman data UPP
+    Route::get('/upp-material', [UppMaterialController::class, 'index'])
+        ->name('upp-material.index')
+        ->middleware('can:manage data playang');
+
+    // Halaman tambah UPP
+    Route::get('/upp-material/tambah', [UppMaterialController::class, 'create'])
+        ->name('upp-material.create')
+        ->middleware('can:manage data playang');
+
+    // Simpan pengajuan UPP
+    Route::post('/upp-material/store', [UppMaterialController::class, 'store'])
+        ->name('upp-material.store')
+        ->middleware('can:manage data playang');
+
+    Route::get('/upp-material/preview/{no_surat}', [UppMaterialController::class, 'preview'])
+        ->name('upp-material.preview')
+        ->where('no_surat', '.*');
+
+    // Halaman edit UPP (memuat form dengan data yang sudah ada)
+    Route::get('/upp-material/edit/{no_surat}', [UppMaterialController::class, 'edit'])
+        ->name('upp-material.edit')
+        ->where('no_surat', '.*')
+        ->middleware('can:manage data playang');
+
+    // Proses update UPP
+    Route::put('/upp-material/update/{no_surat}', [UppMaterialController::class, 'update'])
+        ->name('upp-material.update')
+        ->where('no_surat', '.*')
+        ->middleware('can:manage data playang');
+
+    // Ambil data material untuk modal
+    Route::get('/upp-material/afkir', [UppMaterialController::class, 'getMaterials'])
+        ->name('upp-material.afkir')
+        ->middleware('can:manage data playang');
+
+    Route::post('/upp-material/change-status/{no_surat}', [App\Http\Controllers\UppMaterialController::class, 'changeStatus'])
+        ->name('upp-material.change-status')
+        ->where('no_surat', '.*')
+        ->middleware('can:manage data playang');
+
+    // BARIS BARU UNTUK EKSPOR EXCEL
+    Route::get('/upp-material/export-excel', [UppMaterialController::class, 'exportExcel'])
+        ->name('upp-material.export')
+        ->middleware('can:manage data playang');
 
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
-
-    // ini dibiarkan dulu
-    Route::get('/upp-material', function () {
-        return view('dashboard_page.menu.data_upp-material');
-    });
-
-    // --- Route Spesifik Lainnya ---
-    Route::get('/material', function () {
-        return view('dashboard_page.spbe-bpt_material.data_material');
-    });
-    Route::get('/keterangan-pemusnahan', function () {
-        return view('dashboard_page.upp_material.keterangan_pemusnahan');
-    });
-
-    // --- Aktivitas UPP ---
-    Route::get('/aktivitas-upp', function () {
-        return view('dashboard_page.aktivitas_harian.data_upp');
-    });
-    Route::get('/preview-upp', function () {
-        return view('dashboard_page.aktivitas_harian.preview_upp');
-    });
 
 });

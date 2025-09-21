@@ -19,7 +19,7 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * ✅ FUNGSI DIPERBARUI: Menghapus kolom 'Aktivitas' dan menambahkan 'Aktivitas Asal' & 'Aktivitas Tujuan'.
+     * FUNGSI DIPERBARUI: Menghapus kolom 'Aktivitas' dan menambahkan 'Aktivitas Asal' & 'Aktivitas Tujuan'.
      */
     public function headings(): array
     {
@@ -35,45 +35,62 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
             'User PJ',
             'No. Surat Persetujuan',
             'No. BA Serah Terima',
-            'Aktivitas Asal',      // <-- KOLOM BARU
-            'Aktivitas Tujuan',    // <-- KOLOM BARU
+            'Aktivitas Asal',
+            'Aktivitas Tujuan',
         ];
     }
 
     /**
-     * ✅ FUNGSI DIPERBARUI: Logika mapping kini menghasilkan data untuk dua kolom aktivitas.
+     * FUNGSI DIPERBARUI: Logika mapping kini menghasilkan data untuk dua kolom aktivitas.
      */
     public function map($transaction): array
     {
-        $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
-        $tujuan = 'N/A';
+        $lokasiAsal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
+        $lokasiTujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
+        $tujuanSales = $transaction->tujuan_sales ?? 'N/A';
+
         $aktivitasAsal = 'N/A';
         $aktivitasTujuan = 'N/A';
+        $lokasiTujuanDisplay = 'N/A';
 
-        if ($transaction->jenis_transaksi == 'sales') {
-            $tujuan = $transaction->tujuan_sales;
-            $aktivitasAsal = 'Penyaluran';
-            $aktivitasTujuan = 'Transaksi Sales';
-        } else { // Asumsikan sisanya adalah transfer
-            $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
-            $aktivitasAsal = 'Penyaluran';
-            $aktivitasTujuan = 'Penerimaan';
+        // ✅ PERBAIKAN: Gunakan switch case untuk penanganan jenis transaksi yang lebih akurat
+        switch ($transaction->jenis_transaksi) {
+            case 'transfer':
+                $aktivitasAsal = 'Penyaluran';
+                $aktivitasTujuan = 'Penerimaan';
+                $lokasiTujuanDisplay = $lokasiTujuan;
+                break;
+            case 'penerimaan':
+                $aktivitasAsal = 'Penyaluran';
+                $aktivitasTujuan = 'Penerimaan';
+                $lokasiTujuanDisplay = $lokasiTujuan;
+                break;
+            case 'sales':
+                $aktivitasAsal = 'Penyaluran';
+                $aktivitasTujuan = 'Sales';
+                $lokasiTujuanDisplay = $tujuanSales;
+                break;
+            default:
+                $aktivitasAsal = $transaction->jenis_transaksi;
+                $aktivitasTujuan = $transaction->jenis_transaksi;
+                $lokasiTujuanDisplay = 'N/A';
+                break;
         }
 
         return [
             Carbon::parse($transaction->created_at)->format('d-m-Y H:i:s'),
             $transaction->item->kode_material ?? 'N/A',
             $transaction->item->nama_material ?? 'N/A',
-            $asal,
-            $tujuan,
+            $lokasiAsal,
+            $lokasiTujuanDisplay,
             $transaction->stok_awal_asal ?? 0,
             $transaction->jumlah,
             $transaction->stok_akhir_asal ?? 0,
             $transaction->user->name ?? 'N/A',
             $transaction->no_surat_persetujuan ?? '-',
             $transaction->no_ba_serah_terima ?? '-',
-            $aktivitasAsal,      // <-- DATA BARU
-            $aktivitasTujuan,    // <-- DATA BARU
+            $aktivitasAsal,
+            $aktivitasTujuan,
         ];
     }
 
@@ -97,7 +114,26 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
             'facilityTo',
             'regionFrom',
             'regionTo'
-        ]);
+        ])
+            ->where('jenis_transaksi', '!=', 'pemusnahan'); // ✅ PERBAIKAN: Selalu kecualikan transaksi pemusnahan
+
+        // ✅ PERBAIKAN: Tangani mapping jenis transaksi dari UI ke database
+        if ($jenisTransaksi) {
+            switch (strtolower($jenisTransaksi)) {
+                case 'penyaluran':
+                    $query->where('jenis_transaksi', 'transfer');
+                    break;
+                case 'penerimaan':
+                    $query->where('jenis_transaksi', 'penerimaan');
+                    break;
+                case 'sales':
+                    $query->where('jenis_transaksi', 'sales');
+                    break;
+                default:
+                    // Jika tidak ada yang cocok, tidak ada filter tambahan
+                    break;
+            }
+        }
 
         $query->when($search, function ($q) use ($search) {
             $q->where(function ($subQuery) use ($search) {
@@ -118,15 +154,9 @@ class TransaksiLogExport implements FromQuery, WithHeadings, WithMapping
             });
         });
 
-        // Terapkan filter jenis transaksi
-        $query->when($jenisTransaksi, function ($q, $jenis) {
-            return $q->where('jenis_transaksi', $jenis);
-        });
-
         $query->when($startDate, fn($q, $date) => $q->whereDate('created_at', '>=', $date));
         $query->when($endDate, fn($q, $date) => $q->whereDate('created_at', '<=', $date));
 
         return $query->latest('created_at');
     }
 }
-

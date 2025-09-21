@@ -9,6 +9,8 @@ class ItemTransaction extends Model
 {
     use HasFactory;
 
+    public $timestamps = true;
+
     protected $fillable = [
         'item_id',
         'user_id',
@@ -19,10 +21,19 @@ class ItemTransaction extends Model
         'jumlah',
         'stok_awal_asal',
         'stok_akhir_asal',
+        // ✅ Perbaikan: Tambahkan kolom-kolom ini ke dalam fillable
+        'stok_awal_tujuan',
+        'stok_akhir_tujuan',
         'jenis_transaksi',
-        'tujuan_sales', // BARU: Tambahkan ini agar sesuai dengan database
+        'tujuan_sales',
         'no_surat_persetujuan',
         'no_ba_serah_terima',
+        'keterangan_transaksi',
+        'tahapan',
+        'status',
+        'tanggal_pemusnahan',
+        'aktivitas_pemusnahan',
+        'penanggungjawab',
     ];
 
     /*
@@ -31,47 +42,33 @@ class ItemTransaction extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Relasi ke Item
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class, 'item_id');
     }
 
-    // Relasi ke User (Penanggung Jawab)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Asal facility
     public function facilityFrom()
     {
         return $this->belongsTo(Facility::class, 'facility_from');
     }
 
-    // Tujuan facility
     public function facilityTo()
     {
         return $this->belongsTo(Facility::class, 'facility_to');
     }
 
-    // Asal region (khusus P. Layang)
     public function regionFrom()
     {
         return $this->belongsTo(Region::class, 'region_from');
     }
 
-    // Tujuan region (khusus P. Layang)
     public function regionTo()
     {
         return $this->belongsTo(Region::class, 'region_to');
     }
-
-    // Relasi ke Sales (User yang menerima penyaluran)
-    public function sales()
-    {
-        return $this->belongsTo(User::class, 'tujuan_sales');
-        // kolom "tujuan_sales" sesuai dengan fillable Anda
-    }
-
 }
