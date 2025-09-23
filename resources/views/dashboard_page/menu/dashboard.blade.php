@@ -23,12 +23,15 @@
                 </span>
             </div>
         </div>
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px; opacity: 0.2; pointer-events: none;"></div>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); background-size: 60px 60px; opacity: 0.2; pointer-events: none;"></div>
     </div>
 </div>
 
+{{-- dashboard.blade.php --}}
+
 {{-- Statistik Cards Dinamis --}}
 <div class="row g-3">
+    {{-- ✅ PERBAIKAN: Gunakan perulangan sederhana karena data sudah terurut dari controller --}}
     @foreach ($cards as $card)
         <div class="col-12 col-sm-6 col-md-4 col-lg">
             <a href="{{ $card['link'] }}" class="card h-100" style="text-decoration: none; color: inherit;">
@@ -39,7 +42,14 @@
                                 <p class="text-xs text-uppercase font-weight-bold mb-1 text-wrap" style="min-height: 28px;">
                                     {{ $card['title'] }}
                                 </p>
-                                <h5 class="font-weight-bolder mb-0">{{ $card['value'] }}</h5>
+                                <h5 class="font-weight-bolder mb-0">
+                                    {{-- Cek judul untuk menghilangkan kata 'Transaksi' pada kartu 'Transaksi Sales' --}}
+                                    @if ($card['title'] === 'Transaksi Sales')
+                                        {{ str_replace(' Transaksi', '', $card['value']) }}
+                                    @else
+                                        {{ $card['value'] }}
+                                    @endif
+                                </h5>
                             </div>
                         </div>
                         <div class="col-4 text-end d-flex align-items-center justify-content-end">
@@ -53,6 +63,8 @@
         </div>
     @endforeach
 </div>
+
+{{-- Sisa kode Blade tetap sama --}}
 
 {{-- 2. Tabel Data Material dari Controller --}}
 <div class="row mt-4">
@@ -320,42 +332,42 @@
                         </thead>
                         <tbody>
                             @forelse ($upps as $upp)
-                            <tr>
-                                <td class="text-center">
-                                    <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($upps->currentPage() - 1) * $upps->perPage() }}</p>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat_persetujuan }}</p>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs text-secondary mb-0">{{ $upp->tahapan }}</p>
-                                </td>
-                                <td class="text-center">
-                                    @php
-                                        $statusText = strtolower($upp->status) === 'done' ? 'Done' : 'Proses';
-                                        $statusColor = strtolower($upp->status) === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
-                                    @endphp
-                                    <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold">
-                                        {{ $statusText }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        {{ \Carbon\Carbon::parse($upp->tgl_buat)->translatedFormat('l, d F Y') }}
-                                    </p>
-                                </td>
-                                <td class="text-center">
-                                    <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        {{ \Carbon\Carbon::parse($upp->tgl_update)->translatedFormat('l, d F Y') }}
-                                    </p>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($upps->currentPage() - 1) * $upps->perPage() }}</p>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat_persetujuan }}</p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs text-secondary mb-0">{{ $upp->tahapan }}</p>
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $statusText = strtolower($upp->status) === 'done' ? 'Done' : 'Proses';
+                                            $statusColor = strtolower($upp->status) === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
+                                        @endphp
+                                        <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold">
+                                            {{ $statusText }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <p class="text-xs text-secondary font-weight-bold mb-0">
+                                            {{ \Carbon\Carbon::parse($upp->tgl_buat)->translatedFormat('l, d F Y') }}
+                                        </p>
+                                    </td>
+                                    <td class="text-center">
+                                        <p class="text-xs text-secondary font-weight-bold mb-0">
+                                            {{ \Carbon\Carbon::parse($upp->tgl_update)->translatedFormat('l, d F Y') }}
+                                        </p>
+                                    </td>
+                                </tr>
                             @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-4">Data Kosong</td>
-                            </tr>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">Data Kosong</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>

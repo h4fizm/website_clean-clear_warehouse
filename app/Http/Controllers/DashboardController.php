@@ -51,6 +51,7 @@ class DashboardController extends Controller
         $totalPenyaluran = 0;
         $totalPenerimaan = 0;
         foreach ($allTransactions as $trx) {
+            // Logika lama yang Anda minta untuk dipertahankan
             if ($trx->jenis_transaksi === 'sales') {
                 $totalPenyaluran += $trx->jumlah;
             } else {
@@ -63,12 +64,16 @@ class DashboardController extends Controller
             }
         }
 
-        // ✅ PERBAIKAN: Menambahkan card untuk Total Material UPP
+        // ✅ TAMBAHAN BARU: Hitungan khusus untuk Transaksi Sales
+        $totalSalesItems = ItemTransaction::where('jenis_transaksi', 'sales')->sum('jumlah');
+
+        // ✅ PERBAIKAN: Menambahkan card untuk Total Material UPP dan Transaksi Sales
         $cards = [
             ['title' => 'Total SPBE', 'value' => number_format($totalSpbe), 'icon' => 'fas fa-industry', 'bg' => 'primary', 'link' => '#'],
             ['title' => 'Total BPT', 'value' => number_format($totalBpt), 'icon' => 'fas fa-warehouse', 'bg' => 'info', 'link' => '#'],
             ['title' => 'Transaksi Penerimaan', 'value' => number_format($totalPenerimaan), 'icon' => 'fas fa-arrow-down', 'bg' => 'success', 'link' => '#'],
             ['title' => 'Transaksi Penyaluran', 'value' => number_format($totalPenyaluran), 'icon' => 'fas fa-arrow-up', 'bg' => 'danger', 'link' => '#'],
+            ['title' => 'Transaksi Sales', 'value' => number_format($totalSalesItems), 'icon' => 'fas fa-dollar-sign', 'bg' => 'warning', 'link' => '#'],
             ['title' => 'Total Material UPP', 'value' => number_format($totalUppMaterial), 'icon' => 'fas fa-trash-alt', 'bg' => 'warning', 'link' => '#'],
         ];
 
@@ -106,7 +111,6 @@ class DashboardController extends Controller
                 DB::raw('MAX(updated_at) as tgl_update'),
                 DB::raw('MAX(tahapan) as tahapan'),
                 DB::raw('MAX(status) as status'),
-                // ✅ TAMBAHAN: Menghitung total jumlah material per UPP
                 DB::raw('SUM(jumlah) as total_material_upp')
             )
             ->groupBy('no_surat_persetujuan')
@@ -187,25 +191,25 @@ class DashboardController extends Controller
     {
         $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
         $pusatRegionId = $pusatRegion ? $pusatRegion->id : null;
-    
+
         $month = $month ?? now()->month;
         $year = $year ?? now()->year;
-    
+
         // Ambil semua item yang cocok dengan nama material
         $allItems = Item::where('nama_material', 'like', $materialBaseName . '%')
             ->with('facility') // Eager load facility untuk akses tipe
             ->get();
-    
+
         $pusatStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
         $fasilitasStock = ['Baru' => 0, 'Baik' => 0, 'Rusak' => 0, 'Afkir' => 0];
-    
+
         // Jika tidak ada item, langsung kembalikan data kosong
         if ($allItems->isEmpty()) {
             $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)
                 ->where('month', $month)
                 ->where('year', $year)
                 ->value('capacity');
-    
+
             return [
                 'stock' => [
                     ['material_name' => $materialBaseName, 'gudang' => 'Gudang Regional', 'baru' => 0, 'baik' => 0, 'rusak' => 0, 'afkir' => 0, 'layak_edar' => 0],
@@ -216,25 +220,25 @@ class DashboardController extends Controller
                 'year' => $year,
             ];
         }
-    
+
         // Gunakan stok_akhir langsung dari tabel `items` yang sudah terupdate
         foreach ($allItems as $item) {
             $kategori = $item->kategori_material;
             $stokAkhir = $item->stok_akhir;
-    
+
             // Cek apakah item berada di gudang pusat
             if ($item->region_id === $pusatRegionId && is_null($item->facility_id)) {
                 if (array_key_exists($kategori, $pusatStock)) {
                     $pusatStock[$kategori] += $stokAkhir;
                 }
-            // Cek apakah item berada di fasilitas (SPBE/BPT)
+                // Cek apakah item berada di fasilitas (SPBE/BPT)
             } else if (!is_null($item->facility_id)) {
-                 if (array_key_exists($kategori, $fasilitasStock)) {
-                     $fasilitasStock[$kategori] += $stokAkhir;
+                if (array_key_exists($kategori, $fasilitasStock)) {
+                    $fasilitasStock[$kategori] += $stokAkhir;
                 }
             }
         }
-    
+
         $data = [
             [
                 'material_name' => $materialBaseName,
@@ -255,12 +259,12 @@ class DashboardController extends Controller
                 'layak_edar' => $fasilitasStock['Baru'] + $fasilitasStock['Baik'],
             ],
         ];
-    
+
         $capacity = MaterialCapacity::where('material_base_name', $materialBaseName)
             ->where('month', $month)
             ->where('year', $year)
             ->value('capacity');
-    
+
         return [
             'stock' => $data,
             'capacity' => $capacity ?? 0,
