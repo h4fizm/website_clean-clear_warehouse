@@ -64,8 +64,6 @@
     @endforeach
 </div>
 
-{{-- Sisa kode Blade tetap sama --}}
-
 {{-- 2. Tabel Data Material dari Controller --}}
 <div class="row mt-4">
     <div class="col-12">
@@ -432,6 +430,7 @@
 
         // 🔹 Elemen DOM utama
         const stockTableBody = document.querySelector('#table-stock-material-custom tbody');
+        const stockTable = document.getElementById('table-stock-material-custom');
         const stockSearchInput = document.getElementById('search-stock-material');
         const stockTitle = document.getElementById('stock-title');
         const materialSuggestionsContainer = document.getElementById('material-suggestions');
@@ -480,13 +479,20 @@
         // 📌 Render isi tabel stok material
         function renderStockTable(data) {
             stockTableBody.innerHTML = '';
+            
+            // Hapus footer lama jika ada
+            const oldFooter = stockTable.querySelector('tfoot');
+            if (oldFooter) {
+                oldFooter.remove();
+            }
+
             const materialName = data?.stock?.[0]?.material_name;
             const today = new Date();
             const currentMonth = today.getMonth() + 1;
             const currentYear = today.getFullYear();
             const bulanNama = getMonthName(currentMonth);
 
-            // ✅ PERBAIKAN: Menyesuaikan judul tabel untuk menampilkan bulan dan tahun terkini
+            // Menyesuaikan judul tabel
             if (materialName) {
                 stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${currentYear}`;
                 stockSearchInput.value = materialName;
@@ -498,10 +504,16 @@
             capacityInput.value = data?.capacity ?? 0;
             capacityValueSpan.innerText = `/ ${formatNumber(data?.capacity ?? 0)} pcs`;
 
-            // Render data stok
+            // Render data stok dan hitung total
             if (data && data.stock && data.stock.length > 0) {
                 const stockData = data.stock;
                 let firstRow = true;
+                let totalBaru = 0;
+                let totalBaik = 0;
+                let totalRusak = 0;
+                let totalAfkir = 0;
+                let totalLayakEdar = 0;
+
                 stockData.forEach((item) => {
                     const rowHtml = `
                         <tr>
@@ -518,7 +530,31 @@
                     `;
                     stockTableBody.insertAdjacentHTML('beforeend', rowHtml);
                     firstRow = false;
+
+                    // Akumulasi total
+                    totalBaru += item.baru;
+                    totalBaik += item.baik;
+                    totalRusak += item.rusak;
+                    totalAfkir += item.afkir;
+                    totalLayakEdar += item.layak_edar;
                 });
+                
+                // Tambahkan baris total (footer)
+                // ✅ PERBAIKAN: Menambahkan kelas border-0 untuk menghilangkan garis
+                const footerHtml = `
+                    <tfoot class="bg-gray-200 text-dark fw-bold border-0">
+                        <tr>
+                            <td colspan="2" class="text-start ps-2 text-sm">TOTAL</td>
+                            <td class="text-center text-sm">${formatNumber(totalBaru)}</td>
+                            <td class="text-center text-sm">${formatNumber(totalBaik)}</td>
+                            <td class="text-center text-sm">${formatNumber(totalRusak)}</td>
+                            <td class="text-center text-sm">${formatNumber(totalAfkir)}</td>
+                            <td class="text-center text-sm text-primary">${formatNumber(totalLayakEdar)}</td>
+                        </tr>
+                    </tfoot>
+                `;
+                stockTable.insertAdjacentHTML('beforeend', footerHtml);
+
             } else {
                 stockTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Pilih atau cari material untuk menampilkan data.</td></tr>';
             }
