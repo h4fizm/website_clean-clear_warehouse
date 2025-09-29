@@ -23,35 +23,33 @@ class DashboardController extends Controller
         $user = Auth::user();
         $roleName = $user->getRoleNames()->first() ?? 'User';
 
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
         // ============================
-        // Hitungan untuk card statistik
+        // Hitungan untuk card statistik (berdasarkan bulan ini)
         // ============================
         $totalSpbe = Facility::where('type', 'SPBE')->count();
         $totalBpt = Facility::where('type', 'BPT')->count();
 
-        // ✅ PERBAIKAN: Hitung total material yang di-UPP-kan
+        // Total material yang di-UPP-kan (status done) pada bulan ini
         $totalUppMaterial = ItemTransaction::query()
             ->where('jenis_transaksi', 'pemusnahan')
             ->where('status', 'done')
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
             ->sum('jumlah');
 
-        // Hitung total UPP dari dokumen
-        $totalUpp = ItemTransaction::query()
-            ->whereNotNull('no_surat_persetujuan')
-            ->where('no_surat_persetujuan', '!=', '')
-            ->where('jenis_transaksi', 'pemusnahan')
-            ->where('status', 'done')
-            ->distinct('no_surat_persetujuan')
-            ->count('no_surat_persetujuan');
-
+        // Ambil semua transaksi transfer dan sales pada bulan ini
         $allTransactions = ItemTransaction::with(['facilityFrom', 'facilityTo', 'regionFrom', 'regionTo'])
             ->whereIn('jenis_transaksi', ['transfer', 'sales'])
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
             ->get();
 
         $totalPenyaluran = 0;
         $totalPenerimaan = 0;
         foreach ($allTransactions as $trx) {
-            // Logika lama yang Anda minta untuk dipertahankan
             if ($trx->jenis_transaksi === 'sales') {
                 $totalPenyaluran += $trx->jumlah;
             } else {
@@ -64,8 +62,11 @@ class DashboardController extends Controller
             }
         }
 
-        // ✅ TAMBAHAN BARU: Hitungan khusus untuk Transaksi Sales
-        $totalSalesItems = ItemTransaction::where('jenis_transaksi', 'sales')->sum('jumlah');
+        // Hitungan khusus untuk Transaksi Sales pada bulan ini
+        $totalSalesItems = ItemTransaction::where('jenis_transaksi', 'sales')
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->sum('jumlah');
 
         // ✅ PERBAIKAN: Menambahkan card untuk Total Material UPP dan Transaksi Sales
         $cards = [
