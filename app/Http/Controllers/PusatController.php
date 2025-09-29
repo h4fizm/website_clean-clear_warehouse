@@ -50,25 +50,6 @@ class PusatController extends Controller
             });
         });
 
-        $query->when($filters['start_date'] || $filters['end_date'], function ($q) use ($filters) {
-            $q->where(function ($sub) use ($filters) {
-                $sub->whereHas('transactions', function ($subQ) use ($filters) {
-                    if ($filters['start_date']) {
-                        $subQ->whereDate('created_at', '>=', $filters['start_date']);
-                    }
-                    if ($filters['end_date']) {
-                        $subQ->whereDate('created_at', '<=', $filters['end_date']);
-                    }
-                });
-                if ($filters['start_date']) {
-                    $sub->orWhereDate('items.updated_at', '>=', $filters['start_date']);
-                }
-                if ($filters['end_date']) {
-                    $sub->whereDate('items.updated_at', '<=', $filters['end_date']);
-                }
-            });
-        });
-
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')

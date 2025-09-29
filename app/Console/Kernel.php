@@ -26,6 +26,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Daftarkan command untuk berjalan setiap bulan pada hari pertama jam 1 pagi
+        // $schedule->command(PerformMonthlyStockReset::class)->monthlyOn(1, '01:00');
         $schedule->command(PerformMonthlyStockReset::class)->monthlyOn(1, '01:00');
     }
 
