@@ -56,34 +56,29 @@ class PusatController extends Controller
                 ->whereColumn('source_item.kode_material', 'items.kode_material')
                 ->whereColumn('item_transactions.region_to', 'items.region_id')
                 ->where('jenis_transaksi', 'transfer')
-                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '>=', $date))
-                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '<=', $date)),
+                ->whereBetween('item_transactions.created_at', [$filters['start_date'], $filters['end_date']]),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->where('jenis_transaksi', 'transfer')
                 ->whereColumn('item_id', 'items.id')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+                ->whereBetween('created_at', [$filters['start_date'], $filters['end_date']]),
 
             'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'sales')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+                ->whereBetween('created_at', [$filters['start_date'], $filters['end_date']]),
 
             'pemusnahan_total_proses' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->where('status', 'proses')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+                ->whereBetween('created_at', [$filters['start_date'], $filters['end_date']]),
 
             'pemusnahan_total_done' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')
                 ->where('jenis_transaksi', 'pemusnahan')
                 ->where('status', 'done')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+                ->whereBetween('created_at', [$filters['start_date'], $filters['end_date']]),
 
             'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
                 ->whereColumn('item_id', 'items.id'),
