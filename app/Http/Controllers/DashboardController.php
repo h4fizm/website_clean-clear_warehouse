@@ -106,6 +106,7 @@ class DashboardController extends Controller
             ->whereNotNull('no_surat_persetujuan')
             ->where('no_surat_persetujuan', '!=', '')
             ->where('jenis_transaksi', 'pemusnahan')
+            ->where('no_surat_persetujuan', 'NOT LIKE', '[DELETED_%')
             ->select(
                 'no_surat_persetujuan',
                 DB::raw('MIN(created_at) as tgl_buat'),

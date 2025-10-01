@@ -29,6 +29,7 @@ class UppMaterialController extends Controller
             DB::raw('MAX(status) as status')
         )
             ->where('jenis_transaksi', 'pemusnahan')
+            ->where('no_surat_persetujuan', 'NOT LIKE', '[DELETED_%')
             ->groupBy('no_surat_persetujuan');
 
         if ($request->filled('search')) {
@@ -451,7 +452,44 @@ class UppMaterialController extends Controller
         }
     }
 
-    // ... metode lain tidak berubah ...
+    /**
+     * Menghapus pengajuan UPP secara permanen dari database.
+     */
+    public function destroy($no_surat)
+    {
+        try {
+            DB::transaction(function () use ($no_surat) {
+                // Cari semua transaksi terkait nomor surat ini
+                $transactions = ItemTransaction::where('no_surat_persetujuan', $no_surat)
+                    ->where('jenis_transaksi', 'pemusnahan')
+                    ->get();
+
+                if ($transactions->isEmpty()) {
+                    throw new \Exception("Data pengajuan UPP dengan nomor surat '{$no_surat}' tidak ditemukan.");
+                }
+
+                // UPDATE: Tandai transaksi dengan menambahkan prefix pada no_surat_persetujuan
+                // Ini akan menghapusnya dari daftar UPP tapi tetap menjaga history
+                $markedSurat = "[DELETED_" . now()->timestamp . "]_" . $no_surat;
+
+                ItemTransaction::where('no_surat_persetujuan', $no_surat)
+                    ->where('jenis_transaksi', 'pemusnahan')
+                    ->update([
+                        'no_surat_persetujuan' => $markedSurat,
+                        'keterangan_transaksi' => DB::raw("CONCAT(keterangan_transaksi, ' [PENGHAJUAN UPP DIHAPUS PADA: ', NOW(), ')')")
+                    ]);
+            });
+
+            // Tentukan redirect berdasarkan parameter atau default ke UPP Material
+            $redirectTo = request()->input('redirect_to', 'upp-material');
+            $redirectRoute = $redirectTo === 'dashboard' ? 'dashboard' : 'upp-material.index';
+
+            return redirect()->route($redirectRoute)->with('success', "Pengajuan UPP '{$no_surat}' berhasil dihapus. Stok material tetap berkurang dan history pemusnahan tetap tercatat di tabel pusat.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Gagal menghapus pengajuan UPP: " . $e->getMessage());
+        }
+    }
+
     public function exportExcel(Request $request)
     {
         $request->validate([

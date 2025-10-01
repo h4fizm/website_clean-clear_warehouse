@@ -110,9 +110,16 @@
                                     </p>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-info text-white preview-btn" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;">
+                                    <button type="button" class="btn btn-sm btn-info text-white preview-btn me-1" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;" title="Preview">
                                         <i class="fas fa-eye me-1"></i> Preview
                                     </button>
+                                    <form action="{{ route('upp-material.destroy', $upp->no_surat_persetujuan) }}" method="POST" class="d-inline delete-upp-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger text-white" style="font-size: 0.75rem;" title="Hapus">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             @empty
@@ -372,6 +379,35 @@
                 window.location.href = exportUrl;
             });
         }
+
+        // SweetAlert konfirmasi hapus UPP
+        document.querySelectorAll('.delete-upp-form').forEach(form => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: '⚠️ Peringatan Penting: Hapus Data UPP!',
+                    html: `
+                        <p class="text-start">
+                            Penghapusan ini akan menghapus seluruh data pengajuan UPP ini, termasuk semua riwayat transaksi dan materialnya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        </p>
+                        <p class="text-start mb-0">
+                            <strong>Apakah Anda yakin ingin melanjutkan?</strong>
+                        </p>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus Sekarang!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
     });
 </script>
 @endpush

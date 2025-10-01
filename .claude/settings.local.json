@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+<<<<<<< Updated upstream
+      "Bash(php artisan tinker:*)",
+      "Bash(dir:*)"
+=======
+      "Bash(crontab:*)",
+      "Read(//c/**)",
+      "Bash(php artisan schedule:run:*)"
+>>>>>>> Stashed changes
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

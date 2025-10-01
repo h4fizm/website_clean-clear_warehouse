@@ -419,8 +419,8 @@ class PusatController extends Controller
     }
 
     /**
-     * ✅ PERBAIKAN TOTAL: Mengarsipkan material (soft delete) daripada menghapusnya permanen (hard delete).
-     * Material hanya dapat diarsipkan jika stoknya 0.
+     * Menghapus material secara permanen (hard delete) dari database.
+     * Material dapat dihapus meskipun memiliki stok.
      */
     public function destroy(Item $item)
     {
@@ -428,17 +428,15 @@ class PusatController extends Controller
 
         try {
             DB::transaction(function () use ($item) {
-                // Periksa apakah item memiliki stok akhir > 0
-                if ($item->stok_akhir > 0) {
-                    throw new \Exception("Stok material '{$item->nama_material}' masih {$item->stok_akhir}. Tidak dapat diarsipkan jika stok tidak nol.");
-                }
+                // Hapus semua transaksi terkait item ini di pusat
+                $item->transactions()->delete();
 
-                // Ubah status item menjadi tidak aktif
-                $item->update(['is_active' => false]);
+                // Hapus item secara permanen dari database
+                $item->delete();
             });
-            return redirect()->route('pusat.index')->with('success', "Material '{$materialName}' berhasil dihapus.");
+            return redirect()->route('pusat.index')->with('success', "Material '{$materialName}' berhasil dihapus secara permanen.");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', "Gagal mengarsipkan material: " . $e->getMessage());
+            return redirect()->back()->with('error', "Gagal menghapus material: " . $e->getMessage());
         }
     }
 
