@@ -325,7 +325,7 @@
                     title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
                     html: `
                         <p class="text-start">
-                            Penghapusan ini akan menghapus seluruh data material ini, termasuk semua riwayat transaksi dan stoknya secara permanen. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                            Penghapusan ini akan menghapus seluruh data material ini dari fasilitas {{ $facility->name }}, termasuk semua riwayat transaksi dan stoknya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
                         </p>
                         <p class="text-start mb-0">
                             <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
@@ -342,7 +342,7 @@
                         // Jika pengguna mengkonfirmasi di pop-up pertama, tampilkan yang kedua
                         Swal.fire({
                             title: 'Konfirmasi Terakhir',
-                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen.",
+                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen dari database.",
                             icon: 'question',
                             showCancelButton: true,
                             confirmButtonColor: '#d33', // Warna merah untuk aksi berbahaya

@@ -213,6 +213,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('upp-material.export')
         ->middleware('can:manage data playang');
 
+    // Hapus pengajuan UPP
+    Route::delete('/upp-material/destroy/{no_surat}', [UppMaterialController::class, 'destroy'])
+        ->name('upp-material.destroy')
+        ->where('no_surat', '.*')
+        ->middleware('can:manage data playang');
+
     // Route ini secara otomatis membuat route untuk index, create, store, edit, update, destroy
     Route::resource('/pengguna', UserController::class)->middleware('can:manage user');
 

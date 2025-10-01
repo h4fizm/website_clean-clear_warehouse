@@ -326,6 +326,7 @@
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tanggal Buat</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Tanggal Update Terakhir</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -361,10 +362,25 @@
                                             {{ \Carbon\Carbon::parse($upp->tgl_update)->translatedFormat('l, d F Y') }}
                                         </p>
                                     </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-info text-white me-1 preview-upp-btn"
+                                            data-no-surat="{{ $upp->no_surat_persetujuan }}"
+                                            title="Preview">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <form action="{{ route('upp-material.destroy', $upp->no_surat_persetujuan) }}" method="POST" class="d-inline delete-upp-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="redirect_to" value="dashboard">
+                                            <button type="submit" class="btn btn-sm btn-danger text-white" title="Hapus">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">Data Kosong</td>
+                                    <td colspan="7" class="text-center text-muted py-4">Data Kosong</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -656,6 +672,45 @@
         // 📌 Event input search
         stockSearchInput.addEventListener('keyup', function() { 
             showSuggestions(this.value); 
+        });
+
+        // 📌 SweetAlert konfirmasi hapus UPP
+        document.querySelectorAll('.delete-upp-form').forEach(form => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: '⚠️ Peringatan Penting: Hapus Data UPP!',
+                    html: `
+                        <p class="text-start">
+                            Penghapusan ini akan menghapus seluruh data pengajuan UPP ini, termasuk semua riwayat transaksi dan materialnya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        </p>
+                        <p class="text-start mb-0">
+                            <strong>Apakah Anda yakin ingin melanjutkan?</strong>
+                        </p>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus Sekarang!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        // 📌 Preview UPP functionality
+        document.querySelectorAll('.preview-upp-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const noSurat = this.getAttribute('data-no-surat');
+
+                // Open preview in new tab
+                window.open(`/upp-material/preview/${noSurat}`, '_blank');
+            });
         });
 
         // 📌 Inisialisasi awal
