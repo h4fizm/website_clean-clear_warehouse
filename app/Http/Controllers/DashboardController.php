@@ -82,7 +82,7 @@ class DashboardController extends Controller
         // Data tabel material (global)
         // ============================
         $query = Item::query()
-            ->selectRaw('nama_material, kode_material, kategori_material, SUM(stok_akhir) as total_stok_akhir')
+            ->selectRaw('nama_material, kode_material, kategori_material, SUM(GREATEST(stok_akhir, 0)) as total_stok_akhir')
             ->groupBy('nama_material', 'kode_material', 'kategori_material')
             ->when($request->filled('search_material'), function ($q) use ($request) {
                 $q->having('nama_material', 'like', '%' . $request->search_material . '%')
@@ -227,6 +227,9 @@ class DashboardController extends Controller
         foreach ($allItems as $item) {
             $kategori = $item->kategori_material;
             $stokAkhir = $item->stok_akhir;
+
+            // ✅ FIX: Pastikan stok tidak negatif - jika negatif, gunakan 0
+            $stokAkhir = max(0, $stokAkhir);
 
             // Cek apakah item berada di gudang pusat
             if ($item->region_id === $pusatRegionId && is_null($item->facility_id)) {
