@@ -124,8 +124,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 {{-- DataTables Configuration --}}
 <script>
@@ -137,6 +135,13 @@
             ajax: {
                 url: "{{ route('api.aktivitas.transaksi') }}",
                 type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                error: function(xhr, error, code) {
+                    console.log('DataTable Error:', xhr.responseText);
+                    console.log('Error details:', error, code);
+                },
                 data: function(d) {
                     d.search = $('#searchInput').val();
                     d.start_date = $('#startDate').val();
@@ -154,13 +159,19 @@
                         return meta.row + 1 + meta.settings._iDisplayStart;
                     }
                 },
-                { 
-                    data: 'item', 
+                {
+                    data: 'item',
                     name: 'item.nama_material',
                     render: function(data, type, row) {
+                        if (!row.item) {
+                            return `<div class="d-flex flex-column justify-content-center">
+                                        <h6 class="mb-0 text-sm font-weight-bolder">-</h6>
+                                        <p class="text-xs text-secondary mb-0">Kode: -</p>
+                                    </div>`;
+                        }
                         return `<div class="d-flex flex-column justify-content-center">
-                                    <h6 class="mb-0 text-sm font-weight-bolder">${row.item.nama_material}</h6>
-                                    <p class="text-xs text-secondary mb-0">Kode: ${row.item.kode_material}</p>
+                                    <h6 class="mb-0 text-sm font-weight-bolder">${row.item.nama_material || '-'}</h6>
+                                    <p class="text-xs text-secondary mb-0">Kode: ${row.item.kode_material || '-'}</p>
                                 </div>`;
                     }
                 },
@@ -249,17 +260,18 @@
                                                 </span>` : `<span class="text-muted text-xs">-</span>`;
                     }
                 },
-                { 
-                    data: 'user', 
+                {
+                    data: 'user',
                     name: 'user.name',
                     render: function(data, type, row) {
-                        return `<p class="text-xs text-secondary mb-0">${row.user ? row.user.name : 'N/A'}</p>`;
+                        return `<p class="text-xs text-secondary mb-0">${(row.user && row.user.name) ? row.user.name : 'N/A'}</p>`;
                     }
                 },
-                { 
-                    data: 'created_at', 
+                {
+                    data: 'created_at',
                     name: 'created_at',
                     render: function(data, type, row) {
+                        if (!row.created_at) return '<p class="text-xs text-secondary mb-0">-</p>';
                         return `<p class="text-xs text-secondary mb-0">${moment(row.created_at).locale('id').format('dddd, D MMMM YYYY')}</p>`;
                     }
                 }

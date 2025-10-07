@@ -317,8 +317,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 {{-- DataTables Configuration --}}
 <script>
@@ -330,82 +328,140 @@
             ajax: {
                 url: "{{ route('api.pusat.materials') }}",
                 type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 data: function(d) {
                     d.search = $('#searchInput').val();
                     d.start_date = $('#startDate').val();
                     d.end_date = $('#endDate').val();
+                },
+                error: function(xhr, error, code) {
+                    console.log('DataTable Error - Status:', xhr.status);
+                    console.log('DataTable Error - Response:', xhr.responseText);
+                    console.log('Error details:', error, code);
+
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        console.log('Authentication/Authorization error. Trying debug endpoint...');
+
+                        // Try debug endpoint without authentication
+                        $.ajax({
+                            url: "/api/pusat-materials-debug",
+                            type: "GET",
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            data: {
+                                draw: 1,
+                                start: 0,
+                                length: 10,
+                                search: { value: '' }
+                            },
+                            success: function(debugData) {
+                                console.log('Debug endpoint successful:', debugData);
+                                alert('Debug API works! The issue is authentication/permissions. Check console for details.');
+                            },
+                            error: function(debugXhr, debugError) {
+                                console.log('Debug endpoint also failed:', debugXhr.responseText);
+                                alert('Both APIs failed. Check console for error details.');
+                            }
+                        });
+
+                        $('#pusat-materials-table').hide();
+                        $('#pusat-materials-table').after('<div class="alert alert-warning">Authentication required. Please refresh the page and log in again.</div>');
+                    } else {
+                        $('#pusat-materials-table').after('<div class="alert alert-danger">Error loading data: ' + xhr.status + ' ' + error + '</div>');
+                    }
+                },
+                dataSrc: function(json) {
+                    return json.data;
                 }
             },
             columns: [
-                { 
-                    data: null, 
-                    name: 'id', 
+                {
+                    data: null,
+                    name: 'id',
                     searchable: false,
                     orderable: false,
                     render: function(data, type, row, meta) {
-                        return meta.row + 1 + meta.settings._iDisplayStart;
+                        return meta.row + meta.settings._iDisplayStart + 1;
                     }
                 },
                 { data: 'nama_material', name: 'nama_material' },
                 { data: 'kode_material', name: 'kode_material' },
-                { 
-                    data: 'stok_awal', 
+                {
+                    data: 'stok_awal',
                     name: 'stok_awal',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'penerimaan_total', 
+                {
+                    data: 'penerimaan_total',
                     name: 'penerimaan_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-primary text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-primary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'penyaluran_total', 
+                {
+                    data: 'penyaluran_total',
                     name: 'penyaluran_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'sales_total', 
+                {
+                    data: 'sales_total',
                     name: 'sales_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-warning text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-warning text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'pemusnahan_total', 
+                {
+                    data: 'pemusnahan_total',
                     name: 'pemusnahan_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-danger text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-danger text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'stok_akhir', 
+                {
+                    data: 'stok_akhir',
                     name: 'stok_akhir',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-success text-white text-xs">' + data + ' pcs</span>';
+                        return '<span class="badge bg-gradient-success text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
-                { 
-                    data: 'created_at', 
-                    name: 'updated_at',
+                {
+                    data: 'created_at',
+                    name: 'created_at',
                     render: function(data, type, row) {
-                        return data ? data : '-';
+                        if (!data) return '-';
+                        if (type === 'display' && data !== '-') {
+                            return moment(data, 'DD-MM-YYYY HH:mm:ss').locale('id').format('DD MMMM YYYY, HH:mm');
+                        }
+                        return data;
                     }
                 },
-                { 
-                    data: 'actions', 
+                {
+                    data: 'actions',
                     name: 'actions',
                     orderable: false,
-                    searchable: false
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return data || '';
+                    }
                 }
             ],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+                processing: "Sedang memproses...",
+                lengthMenu: "Tampilkan _MENU_ data",
+                search: "Cari:",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)"
             },
             dom: 'Bfrtip',
             order: [[9, 'desc']] // Default order by last activity date
@@ -421,8 +477,9 @@
             table.draw();
         });
 
+        
         // Edit functionality
-        $('#pusat-materials-table').on('click', '.btn-info', function() {
+        $('#pusat-materials-table').on('click', '.edit-btn', function() {
             const row = $(this).closest('tr');
             const rowData = table.row(row).data();
             
@@ -484,24 +541,44 @@
 
         // Process transaction functionality
         $('#pusat-materials-table').on('click', '.kirim-btn', function() {
-            const rowData = table.row($(this).closest('tr')).data();
-            
-            // Fill modal with item info
-            document.getElementById('modal-nama-material-display').textContent = rowData.nama_material;
-            document.getElementById('modal-kode-material-display').textContent = rowData.kode_material;
-            document.getElementById('modal-stok-akhir-display').textContent = rowData.stok_akhir + ' pcs';
-            
-            // Set form data
-            document.getElementById('item-id-pusat').value = rowData.id;
-            document.getElementById('kode-material-selected').value = rowData.kode_material;
-            
-            // Set default date
-            const today = new Date();
-            document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
-            
-            // Show modal
-            const kirimModal = new bootstrap.Modal(document.getElementById('kirimMaterialModal'));
-            kirimModal.show();
+            try {
+                const rowData = table.row($(this).closest('tr')).data();
+                console.log('Row data:', rowData); // Debug log
+
+                // Fill modal with item info
+                document.getElementById('modal-nama-material-display').textContent = rowData.nama_material;
+                document.getElementById('modal-kode-material-display').textContent = rowData.kode_material;
+                document.getElementById('modal-stok-akhir-display').textContent = rowData.stok_akhir + ' pcs';
+
+                // Set form data
+                document.getElementById('item-id-pusat').value = rowData.id;
+                document.getElementById('kode-material-selected').value = rowData.kode_material;
+
+                // Set default date
+                const today = new Date();
+                document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
+
+                // Set default transaction type to "penyaluran" and initialize form
+                document.getElementById('jenis-penyaluran').checked = true;
+
+                // Check if updateFormUI function exists before calling
+                if (typeof window.updateFormUI === 'function') {
+                    window.updateFormUI('penyaluran');
+                } else {
+                    console.error('updateFormUI function not found');
+                }
+
+                // Show modal
+                const kirimModal = new bootstrap.Modal(document.getElementById('kirimMaterialModal'));
+                kirimModal.show();
+            } catch (error) {
+                console.error('Error in kirim button handler:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat membuka modal transaksi'
+                });
+            }
         });
     });
 </script>
@@ -559,6 +636,17 @@
                 text: 'Terjadi kesalahan. Silakan coba lagi.'
             });
         });
+
+        // Clear validation errors on input
+        document.querySelectorAll('#editMaterialForm input, #editMaterialForm select').forEach(field => {
+            field.addEventListener('input', function() {
+                this.parentElement.classList.remove('is-invalid');
+                const errorElement = document.getElementById(`${this.id}-error`);
+                if (errorElement) {
+                    errorElement.textContent = '';
+                }
+            });
+        });
     });
 </script>
 
@@ -594,7 +682,8 @@
             `;
         }
 
-        function updateFormUI(type) {
+        // Make function globally accessible
+        window.updateFormUI = function(type) {
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
             const asalLabel = document.getElementById('asal-label');
@@ -719,13 +808,24 @@
             })
             .then(result => {
                 if (result.success) {
+                    // Close the modal first
+                    const kirimModal = bootstrap.Modal.getInstance(document.getElementById('kirimMaterialModal'));
+                    if (kirimModal) {
+                        kirimModal.hide();
+                    }
+
+                    // Reset form
+                    document.getElementById('kirimMaterialForm').reset();
+
+                    // Refresh the DataTable immediately
+                    console.log('Refreshing table after transaction...');
+                    $('#pusat-materials-table').DataTable().ajax.reload(null, false); // false to keep current page
+
+                    // Show success message
                     Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
                         text: result.message
-                    }).then(() => {
-                        // Refresh the DataTable
-                        $('#pusat-materials-table').DataTable().ajax.reload();
                     });
                 } else if (result.errors) {
                     let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');

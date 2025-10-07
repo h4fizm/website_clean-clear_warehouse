@@ -521,7 +521,7 @@ class UppMaterialController extends Controller
         $order = $request->get('order')[0] ?? null;
         $columns = $request->get('columns') ?? [];
 
-        // Build the query for UPP transactions
+        // Build the query for UPP transactions with optimized aggregation
         $query = ItemTransaction::select(
             'no_surat_persetujuan',
             DB::raw('MIN(created_at) as tgl_buat'),
@@ -549,7 +549,7 @@ class UppMaterialController extends Controller
 
             switch ($columnName) {
                 case 'no_surat_persetujuan':
-                    $query->orderByRaw('MIN(created_at) ' . $direction);
+                    $query->orderBy('no_surat_persetujuan', $direction);
                     break;
                 case 'tgl_buat':
                     $query->orderByRaw('MIN(created_at) ' . $direction);
@@ -571,8 +571,14 @@ class UppMaterialController extends Controller
             $query->orderByRaw('MIN(created_at) DESC');
         }
 
-        // Add pagination
-        $query->offset($start)->limit($length);
+        // Get the filtered records count before pagination
+        $filteredQuery = clone $query;
+        $filteredRecords = $filteredQuery->count();
+
+        // Add pagination - ensure both parameters are provided
+        if ($length > 0) {
+            $query->skip($start)->take($length);
+        }
 
         $upps = $query->get();
 
@@ -582,12 +588,12 @@ class UppMaterialController extends Controller
                 'no_surat_persetujuan' => $upp->no_surat_persetujuan,
                 'tgl_buat' => Carbon::parse($upp->tgl_buat)->format('d-m-Y'),
                 'tgl_update' => Carbon::parse($upp->tgl_update)->format('d-m-Y'),
-                'tahapan' => $upp->tahapan,
-                'status' => $upp->status,
+                'tahapan' => $upp->tahapan ?? '-',
+                'status' => ucfirst($upp->status ?? 'proses'),
                 'actions' => '<a href="' . route('upp-material.edit', $upp->no_surat_persetujuan) . '" class="btn btn-sm btn-primary">Edit</a> '
                     . '<a href="' . route('upp-material.preview', $upp->no_surat_persetujuan) . '" class="btn btn-sm btn-info">Preview</a> '
                     . '<form action="' . route('upp-material.destroy', $upp->no_surat_persetujuan) . '" method="POST" class="d-inline">'
-                    . csrf_field() . method_field('DELETE') 
+                    . csrf_field() . method_field('DELETE')
                     . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
                     . '</form>'
             ];
@@ -596,7 +602,7 @@ class UppMaterialController extends Controller
         return response()->json([
             'draw' => (int) $draw,
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'recordsFiltered' => $filteredRecords,
             'data' => $data
         ]);
     }

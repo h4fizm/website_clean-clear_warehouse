@@ -213,7 +213,7 @@ class PusatController extends Controller
                     ItemTransaction::create([
                         'item_id' => $itemPusat->id,
                         'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'transfer',
+                        'jenis_transaksi' => 'penyaluran',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalPusat,
                         'stok_akhir_asal' => $itemPusat->stok_akhir,
@@ -255,7 +255,7 @@ class PusatController extends Controller
                     ItemTransaction::create([
                         'item_id' => $itemAsal->id,
                         'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'transfer',
+                        'jenis_transaksi' => 'penerimaan',
                         'jumlah' => $jumlah,
                         'stok_awal_asal' => $stokAwalAsal,
                         'stok_akhir_asal' => $stokAwalAsal - $jumlah,
@@ -320,12 +320,20 @@ class PusatController extends Controller
         return view('dashboard_page.menu.tambah_material');
     }
 
+    /**
+     * Show the form for editing the specified item.
+     */
+    public function edit(Item $item)
+    {
+        return view('dashboard_page.menu.tambah_material', compact('item'));
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'nama_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
             'kode_material' => ['required', 'string', 'max:255', Rule::unique('items')->whereNull('facility_id')],
-            'total_stok' => 'required|integer|min:0',
+            'stok_awal' => 'required|integer|min:0',
             'kategori_material' => ['required', 'string', 'in:Baru,Baik,Rusak,Afkir'],
         ]);
 
@@ -337,8 +345,8 @@ class PusatController extends Controller
             'nama_material' => $request->nama_material,
             'kode_material' => $request->kode_material,
             'kategori_material' => $request->kategori_material,
-            'stok_awal' => $request->total_stok,
-            'stok_akhir' => $request->total_stok,
+            'stok_awal' => $request->stok_awal,
+            'stok_akhir' => $request->stok_awal,
             'facility_id' => null,
             'region_id' => 1,
             'is_active' => true // ✅ PERBAIKAN: Set is_active saat membuat item baru
@@ -371,10 +379,10 @@ class PusatController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput()
-                ->with('error_item_id', $item->id);
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         DB::transaction(function () use ($request, $item) {
@@ -404,7 +412,10 @@ class PusatController extends Controller
             }
         });
 
-        return redirect()->route('pusat.index')->with('success', 'Data material berhasil diperbarui!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Data material berhasil diperbarui!'
+        ]);
     }
 
     /**
@@ -460,20 +471,55 @@ class PusatController extends Controller
      */
     public function getPusatMaterials(Request $request)
     {
-        $draw = $request->get('draw');
-        $start = $request->get('start');
-        $length = $request->get('length');
+        // Validate and sanitize input parameters
+        $draw = (int) $request->get('draw', 1);
+        $start = (int) $request->get('start', 0);
+        $length = (int) $request->get('length', 10);
         $search = $request->get('search')['value'] ?? '';
         $order = $request->get('order')[0] ?? null;
         $columns = $request->get('columns') ?? [];
 
-        // Get the pusat region ID
-        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+        // Ensure valid values
+        $start = max(0, $start);
+        $length = max(1, min(100, $length)); // Limit to 100 records max
 
-        // Build the query
+        try {
+            // Get the pusat region ID
+            $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
+        // Build the query with optimized joins
         $query = Item::query()
             ->whereNull('facility_id') // Only items in pusat
-            ->where('is_active', true); // Only active items
+            ->where('is_active', true) // Only active items
+            ->select([
+                'items.*',
+                // Penyaluran: transaksi KELUAR dari pusat (item_id langsung cocok)
+                'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->where('jenis_transaksi', 'penyaluran')
+                    ->whereColumn('item_id', 'items.id'),
+                // Sales: transaksi sales dari pusat (item_id langsung cocok)
+                'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->whereColumn('item_id', 'items.id')
+                    ->where('jenis_transaksi', 'sales'),
+                // Pemusnahan: transaksi pemusnahan dari pusat (item_id langsung cocok)
+                'pemusnahan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->whereColumn('item_id', 'items.id')
+                    ->where('jenis_transaksi', 'pemusnahan')
+                    ->where('status', 'done'),
+                // Penerimaan: transaksi MASUK ke pusat (cari berdasarkan kode_material yang sama)
+                'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->where('jenis_transaksi', 'penerimaan')
+                    ->whereExists(function ($subQuery) {
+                        $subQuery->select(DB::raw(1))
+                                 ->from('items as source_item')
+                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
+                                 ->whereColumn('source_item.id', 'base_transactions.item_id')
+                                 ->whereNotNull('source_item.facility_id'); // Source harus dari facility
+                    }),
+                // Latest transaction date
+                'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
+                    ->whereColumn('item_id', 'items.id')
+            ]);
 
         // Add search functionality
         if (!empty($search)) {
@@ -503,19 +549,23 @@ class PusatController extends Controller
                     $query->orderBy('stok_awal', $direction);
                     break;
                 case 'penerimaan_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND region_to = items.region_id AND EXISTS (SELECT 1 FROM items as source_item WHERE source_item.kode_material = items.kode_material AND source_item.id = base_transactions.item_id)), 0)', $direction);
+                    $query->orderBy('penerimaan_total', $direction);
                     break;
                 case 'penyaluran_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND region_from = items.region_id), 0)', $direction);
+                    $query->orderBy('penyaluran_total', $direction);
                     break;
                 case 'sales_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "sales"), 0)', $direction);
+                    $query->orderBy('sales_total', $direction);
                     break;
                 case 'pemusnahan_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "pemusnahan" AND status = "done"), 0)', $direction);
+                    $query->orderBy('pemusnahan_total', $direction);
                     break;
                 case 'stok_akhir':
-                    $query->orderBy('stok_akhir', $direction);
+                    // Will be calculated below, so order by the calculated value
+                    $query->orderBy(DB::raw('(stok_awal + COALESCE(penerimaan_total, 0) - COALESCE(penyaluran_total, 0) - COALESCE(sales_total, 0) - COALESCE(pemusnahan_total, 0))'), $direction);
+                    break;
+                case 'created_at':
+                    $query->orderBy('latest_transaction_date', $direction);
                     break;
                 default:
                     $query->orderBy('updated_at', $direction);
@@ -525,42 +575,29 @@ class PusatController extends Controller
             $query->orderBy('updated_at', 'desc');
         }
 
-        // Add pagination
-        $query->offset($start)->limit($length);
+        // Get the filtered records count before pagination
+        $filteredQuery = clone $query;
+        $filteredRecords = $filteredQuery->count();
 
-        // Get the items with calculated totals
+        // Add pagination - ensure both parameters are provided
+        if ($length > 0) {
+            $query->skip($start)->take($length);
+        }
+
+        // Get the items with pre-calculated totals
         $items = $query->get();
+
+        // Debug: Log query and results
+        \Log::info('Pusat API Query SQL: ' . $query->toSql());
+        \Log::info('Pusat API Count: ' . $items->count());
 
         $data = [];
         foreach ($items as $item) {
-            // Calculate totals for each item
-            $penerimaanTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
-                ->whereNotNull('region_to')
-                ->where('region_to', $item->region_id)
-                ->whereExists(function ($subQuery) use ($item) {
-                    $subQuery->select(DB::raw(1))
-                             ->from('items as source_item')
-                             ->whereColumn('source_item.kode_material', DB::raw("'" . $item->kode_material . "'"))
-                             ->whereColumn('source_item.id', 'base_transactions.item_id');
-                })
-                ->sum('jumlah');
+            // Calculate the final stock using the pre-calculated totals
+            $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
 
-            $penyaluranTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
-                ->whereNotNull('region_from')
-                ->where('region_from', $item->region_id)
-                ->sum('jumlah');
-
-            $salesTotal = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'sales')
-                ->sum('jumlah');
-
-            $pemusnahanTotal = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->where('status', 'done')
-                ->sum('jumlah');
-
-            // Calculate the final stock
-            $stokAkhir = $item->stok_awal + $penerimaanTotal - $penyaluranTotal - $salesTotal - $pemusnahanTotal;
+            // Debug: Log individual item calculations
+            \Log::info("Item {$item->nama_material} ({$item->kode_material}): stok_awal={$item->stok_awal}, penerimaan={$item->penerimaan_total}, penyaluran={$item->penyaluran_total}, sales={$item->sales_total}, stok_akhir={$stokAkhir}");
 
             $data[] = [
                 'id' => $item->id,
@@ -568,24 +605,36 @@ class PusatController extends Controller
                 'nama_material' => $item->nama_material,
                 'kategori_material' => $item->kategori_material,
                 'stok_awal' => $item->stok_awal,
-                'penerimaan_total' => $penerimaanTotal,
-                'penyaluran_total' => $penyaluranTotal,
-                'sales_total' => $salesTotal,
-                'pemusnahan_total' => $pemusnahanTotal,
+                'penerimaan_total' => (int) $item->penerimaan_total,
+                'penyaluran_total' => (int) $item->penyaluran_total,
+                'sales_total' => (int) $item->sales_total,
+                'pemusnahan_total' => (int) $item->pemusnahan_total,
                 'stok_akhir' => $stokAkhir,
-                'actions' => '<a href="' . route('pusat.edit', $item->id) . '" class="btn btn-sm btn-primary">Edit</a> '
+                'created_at' => $item->latest_transaction_date ? Carbon::parse($item->latest_transaction_date)->format('d-m-Y H:i:s') : Carbon::parse($item->updated_at)->format('d-m-Y H:i:s'),
+                'actions' => '<button class="btn btn-sm btn-primary btn-info edit-btn" data-item-id="' . $item->id . '">Edit</button> '
+                    . '<button class="btn btn-sm btn-success kirim-btn" data-item-id="' . $item->id . '">Kirim</button> '
                     . '<form action="' . route('pusat.destroy', $item->id) . '" method="POST" class="d-inline">'
-                    . csrf_field() . method_field('DELETE') 
-                    . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
+                    . csrf_field() . method_field('DELETE')
+                    . '<button type="submit" class="btn btn-sm btn-danger">Hapus</button>'
                     . '</form>'
             ];
         }
 
         return response()->json([
-            'draw' => (int) $draw,
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
-            'data' => $data
-        ]);
+                'draw' => $draw,
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Pusat API Error: ' . $e->getMessage() . ' on line ' . $e->getLine());
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+        }
     }
 }

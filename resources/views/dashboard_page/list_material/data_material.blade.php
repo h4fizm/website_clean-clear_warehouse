@@ -220,10 +220,17 @@
             ajax: {
                 url: "{{ route('api.facility.materials', $facility->id) }}",
                 type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
                 data: function(d) {
                     d.search = $('#searchInput').val();
                     d.start_date = $('#startDate').val();
                     d.end_date = $('#endDate').val();
+                },
+                error: function(xhr, error, code) {
+                    console.log('DataTable Error:', xhr.responseText);
+                    console.log('Error details:', error, code);
                 }
             },
             columns: [
@@ -242,21 +249,21 @@
                     data: 'stok_awal', 
                     name: 'stok_awal',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
                 { 
                     data: 'penerimaan_total', 
                     name: 'penerimaan_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-primary text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
+                        return '<span class="badge bg-gradient-primary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
                 { 
                     data: 'penyaluran_total', 
                     name: 'penyaluran_total',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-info text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
                 },
                 { 
@@ -305,18 +312,18 @@
         });
 
         // Edit functionality
-        $('#table-material').on('click', '.btn-info', function() {
+        $('#table-material').on('click', '.edit-btn', function() {
             const row = $(this).closest('tr');
             const rowData = table.row(row).data();
-            
+
             // Fill the form with current data
             $('#edit-nama_material').val(rowData.nama_material);
             $('#edit-kode_material').val(rowData.kode_material);
             $('#edit-stok_awal').val(rowData.stok_awal);
-            
+
             // Set form action to update URL
             $('#editMaterialForm').attr('action', '/materials/' + rowData.id);
-            
+
             // Show the modal
             const editModal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
             editModal.show();
@@ -366,24 +373,44 @@
 
         // Process transaction functionality
         $('#table-material').on('click', '.transaksi-btn', function() {
-            const rowData = table.row($(this).closest('tr')).data();
-            
-            // Fill modal with item info
-            document.getElementById('modal-nama-material').textContent = rowData.nama_material;
-            document.getElementById('modal-kode-material').textContent = rowData.kode_material;
-            document.getElementById('modal-stok-akhir').textContent = rowData.stok_akhir.toLocaleString('id-ID') + ' pcs';
-            
-            // Set form data
-            document.getElementById('modal-item-id').value = rowData.id;
-            document.getElementById('modal-kode-material-hidden').value = rowData.kode_material;
-            
-            // Set default date
-            const today = new Date();
-            document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
-            
-            // Show modal
-            const kirimModal = new bootstrap.Modal(document.getElementById('transaksiMaterialModal'));
-            kirimModal.show();
+            try {
+                const rowData = table.row($(this).closest('tr')).data();
+                console.log('Transaction row data:', rowData); // Debug log
+
+                // Fill modal with item info
+                document.getElementById('modal-nama-material').textContent = rowData.nama_material;
+                document.getElementById('modal-kode-material').textContent = rowData.kode_material;
+                document.getElementById('modal-stok-akhir').textContent = rowData.stok_akhir.toLocaleString('id-ID') + ' pcs';
+
+                // Set form data
+                document.getElementById('modal-item-id').value = rowData.id;
+                document.getElementById('modal-kode-material-hidden').value = rowData.kode_material;
+
+                // Set default date
+                const today = new Date();
+                document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
+
+                // Set default transaction type and initialize form
+                document.getElementById('jenis-penyaluran').checked = true;
+
+                // Check if updateFormUI function exists before calling
+                if (typeof window.updateFormUI === 'function') {
+                    window.updateFormUI('penyaluran');
+                } else {
+                    console.error('updateFormUI function not found');
+                }
+
+                // Show modal
+                const kirimModal = new bootstrap.Modal(document.getElementById('transaksiMaterialModal'));
+                kirimModal.show();
+            } catch (error) {
+                console.error('Error in transaksi button handler:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Terjadi kesalahan saat membuka modal transaksi'
+                });
+            }
         });
     });
 </script>
@@ -439,6 +466,17 @@
                 icon: 'error',
                 title: 'Oops...',
                 text: 'Terjadi kesalahan. Silakan coba lagi.'
+            });
+        });
+
+        // Clear validation errors on input
+        document.querySelectorAll('#editMaterialForm input, #editMaterialForm select').forEach(field => {
+            field.addEventListener('input', function() {
+                this.parentElement.classList.remove('is-invalid');
+                const errorElement = document.getElementById(`${this.id}-error`);
+                if (errorElement) {
+                    errorElement.textContent = '';
+                }
             });
         });
     });
@@ -529,9 +567,9 @@
             });
         }
         
-        // Fungsi untuk memperbarui form UI berdasarkan jenis transaksi
-        function updateFormUI() {
-            const selectedType = document.querySelector('input[name="jenis_transaksi"]:checked').value;
+        // Make function globally accessible
+        window.updateFormUI = function(type) {
+            const selectedType = type || document.querySelector('input[name="jenis_transaksi"]:checked').value;
             const asalContainer = document.getElementById('asal-container');
             const tujuanContainer = document.getElementById('tujuan-container');
             const asalLabel = document.getElementById('asal-label');

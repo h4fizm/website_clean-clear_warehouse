@@ -157,6 +157,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('api.pusat.materials')
         ->middleware('can:manage data playang');
 
+    // Temporary debug route for testing API without authentication
+    Route::get('/api/pusat-materials-debug', [PusatController::class, 'getPusatMaterials'])
+        ->name('api.pusat.materials.debug');
+
     Route::get('/api/facility-materials/{facility}', [MaterialController::class, 'getFacilityMaterials'])
         ->name('api.facility.materials')
         ->middleware('can:manage transaksi');

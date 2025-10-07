@@ -66,20 +66,21 @@ class MaterialController extends Controller
 
         $itemsQuery->addSelect([
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->where('jenis_transaksi', 'transfer')
+                ->where('jenis_transaksi', 'penerimaan')
                 ->whereNotNull('facility_to')  // Ensure it's going TO a facility
                 ->whereColumn('facility_to', 'items.facility_id')  // Only items going TO this facility
                 ->whereExists(function ($subQuery) {
                     $subQuery->select(DB::raw(1))
                              ->from('items as source_item')
                              ->whereColumn('source_item.kode_material', 'items.kode_material')
-                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+                             ->whereColumn('source_item.id', 'base_transactions.item_id')
+                             ->whereNull('source_item.facility_id'); // Source harus dari pusat
                 })
                 ->when($filters['start_date'], fn($query, $date) => $query->whereDate('created_at', '>=', $date))
                 ->when($filters['end_date'], fn($query, $date) => $query->whereDate('created_at', '<=', $date)),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->where('jenis_transaksi', 'transfer')
+                ->where('jenis_transaksi', 'penyaluran')
                 ->whereNotNull('facility_from')  // Ensure it's coming FROM a facility
                 ->whereColumn('facility_from', 'items.facility_id')  // Only items coming FROM this facility
                 ->when($filters['start_date'], fn($query, $date) => $query->whereDate('created_at', '>=', $date))
@@ -125,6 +126,20 @@ class MaterialController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Item $item)
+    {
+        return response()->json([
+            'id' => $item->id,
+            'nama_material' => $item->nama_material,
+            'kode_material' => $item->kode_material,
+            'stok_awal' => $item->stok_awal,
+            'stok_akhir' => $item->stok_akhir,
+        ]);
+    }
+
+    /**
      * Memperbarui data material.
      * Tidak ada perubahan logika besar di sini.
      */
@@ -147,10 +162,10 @@ class MaterialController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput()
-                ->with('error_item_id', $item->id);
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         DB::transaction(function () use ($request, $item) {
@@ -182,7 +197,10 @@ class MaterialController extends Controller
             }
         });
 
-        return redirect()->route('materials.index', $item->facility_id)->with('success', 'Data material berhasil diperbarui!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Data material berhasil diperbarui!'
+        ]);
     }
 
     /**
@@ -220,7 +238,6 @@ class MaterialController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'item_id' => 'required|exists:items,id',
-            'kode_material' => 'required|string',
             'jenis_transaksi' => 'required|in:penyaluran,penerimaan,sales',
             'jumlah' => 'required|integer|min:1',
             'tanggal_transaksi' => 'required|date',
@@ -242,11 +259,11 @@ class MaterialController extends Controller
                 $jenis = $request->jenis_transaksi;
                 $jumlah = (int) $request->jumlah;
                 $tanggal = Carbon::parse($request->tanggal_transaksi);
-                $kodeMaterial = $request->kode_material;
                 $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
 
                 if ($jenis === 'sales') {
                     $item = Item::where('id', $request->item_id)->lockForUpdate()->firstOrFail();
+                    $kodeMaterial = $item->kode_material;
                     if ($item->stok_akhir < $jumlah) {
                         throw ValidationException::withMessages(['jumlah' => 'Stok tidak cukup!']);
                     }
@@ -275,6 +292,10 @@ class MaterialController extends Controller
                 // Penyaluran/penerimaan
                 $asalIsPusat = $request->asal_id === 'pusat';
                 $tujuanIsPusat = $request->tujuan_id === 'pusat';
+
+                // Get the item to find the kode_material
+                $sourceItem = Item::where('id', $request->item_id)->lockForUpdate()->firstOrFail();
+                $kodeMaterial = $sourceItem->kode_material;
 
                 $itemAsal = $asalIsPusat
                     ? Item::whereNull('facility_id')->where('kode_material', $kodeMaterial)->lockForUpdate()->firstOrFail()
@@ -320,7 +341,7 @@ class MaterialController extends Controller
                 ItemTransaction::create([
                     'item_id' => $itemAsal->id,
                     'user_id' => Auth::id(),
-                    'jenis_transaksi' => 'transfer',
+                    'jenis_transaksi' => $request->jenis_transaksi,
                     'jumlah' => $jumlah,
                     'stok_awal_asal' => $stokAwalAsal,
                     'stok_akhir_asal' => $stokAwalAsal - $jumlah,
@@ -361,10 +382,34 @@ class MaterialController extends Controller
         $order = $request->get('order')[0] ?? null;
         $columns = $request->get('columns') ?? [];
 
-        // Build the query
+        // Build the query with optimized subqueries
         $query = Item::query()
             ->where('facility_id', $facility->id)
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->select([
+                'items.*',
+                // Optimized subqueries for totals
+                'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->where('jenis_transaksi', 'penerimaan')
+                    ->whereNotNull('facility_to')
+                    ->whereColumn('facility_to', 'items.facility_id')
+                    ->whereExists(function ($subQuery) {
+                        $subQuery->select(DB::raw(1))
+                                 ->from('items as source_item')
+                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
+                                 ->whereColumn('source_item.id', 'base_transactions.item_id')
+                                 ->whereNull('source_item.facility_id'); // Source harus dari pusat
+                    }),
+                'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->where('jenis_transaksi', 'penyaluran')
+                    ->whereNotNull('facility_from')
+                    ->whereColumn('facility_from', 'items.facility_id'),
+                'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                    ->whereColumn('item_id', 'items.id')
+                    ->where('jenis_transaksi', 'sales'),
+                'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
+                    ->whereColumn('item_id', 'items.id')
+            ]);
 
         // Add search functionality
         if (!empty($search)) {
@@ -394,16 +439,20 @@ class MaterialController extends Controller
                     $query->orderBy('stok_awal', $direction);
                     break;
                 case 'penerimaan_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND facility_to = items.facility_id AND EXISTS (SELECT 1 FROM items as source_item WHERE source_item.kode_material = items.kode_material AND source_item.id = base_transactions.item_id)), 0)', $direction);
+                    $query->orderBy('penerimaan_total', $direction);
                     break;
                 case 'penyaluran_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND facility_from = items.facility_id), 0)', $direction);
+                    $query->orderBy('penyaluran_total', $direction);
                     break;
                 case 'sales_total':
-                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "sales"), 0)', $direction);
+                    $query->orderBy('sales_total', $direction);
                     break;
                 case 'stok_akhir':
-                    $query->orderBy('stok_akhir', $direction);
+                    // Order by calculated stock
+                    $query->orderBy(DB::raw('(stok_awal + COALESCE(penerimaan_total, 0) - COALESCE(penyaluran_total, 0) - COALESCE(sales_total, 0))'), $direction);
+                    break;
+                case 'created_at':
+                    $query->orderBy('latest_transaction_date', $direction);
                     break;
                 default:
                     $query->orderBy('updated_at', $direction);
@@ -413,37 +462,22 @@ class MaterialController extends Controller
             $query->orderBy('updated_at', 'desc');
         }
 
-        // Add pagination
-        $query->offset($start)->limit($length);
+        // Get the filtered records count before pagination
+        $filteredQuery = clone $query;
+        $filteredRecords = $filteredQuery->count();
 
-        // Get the items with calculated totals
+        // Add pagination - ensure both parameters are provided
+        if ($length > 0) {
+            $query->skip($start)->take($length);
+        }
+
+        // Get the items with pre-calculated totals
         $items = $query->get();
 
         $data = [];
         foreach ($items as $item) {
-            // Calculate totals for each item
-            $penerimaanTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
-                ->whereNotNull('facility_to')
-                ->where('facility_to', $item->facility_id)
-                ->whereExists(function ($subQuery) use ($item) {
-                    $subQuery->select(DB::raw(1))
-                             ->from('items as source_item')
-                             ->whereColumn('source_item.kode_material', DB::raw("'" . $item->kode_material . "'"))
-                             ->whereColumn('source_item.id', 'base_transactions.item_id');
-                })
-                ->sum('jumlah');
-
-            $penyaluranTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
-                ->whereNotNull('facility_from')
-                ->where('facility_from', $item->facility_id)
-                ->sum('jumlah');
-
-            $salesTotal = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'sales')
-                ->sum('jumlah');
-
-            // Calculate the final stock
-            $stokAkhir = $item->stok_awal + $penerimaanTotal - $penyaluranTotal - $salesTotal;
+            // Calculate the final stock using pre-calculated totals
+            $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
 
             $data[] = [
                 'id' => $item->id,
@@ -451,15 +485,17 @@ class MaterialController extends Controller
                 'nama_material' => $item->nama_material,
                 'kategori_material' => $item->kategori_material,
                 'stok_awal' => $item->stok_awal,
-                'penerimaan_total' => $penerimaanTotal,
-                'penyaluran_total' => $penyaluranTotal,
-                'sales_total' => $salesTotal,
+                'penerimaan_total' => (int) $item->penerimaan_total,
+                'penyaluran_total' => (int) $item->penyaluran_total,
+                'sales_total' => (int) $item->sales_total,
                 'pemusnahan_total' => 0, // SPBE/BPT doesn't track pemusnahan
                 'stok_akhir' => $stokAkhir,
-                'actions' => '<a href="' . route('materials.update', $item->id) . '" class="btn btn-sm btn-primary">Edit</a> '
+                'created_at' => $item->latest_transaction_date ? Carbon::parse($item->latest_transaction_date)->format('d-m-Y H:i:s') : null,
+                'actions' => '<button class="btn btn-sm btn-primary btn-info edit-btn" data-item-id="' . $item->id . '">Edit</button> '
+                    . '<button class="btn btn-sm btn-success transaksi-btn" data-item-id="' . $item->id . '">Transaksi</button> '
                     . '<form action="' . route('materials.destroy', $item->id) . '" method="POST" class="d-inline">'
-                    . csrf_field() . method_field('DELETE') 
-                    . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
+                    . csrf_field() . method_field('DELETE')
+                    . '<button type="submit" class="btn btn-sm btn-danger">Hapus</button>'
                     . '</form>'
             ];
         }
@@ -467,7 +503,7 @@ class MaterialController extends Controller
         return response()->json([
             'draw' => (int) $draw,
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'recordsFiltered' => $filteredRecords,
             'data' => $data
         ]);
     }

@@ -175,7 +175,7 @@ class AktivitasHarianController extends Controller
         $columns = $request->get('columns') ?? [];
         $jenisTransaksi = $request->get('jenis_transaksi');
 
-        // Build the query
+        // Build the query with optimized joins
         $query = ItemTransaction::with([
             'item',
             'user',
@@ -194,7 +194,7 @@ class AktivitasHarianController extends Controller
             }
         });
 
-        // Add search functionality
+        // Add search functionality with optimized queries
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('no_surat_persetujuan', 'like', "%{$search}%")
@@ -261,8 +261,14 @@ class AktivitasHarianController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // Add pagination
-        $query->offset($start)->limit($length);
+        // Get the filtered records count before pagination
+        $filteredQuery = clone $query;
+        $filteredRecords = $filteredQuery->count();
+
+        // Add pagination - ensure both parameters are provided
+        if ($length > 0) {
+            $query->skip($start)->take($length);
+        }
 
         $transactions = $query->get();
 
@@ -270,12 +276,15 @@ class AktivitasHarianController extends Controller
         foreach ($transactions as $transaction) {
             $data[] = [
                 'id' => $transaction->id,
-                'no_surat_persetujuan' => $transaction->no_surat_persetujuan,
+                'no_surat_persetujuan' => $transaction->no_surat_persetujuan ?? '-',
                 'item' => $transaction->item ? $transaction->item->nama_material : '-',
-                'jenis_transaksi' => $transaction->jenis_transaksi,
-                'jumlah' => $transaction->jumlah,
+                'item.nama_material' => $transaction->item ? $transaction->item->nama_material : '-',
+                'jenis_transaksi' => ucfirst($transaction->jenis_transaksi),
+                'jumlah' => number_format($transaction->jumlah, 0, ',', '.'),
                 'facility_from' => $transaction->facilityFrom ? $transaction->facilityFrom->name : ($transaction->regionFrom ? $transaction->regionFrom->name_region : '-'),
                 'facility_to' => $transaction->facilityTo ? $transaction->facilityTo->name : ($transaction->regionTo ? $transaction->regionTo->name_region : '-'),
+                'user' => $transaction->user ? $transaction->user->name : '-',
+                'user.name' => $transaction->user ? $transaction->user->name : '-',
                 'created_at' => Carbon::parse($transaction->created_at)->format('d-m-Y H:i:s'),
             ];
         }
@@ -283,7 +292,7 @@ class AktivitasHarianController extends Controller
         return response()->json([
             'draw' => (int) $draw,
             'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'recordsFiltered' => $filteredRecords,
             'data' => $data
         ]);
     }

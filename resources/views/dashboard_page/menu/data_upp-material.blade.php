@@ -133,9 +133,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
 {{-- DataTables Configuration --}}
 <script>
@@ -147,6 +144,13 @@
             ajax: {
                 url: "{{ route('api.upp.materials') }}",
                 type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                error: function(xhr, error, code) {
+                    console.log('DataTable Error:', xhr.responseText);
+                    console.log('Error details:', error, code);
+                },
                 data: function(d) {
                     d.search = $('#searchInput').val();
                     d.start_date = $('#startDate').val();
@@ -163,17 +167,17 @@
                         return meta.row + 1 + meta.settings._iDisplayStart;
                     }
                 },
-                { 
-                    data: 'no_surat_persetujuan', 
+                {
+                    data: 'no_surat_persetujuan',
                     name: 'no_surat_persetujuan',
                     render: function(data, type, row) {
                         return `<div class="d-flex flex-column justify-content-center">
-                                    <p class="mb-0 text-sm font-weight-bolder text-primary">${data}</p>
+                                    <p class="mb-0 text-sm font-weight-bolder text-primary">${data || '-'}</p>
                                 </div>`;
                     }
                 },
-                { 
-                    data: 'tahapan', 
+                {
+                    data: 'tahapan',
                     name: 'tahapan',
                     render: function(data, type, row) {
                         return `<p class="text-xs text-secondary mb-0">${data || '-'}</p>`;
@@ -194,19 +198,21 @@
                                 </span>`;
                     }
                 },
-                { 
-                    data: 'tgl_buat', 
+                {
+                    data: 'tgl_buat',
                     name: 'tgl_buat',
                     render: function(data, type, row) {
+                        if (!data) return '<p class="text-xs text-secondary font-weight-bold mb-0">-</p>';
                         return `<p class="text-xs text-secondary font-weight-bold mb-0">
                                     ${moment(data, 'YYYY-MM-DD').locale('id').format('dddd, D MMMM YYYY')}
                                 </p>`;
                     }
                 },
-                { 
-                    data: 'tgl_update', 
+                {
+                    data: 'tgl_update',
                     name: 'tgl_update',
                     render: function(data, type, row) {
+                        if (!data) return '<p class="text-xs text-secondary font-weight-bold mb-0">-</p>';
                         return `<p class="text-xs text-secondary font-weight-bold mb-0">
                                     ${moment(data, 'YYYY-MM-DD').locale('id').format('dddd, D MMMM YYYY')}
                                 </p>`;
