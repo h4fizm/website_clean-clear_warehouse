@@ -2,24 +2,24 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Region;
 
 class RegionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        DB::table('regions')->insert([
+        $regions = [
             ['name_region' => 'P.Layang (Pusat)'],
-            ['name_region' => 'SA Jambi'],
-            ['name_region' => 'SA Bengkulu'],
-            ['name_region' => 'SA Lampung'],
-            ['name_region' => 'SA Sumsel'],
-            ['name_region' => 'SA Babel'],
-        ]);
+            ['name_region' => 'Jawa Barat'],
+            ['name_region' => 'Jawa Tengah'],
+            ['name_region' => 'Jawa Timur'],
+            ['name_region' => 'DKI Jakarta'],
+            ['name_region' => 'Banten'],
+        ];
+
+        foreach ($regions as $region) {
+            Region::create($region);
+        }
     }
 }

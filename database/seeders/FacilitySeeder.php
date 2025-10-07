@@ -3,37 +3,44 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Facility;
+use App\Models\Region;
 
 class FacilitySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
+        $regions = Region::all();
+        
         $facilities = [
-            // Region 2 - Jambi
-            ['name' => 'SPBE Jambi', 'kode_plant' => 'JMB001', 'province' => 'Jambi', 'regency' => 'Kota Jambi', 'type' => 'SPBE', 'region_id' => 2],
-            ['name' => 'BPT Jambi', 'kode_plant' => 'JMB002', 'province' => 'Jambi', 'regency' => 'Muaro Jambi', 'type' => 'BPT', 'region_id' => 2],
-
-            // Region 3 - Bengkulu
-            ['name' => 'SPBE Bengkulu', 'kode_plant' => 'BGL001', 'province' => 'Bengkulu', 'regency' => 'Kota Bengkulu', 'type' => 'SPBE', 'region_id' => 3],
-            ['name' => 'BPT Bengkulu', 'kode_plant' => 'BGL002', 'province' => 'Bengkulu', 'regency' => 'Bengkulu Tengah', 'type' => 'BPT', 'region_id' => 3],
-
-            // Region 4 - Lampung
-            ['name' => 'SPBE Lampung', 'kode_plant' => 'LMP001', 'province' => 'Lampung', 'regency' => 'Bandar Lampung', 'type' => 'SPBE', 'region_id' => 4],
-            ['name' => 'BPT Lampung', 'kode_plant' => 'LMP002', 'province' => 'Lampung', 'regency' => 'Lampung Selatan', 'type' => 'BPT', 'region_id' => 4],
-
-            // Region 5 - Sumsel
-            ['name' => 'SPBE Sumsel', 'kode_plant' => 'SSL001', 'province' => 'Sumatera Selatan', 'regency' => 'Palembang', 'type' => 'SPBE', 'region_id' => 5],
-            ['name' => 'BPT Sumsel', 'kode_plant' => 'SSL002', 'province' => 'Sumatera Selatan', 'regency' => 'Banyuasin', 'type' => 'BPT', 'region_id' => 5],
-
-            // Region 6 - Bangka Belitung
-            ['name' => 'SPBE Babel', 'kode_plant' => 'BBL001', 'province' => 'Bangka Belitung', 'regency' => 'Pangkal Pinang', 'type' => 'SPBE', 'region_id' => 6],
-            ['name' => 'BPT Babel', 'kode_plant' => 'BBL002', 'province' => 'Bangka Belitung', 'regency' => 'Bangka', 'type' => 'BPT', 'region_id' => 6],
+            // P.Layang (Pusat) - index 0
+            ['name' => 'Pusat Bandung', 'kode_plant' => 'PB001', 'province' => 'Jawa Barat', 'regency' => 'Bandung', 'type' => 'BPT', 'region_id' => $regions[0]->id],
+            ['name' => 'SPBE Sumedang', 'kode_plant' => 'SS002', 'province' => 'Jawa Barat', 'regency' => 'Sumedang', 'type' => 'SPBE', 'region_id' => $regions[0]->id],
+            ['name' => 'SPBE Cimahi', 'kode_plant' => 'SC003', 'province' => 'Jawa Barat', 'regency' => 'Cimahi', 'type' => 'SPBE', 'region_id' => $regions[0]->id],
+            
+            // Jawa Barat - index 1
+            ['name' => 'Pusat Bandung Regional', 'kode_plant' => 'PBR002', 'province' => 'Jawa Barat', 'regency' => 'Bandung', 'type' => 'BPT', 'region_id' => $regions[1]->id],
+            ['name' => 'SPBE Sumedang Regional', 'kode_plant' => 'SSR003', 'province' => 'Jawa Barat', 'regency' => 'Sumedang', 'type' => 'SPBE', 'region_id' => $regions[1]->id],
+            
+            // Jawa Tengah - index 2
+            ['name' => 'Pusat Semarang', 'kode_plant' => 'PS004', 'province' => 'Jawa Tengah', 'regency' => 'Semarang', 'type' => 'BPT', 'region_id' => $regions[2]->id],
+            ['name' => 'SPBE Solo', 'kode_plant' => 'SO005', 'province' => 'Jawa Tengah', 'regency' => 'Solo', 'type' => 'SPBE', 'region_id' => $regions[2]->id],
+            
+            // Jawa Timur - index 3
+            ['name' => 'Pusat Surabaya', 'kode_plant' => 'PSU006', 'province' => 'Jawa Timur', 'regency' => 'Surabaya', 'type' => 'BPT', 'region_id' => $regions[3]->id],
+            ['name' => 'SPBE Malang', 'kode_plant' => 'SM007', 'province' => 'Jawa Timur', 'regency' => 'Malang', 'type' => 'SPBE', 'region_id' => $regions[3]->id],
+            ['name' => 'SPBE Sidoarjo', 'kode_plant' => 'SD008', 'province' => 'Jawa Timur', 'regency' => 'Sidoarjo', 'type' => 'SPBE', 'region_id' => $regions[3]->id],
+            
+            // DKI Jakarta - index 4
+            ['name' => 'Pusat Jakarta', 'kode_plant' => 'PJ009', 'province' => 'DKI Jakarta', 'regency' => 'Jakarta Pusat', 'type' => 'BPT', 'region_id' => $regions[4]->id],
+            
+            // Banten - index 5
+            ['name' => 'SPBE Tangerang', 'kode_plant' => 'TGR010', 'province' => 'Banten', 'regency' => 'Tangerang', 'type' => 'SPBE', 'region_id' => $regions[5]->id],
+            ['name' => 'SPBE Serang', 'kode_plant' => 'SER011', 'province' => 'Banten', 'regency' => 'Serang', 'type' => 'SPBE', 'region_id' => $regions[5]->id],
         ];
 
-        DB::table('facilities')->insert($facilities);
+        foreach ($facilities as $facility) {
+            Facility::create($facility);
+        }
     }
 }

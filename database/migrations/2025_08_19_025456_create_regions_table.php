@@ -13,8 +13,7 @@ return new class extends Migration {
         Schema::create('regions', function (Blueprint $table) {
             $table->id();
             $table->string('name_region');
-            // Laravel secara otomatis menambahkan timestamps (created_at dan updated_at)
-            // Jika tidak dibutuhkan, Anda bisa menghapusnya atau menambahkan $table->timestamps(false);
+            $table->timestamps(); // Add timestamps as required by Eloquent
         });
     }
 

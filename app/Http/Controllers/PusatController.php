@@ -52,16 +52,22 @@ class PusatController extends Controller
 
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
-                ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.region_to', 'items.region_id')
                 ->where('jenis_transaksi', 'transfer')
-                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '>=', $date))
-                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('item_transactions.created_at', '<=', $date)),
+                ->whereNotNull('region_to')  // Ensure it's going TO a region
+                ->whereColumn('region_to', 'items.region_id')  // Only items going TO this region (Pusat)
+                ->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                             ->from('items as source_item')
+                             ->whereColumn('source_item.kode_material', 'items.kode_material')
+                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+                })
+                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('base_transactions.created_at', '>=', $date))
+                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('base_transactions.created_at', '<=', $date)),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->where('jenis_transaksi', 'transfer')
-                ->whereColumn('item_id', 'items.id')
+                ->whereNotNull('region_from')  // Ensure it's coming FROM a region
+                ->whereColumn('region_from', 'items.region_id')  // Only items coming FROM this region (Pusat)
                 ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
                 ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
 
@@ -94,8 +100,8 @@ class PusatController extends Controller
                 COALESCE(items.updated_at, '1970-01-01'),
                 COALESCE((
                     SELECT MAX(created_at)
-                    FROM item_transactions
-                    WHERE item_transactions.item_id = items.id
+                    FROM base_transactions
+                    WHERE base_transactions.item_id = items.id
                 ), '1970-01-01')
             )
         "));
@@ -377,36 +383,14 @@ class PusatController extends Controller
             $newName = $request->input('nama_material');
             $newKategori = $request->input('kategori_material');
 
-            $totalPenerimaan = ItemTransaction::where('region_to', $item->region_id)
-                ->where(function ($query) use ($oldKode) {
-                    $query->whereHas('item', function ($q) use ($oldKode) {
-                        $q->where('kode_material', $oldKode);
-                    });
-                })
-                ->sum('jumlah');
-
-            $totalPenyaluran = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'transfer')
-                ->sum('jumlah');
-
-            $totalSales = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'sales')
-                ->sum('jumlah');
-
-            $totalPemusnahan = ItemTransaction::where('item_id', $item->id)
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->where('status', 'done')
-                ->sum('jumlah');
-
             $stokAwalBaru = $request->stok_awal;
-            $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales - $totalPemusnahan;
-
+            
+            // Only update stok_awal, keep stok_akhir as is
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
                 'kategori_material' => $newKategori,
                 'stok_awal' => $stokAwalBaru,
-                'stok_akhir' => $stokAkhirBaru,
             ]);
 
             if ($oldKode !== $newKode || $item->wasChanged('nama_material') || $item->wasChanged('kategori_material')) {
@@ -469,5 +453,139 @@ class PusatController extends Controller
         $filename = "Laporan Data Pusat ({$startDate} - {$endDate}).xlsx";
 
         return Excel::download(new PusatDataExport($filters), $filename);
+    }
+
+    /**
+     * API endpoint for DataTables to fetch Pusat materials data
+     */
+    public function getPusatMaterials(Request $request)
+    {
+        $draw = $request->get('draw');
+        $start = $request->get('start');
+        $length = $request->get('length');
+        $search = $request->get('search')['value'] ?? '';
+        $order = $request->get('order')[0] ?? null;
+        $columns = $request->get('columns') ?? [];
+
+        // Get the pusat region ID
+        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+
+        // Build the query
+        $query = Item::query()
+            ->whereNull('facility_id') // Only items in pusat
+            ->where('is_active', true); // Only active items
+
+        // Add search functionality
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_material', 'like', "%{$search}%")
+                  ->orWhere('kode_material', 'like', "%{$search}%");
+            });
+        }
+
+        // Get total records count
+        $totalRecords = $query->count();
+
+        // Add ordering
+        if ($order) {
+            $columnIndex = $order['column'];
+            $direction = $order['dir'];
+            $columnName = $columns[$columnIndex]['data'] ?? 'id';
+
+            switch ($columnName) {
+                case 'kode_material':
+                    $query->orderBy('kode_material', $direction);
+                    break;
+                case 'nama_material':
+                    $query->orderBy('nama_material', $direction);
+                    break;
+                case 'stok_awal':
+                    $query->orderBy('stok_awal', $direction);
+                    break;
+                case 'penerimaan_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND region_to = items.region_id AND EXISTS (SELECT 1 FROM items as source_item WHERE source_item.kode_material = items.kode_material AND source_item.id = base_transactions.item_id)), 0)', $direction);
+                    break;
+                case 'penyaluran_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND region_from = items.region_id), 0)', $direction);
+                    break;
+                case 'sales_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "sales"), 0)', $direction);
+                    break;
+                case 'pemusnahan_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "pemusnahan" AND status = "done"), 0)', $direction);
+                    break;
+                case 'stok_akhir':
+                    $query->orderBy('stok_akhir', $direction);
+                    break;
+                default:
+                    $query->orderBy('updated_at', $direction);
+                    break;
+            }
+        } else {
+            $query->orderBy('updated_at', 'desc');
+        }
+
+        // Add pagination
+        $query->offset($start)->limit($length);
+
+        // Get the items with calculated totals
+        $items = $query->get();
+
+        $data = [];
+        foreach ($items as $item) {
+            // Calculate totals for each item
+            $penerimaanTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
+                ->whereNotNull('region_to')
+                ->where('region_to', $item->region_id)
+                ->whereExists(function ($subQuery) use ($item) {
+                    $subQuery->select(DB::raw(1))
+                             ->from('items as source_item')
+                             ->whereColumn('source_item.kode_material', DB::raw("'" . $item->kode_material . "'"))
+                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+                })
+                ->sum('jumlah');
+
+            $penyaluranTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
+                ->whereNotNull('region_from')
+                ->where('region_from', $item->region_id)
+                ->sum('jumlah');
+
+            $salesTotal = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'sales')
+                ->sum('jumlah');
+
+            $pemusnahanTotal = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'pemusnahan')
+                ->where('status', 'done')
+                ->sum('jumlah');
+
+            // Calculate the final stock
+            $stokAkhir = $item->stok_awal + $penerimaanTotal - $penyaluranTotal - $salesTotal - $pemusnahanTotal;
+
+            $data[] = [
+                'id' => $item->id,
+                'kode_material' => $item->kode_material,
+                'nama_material' => $item->nama_material,
+                'kategori_material' => $item->kategori_material,
+                'stok_awal' => $item->stok_awal,
+                'penerimaan_total' => $penerimaanTotal,
+                'penyaluran_total' => $penyaluranTotal,
+                'sales_total' => $salesTotal,
+                'pemusnahan_total' => $pemusnahanTotal,
+                'stok_akhir' => $stokAkhir,
+                'actions' => '<a href="' . route('pusat.edit', $item->id) . '" class="btn btn-sm btn-primary">Edit</a> '
+                    . '<form action="' . route('pusat.destroy', $item->id) . '" method="POST" class="d-inline">'
+                    . csrf_field() . method_field('DELETE') 
+                    . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
+                    . '</form>'
+            ];
+        }
+
+        return response()->json([
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'data' => $data
+        ]);
     }
 }

@@ -29,89 +29,84 @@
     <div class="col-12">
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0">
-                <form method="GET" action="{{ route('pusat.index') }}">
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
-                            <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
-                        </div>
-                        <div class="col-12 col-md-auto">
-                            <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
-                                <i class="fas fa-file-excel me-2"></i> Export Excel
-                            </span>
-                        </div>
+                <div class="row mb-3 align-items-center">
+                    <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
+                        <h4 class="mb-0" id="table-branch-name">Tabel Data Stok Material - P.Layang (Pusat)</h4>
                     </div>
+                    <div class="col-12 col-md-auto">
+                        <span id="openExportModalBtn" class="px-3 py-2 bg-success text-white rounded d-flex align-items-center justify-content-center mt-2 mt-md-0" style="cursor: pointer; font-size: 0.875rem; font-weight: bold;">
+                            <i class="fas fa-file-excel me-2"></i> Export Excel
+                        </span>
+                    </div>
+                </div>
 
-                    {{-- Area untuk menampilkan Bootstrap Alert dan Validasi Server-Side --}}
-                    <div class="px-0 pt-2">
-                        @if(session('success'))
-                            <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
-                                {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-                        @if(session('error'))
-                            <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
-                                {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        @endif
-                        @if ($errors->any())
-                        <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
-                            <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
-                            <ul class="mb-0 ps-3">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+                {{-- Area untuk menampilkan Bootstrap Alert dan Validasi Server-Side --}}
+                <div class="px-0 pt-2">
+                    @if(session('success'))
+                        <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-                        @endif
-                    </div>
-                    
-                    <div class="row mb-3 align-items-start">
-                        {{-- Input Search --}}
-                        <div class="col-12 col-md-4 mb-3 mb-md-0">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" name="search" id="searchInput" 
-                                    class="form-control" 
-                                    placeholder="Cari material..." 
-                                    value="{{ $filters['search'] ?? '' }}">
-                            </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
-
-                        {{-- Date Range + Filter Button --}}
-                        <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
-                            {{-- Start Date --}}
-                            <div class="d-flex align-items-center me-2 mb-3">
-                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
-                                <input type="date" name="start_date" id="startDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;"
-                                    value="{{ $filters['start_date'] ?? '' }}">
-                            </div>
-
-                            {{-- End Date --}}
-                            <div class="d-flex align-items-center me-2 mb-3">
-                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
-                                <input type="date" name="end_date" id="endDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;"
-                                    value="{{ $filters['end_date'] ?? '' }}">
-                            </div>
-
-                            {{-- Button Filter (diturunkan sedikit) --}}
-                            <div class="align-self-end">
-                                <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
-                            </div>
+                    @endif
+                    @if ($errors->any())
+                    <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
+                        <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
+                        <ul class="mb-0 ps-3">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    @endif
+                </div>
+                
+                <div class="row mb-3 align-items-start">
+                    {{-- Input Search --}}
+                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" name="search" id="searchInput" 
+                                class="form-control" 
+                                placeholder="Cari material...">
                         </div>
                     </div>
 
-                </form>
+                    {{-- Date Range + Filter Button --}}
+                    <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
+                        {{-- Start Date --}}
+                        <div class="d-flex align-items-center me-2 mb-3">
+                            <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                            <input type="date" name="start_date" id="startDate" 
+                                class="form-control form-control-sm date-input" 
+                                style="max-width: 160px;">
+                        </div>
+
+                        {{-- End Date --}}
+                        <div class="d-flex align-items-center me-2 mb-3">
+                            <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                            <input type="date" name="end_date" id="endDate" 
+                                class="form-control form-control-sm date-input" 
+                                style="max-width: 160px;">
+                        </div>
+
+                        {{-- Button Filter (diturunkan sedikit) --}}
+                        <div class="align-self-end">
+                            <button id="filterBtn" class="btn btn-primary btn-sm px-3">Filter</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <div class="card-body px-0 pt-0 pb-5">
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0">
+                    <table id="pusat-materials-table" class="table align-items-center mb-0" style="width:100%">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -128,128 +123,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($items as $item)
-                            @php
-                                // Perbaikan Logika: Pemusnahan sekarang hanya dihitung jika statusnya "done"
-                                $pemusnahan_total = $item->pemusnahan_total_done;
-                                
-                                // Perhitungan stok akhir secara dinamis di Blade
-                                $stok_akhir_calc = $item->stok_akhir;
-                                
-                                $latest_activity_date = $item->latest_transaction_date ?? $item->updated_at;
-                            @endphp
-                            <tr>
-                                <td class="text-center">
-                                    <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($items->currentPage() - 1) * $items->perPage() }}</p>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $item->nama_material }}</p>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs text-secondary mb-0">{{ $item->kode_material }}</p>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-gradient-secondary text-white text-xs">{{ $item->stok_awal }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-gradient-primary text-white text-xs">{{ $item->penerimaan_total }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-gradient-info text-white text-xs">{{ $item->penyaluran_total }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-gradient-warning text-white text-xs">{{ $item->sales_total ?? 0 }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    {{-- Menampilkan total pemusnahan yang selesai --}}
-                                    <span class="badge bg-gradient-danger text-white text-xs">{{ $pemusnahan_total }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    {{-- Perbaikan: Gunakan perhitungan dinamis yang sudah diperbarui --}}
-                                    <span class="badge bg-gradient-success text-white text-xs">{{ $stok_akhir_calc }} pcs</span>
-                                </td>
-                                <td class="text-center">
-                                    <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        @if($latest_activity_date)
-                                            {{ \Carbon\Carbon::parse($latest_activity_date)->locale('id')->translatedFormat('l, d F Y') }}
-                                        @else
-                                            -
-                                        @endif
-                                    </p>
-                                </td>
-                                <td class="text-center">
-                                    {{-- Tombol Aksi --}}
-                                    <button type="button" class="btn btn-sm btn-success text-white me-1 kirim-btn" 
-                                        data-id="{{ $item->id }}" 
-                                        data-kode-material="{{ $item->kode_material }}"
-                                        data-stok-akhir="{{ $item->stok_akhir }}" {{-- KEMBALI MENGGUNAKAN STOK DARI DB --}}
-                                        data-nama-material="{{ $item->nama_material }}"
-                                        data-bs-toggle="modal" data-bs-target="#kirimMaterialModal">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-info text-white me-1" data-bs-toggle="modal" data-bs-target="#editMaterialModal-{{ $item->id }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <form action="{{ route('pusat.destroy', $item->id) }}" method="POST" class="d-inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger text-white delete-btn" title="Hapus">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="11" class="text-center text-muted py-4">Data Kosong</td>
-                            </tr>
-                            @endforelse
+                            <!-- Data will be loaded via AJAX -->
                         </tbody>
                     </table>
                 </div>
-
-                {{-- PAGINATION --}}
-                @if ($items->hasPages())
-                <div class="mt-4 px-3 d-flex justify-content-center">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0">
-                            @php
-                                $total = $items->lastPage();
-                                $current = $items->currentPage();
-                                $window = 1; 
-                            @endphp
-                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $items->url(1) }}">&laquo;</a>
-                            </li>
-                            <li class="page-item {{ $items->onFirstPage() ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $items->previousPageUrl() }}">&lsaquo;</a>
-                            </li>
-                            @php $wasGap = false; @endphp
-                            @for ($i = 1; $i <= $total; $i++)
-                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
-                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $items->url($i) }}">{{ $i }}</a>
-                                    </li>
-                                    @php $wasGap = false; @endphp
-                                @else
-                                    @if (!$wasGap)
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                        @php $wasGap = true; @endphp
-                                    @endif
-                                @endif
-                            @endfor
-                            <li class="page-item {{ $items->hasMorePages() ? '' : 'disabled' }}">
-                                <a class="page-link" href="{{ $items->nextPageUrl() }}">&rsaquo;</a>
-                            </li>
-                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $items->url($total) }}">&raquo;</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -350,63 +227,53 @@
     </div>
 </div>
 
-{{-- Modal Edit dibuat di dalam Loop --}}
-@foreach ($items as $item)
-<div class="modal fade" id="editMaterialModal-{{ $item->id }}" tabindex="-1" aria-labelledby="editMaterialModalLabel-{{ $item->id }}" aria-hidden="true">
+{{-- Modal Edit --}}
+<div class="modal fade" id="editMaterialModal" tabindex="-1" aria-labelledby="editMaterialModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editMaterialModalLabel-{{ $item->id }}">Edit Data Material</h5>
+                <h5 class="modal-title" id="editMaterialModalLabel">Edit Data Material</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('pusat.update', $item->id) }}" method="POST">
+            <form id="editMaterialForm" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control @if($errors->has('nama_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                                id="nama_material-{{ $item->id }}" name="nama_material" placeholder=" " 
-                                value="{{ old('nama_material', $item->nama_material) }}">
-                        <label for="nama_material-{{ $item->id }}">Nama Material</label>
-                        @if($errors->has('nama_material') && session('error_item_id') == $item->id) 
-                            <div class="invalid-feedback">{{ $errors->first('nama_material') }}</div> 
-                        @endif
+                        <input type="text" class="form-control" 
+                                id="edit-nama_material" name="nama_material" placeholder=" " 
+                                value="">
+                        <label for="edit-nama_material">Nama Material</label>
+                        <div class="invalid-feedback" id="edit-nama_material-error"></div>
                     </div>
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control @if($errors->has('kode_material') && session('error_item_id') == $item->id) is-invalid @endif" 
-                                id="kode_material-{{ $item->id }}" name="kode_material" placeholder=" " 
-                                value="{{ old('kode_material', $item->kode_material) }}">
-                        <label for="kode_material-{{ $item->id }}">Kode Material</label>
-                        @if($errors->has('kode_material') && session('error_item_id') == $item->id) 
-                            <div class="invalid-feedback">{{ $errors->first('kode_material') }}</div> 
-                        @endif
+                        <input type="text" class="form-control" 
+                                id="edit-kode_material" name="kode_material" placeholder=" " 
+                                value="">
+                        <label for="edit-kode_material">Kode Material</label>
+                        <div class="invalid-feedback" id="edit-kode_material-error"></div>
                     </div>
                     
                     {{-- Field Kategori Material --}}
                     <div class="form-floating mb-3">
-                        <select class="form-select @if($errors->has('kategori_material') && session('error_item_id') == $item->id) is-invalid @endif"
-                                id="kategori_material-{{ $item->id }}" name="kategori_material" required>
-                            <option value="" disabled>-- Pilih Kategori --</option>
-                            <option value="Baru" {{ old('kategori_material', $item->kategori_material) == 'Baru' ? 'selected' : '' }}>Baru</option>
-                            <option value="Baik" {{ old('kategori_material', $item->kategori_material) == 'Baik' ? 'selected' : '' }}>Baik</option>
-                            <option value="Rusak" {{ old('kategori_material', $item->kategori_material) == 'Rusak' ? 'selected' : '' }}>Rusak</option>
-                            <option value="Afkir" {{ old('kategori_material', $item->kategori_material) == 'Afkir' ? 'selected' : '' }}>Afkir</option>
+                        <select class="form-select"
+                                id="edit-kategori_material" name="kategori_material" required>
+                            <option value="Baru">Baru</option>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak">Rusak</option>
+                            <option value="Afkir">Afkir</option>
                         </select>
-                        <label for="kategori_material-{{ $item->id }}">Kategori Material</label>
-                        @if($errors->has('kategori_material') && session('error_item_id') == $item->id)
-                            <div class="invalid-feedback">{{ $errors->first('kategori_material') }}</div>
-                        @endif
+                        <label for="edit-kategori_material">Kategori Material</label>
+                        <div class="invalid-feedback" id="edit-kategori_material-error"></div>
                     </div>
                     
                     {{-- Field Stok Awal --}}
                     <div class="form-floating mb-3">
-                        <input type="number" class="form-control @if($errors->has('stok_awal') && session('error_item_id') == $item->id) is-invalid @endif" 
-                                id="stok_awal-{{ $item->id }}" name="stok_awal" placeholder=" " 
-                                value="{{ old('stok_awal', $item->stok_awal) }}" min="0">
-                        <label for="stok_awal-{{ $item->id }}">Stok Awal</label>
-                        @if($errors->has('stok_awal') && session('error_item_id') == $item->id) 
-                            <div class="invalid-feedback">{{ $errors->first('stok_awal') }}</div> 
-                        @endif
+                        <input type="number" class="form-control" 
+                                id="edit-stok_awal" name="stok_awal" placeholder=" " 
+                                value="" min="0">
+                        <label for="edit-stok_awal">Stok Awal</label>
+                        <div class="invalid-feedback" id="edit-stok_awal-error"></div>
                     </div>
                     
                 </div>
@@ -418,7 +285,6 @@
         </div>
     </div>
 </div>
-@endforeach
 
 {{-- Modal untuk Export Excel --}}
 <div class="modal fade" id="exportExcelModal" tabindex="-1" aria-labelledby="exportExcelModalLabel" aria-hidden="true">
@@ -451,62 +317,246 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
-{{-- Script untuk membuka kembali modal jika ada error validasi --}}
-@if ($errors->any() && session('error_item_id'))
+{{-- DataTables Configuration --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var editModal = new bootstrap.Modal(document.getElementById('editMaterialModal-{{ session('error_item_id') }}'));
-        editModal.show();
+    $(document).ready(function() {
+        const table = $('#pusat-materials-table').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: "{{ route('api.pusat.materials') }}",
+                type: "GET",
+                data: function(d) {
+                    d.search = $('#searchInput').val();
+                    d.start_date = $('#startDate').val();
+                    d.end_date = $('#endDate').val();
+                }
+            },
+            columns: [
+                { 
+                    data: null, 
+                    name: 'id', 
+                    searchable: false,
+                    orderable: false,
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1 + meta.settings._iDisplayStart;
+                    }
+                },
+                { data: 'nama_material', name: 'nama_material' },
+                { data: 'kode_material', name: 'kode_material' },
+                { 
+                    data: 'stok_awal', 
+                    name: 'stok_awal',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'penerimaan_total', 
+                    name: 'penerimaan_total',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-primary text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'penyaluran_total', 
+                    name: 'penyaluran_total',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'sales_total', 
+                    name: 'sales_total',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-warning text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'pemusnahan_total', 
+                    name: 'pemusnahan_total',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-danger text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'stok_akhir', 
+                    name: 'stok_akhir',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-success text-white text-xs">' + data + ' pcs</span>';
+                    }
+                },
+                { 
+                    data: 'created_at', 
+                    name: 'updated_at',
+                    render: function(data, type, row) {
+                        return data ? data : '-';
+                    }
+                },
+                { 
+                    data: 'actions', 
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+            },
+            dom: 'Bfrtip',
+            order: [[9, 'desc']] // Default order by last activity date
+        });
+
+        // Handle search input
+        $('#searchInput').on('keyup', function() {
+            table.search(this.value).draw();
+        });
+
+        // Handle date filter
+        $('#filterBtn').on('click', function() {
+            table.draw();
+        });
+
+        // Edit functionality
+        $('#pusat-materials-table').on('click', '.btn-info', function() {
+            const row = $(this).closest('tr');
+            const rowData = table.row(row).data();
+            
+            // Fill the form with current data
+            $('#edit-nama_material').val(rowData.nama_material);
+            $('#edit-kode_material').val(rowData.kode_material);
+            $('#edit-kategori_material').val(rowData.kategori_material);
+            $('#edit-stok_awal').val(rowData.stok_awal);
+            
+            // Set form action to update URL
+            $('#editMaterialForm').attr('action', '/pusat/' + rowData.id);
+            
+            // Show the modal
+            const editModal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
+            editModal.show();
+        });
+
+        // Delete functionality
+        $('#pusat-materials-table').on('click', '.btn-danger', function(e) {
+            e.preventDefault();
+            const form = $(this).closest('form');
+            
+            // SweetAlert for confirmation
+            Swal.fire({
+                title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
+                html: `
+                    <p class="text-start">
+                        Penghapusan ini akan menghapus seluruh data material ini dari gudang pusat, termasuk semua riwayat transaksi dan stoknya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                    </p>
+                    <p class="text-start mb-0">
+                        <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
+                    </p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Saya Sudah Backup!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Konfirmasi Terakhir',
+                        text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen dari database.",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, Hapus Sekarang!',
+                        cancelButtonText: 'Kembali'
+                    }).then((secondResult) => {
+                        if (secondResult.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                }
+            });
+        });
+
+        // Process transaction functionality
+        $('#pusat-materials-table').on('click', '.kirim-btn', function() {
+            const rowData = table.row($(this).closest('tr')).data();
+            
+            // Fill modal with item info
+            document.getElementById('modal-nama-material-display').textContent = rowData.nama_material;
+            document.getElementById('modal-kode-material-display').textContent = rowData.kode_material;
+            document.getElementById('modal-stok-akhir-display').textContent = rowData.stok_akhir + ' pcs';
+            
+            // Set form data
+            document.getElementById('item-id-pusat').value = rowData.id;
+            document.getElementById('kode-material-selected').value = rowData.kode_material;
+            
+            // Set default date
+            const today = new Date();
+            document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
+            
+            // Show modal
+            const kirimModal = new bootstrap.Modal(document.getElementById('kirimMaterialModal'));
+            kirimModal.show();
+        });
     });
 </script>
-@endif
 
-{{-- Script konfirmasi hapus untuk form submit --}}
+{{-- Script for edit form submission --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const deleteButtons = document.querySelectorAll('.delete-btn');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function (event) {
-                event.preventDefault(); 
-                const form = this.closest('form');
+    document.getElementById('editMaterialForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const actionUrl = this.getAttribute('action');
+        
+        fetch(actionUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': formData.get('_token'),
+                'X-HTTP-Method-Override': 'PUT',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh the DataTable
+                $('#pusat-materials-table').DataTable().ajax.reload();
                 
-                // SweetAlert Pertama: Peringatan dan Ajak untuk Backup
+                // Show success message
                 Swal.fire({
-                    title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
-                    html: `
-                        <p class="text-start">
-                            Penghapusan ini akan menghapus seluruh data material ini dari gudang pusat, termasuk semua riwayat transaksi dan stoknya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
-                        </p>
-                        <p class="text-start mb-0">
-                            <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
-                        </p>
-                    `,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#007bff', // Warna tombol sesuai tema
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, Saya Sudah Backup!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Jika pengguna mengkonfirmasi di pop-up pertama, tampilkan yang kedua
-                        Swal.fire({
-                            title: 'Konfirmasi Terakhir',
-                            text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen dari database.",
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33', // Warna merah untuk aksi berbahaya
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Ya, Hapus Sekarang!',
-                            cancelButtonText: 'Kembali'
-                        }).then((secondResult) => {
-                            if (secondResult.isConfirmed) {
-                                form.submit(); // Kirimkan form untuk menghapus data
-                            }
-                        });
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data material berhasil diperbarui!'
+                });
+                
+                // Close modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
+                editModal.hide();
+            } else if (data.errors) {
+                // Show validation errors
+                Object.keys(data.errors).forEach(field => {
+                    const errorElement = document.getElementById(`edit-${field}-error`);
+                    if (errorElement) {
+                        errorElement.textContent = data.errors[field][0];
+                        errorElement.parentElement.classList.add('is-invalid');
                     }
                 });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Terjadi kesalahan. Silakan coba lagi.'
             });
         });
     });
@@ -550,61 +600,22 @@
             const asalLabel = document.getElementById('asal-label');
             const tujuanLabel = document.getElementById('tujuan-label');
 
-            // Hapus input hidden item_id_pusat sebelum mengisi ulang
-            const existingItemIdInput = document.getElementById('item-id-pusat');
-            if (existingItemIdInput) {
-                existingItemIdInput.remove();
-            }
-
             asalLabel.textContent = "Asal Transaksi";
             tujuanLabel.textContent = "Tujuan Transaksi";
-
-            const kodeMaterialInput = document.getElementById('kode-material-selected');
-            if (kodeMaterialInput) {
-                // Hapus input kode material yang lama jika ada
-                kodeMaterialInput.remove();
-            }
-
-            // Tambahkan kembali input kode material ke form
-            const newKodeMaterialInput = document.createElement('input');
-            newKodeMaterialInput.type = 'hidden';
-            newKodeMaterialInput.id = 'kode-material-selected';
-            newKodeMaterialInput.name = 'kode_material';
-            newKodeMaterialInput.value = form.dataset.kodeMaterial;
-            form.appendChild(newKodeMaterialInput);
 
             if (type === 'penyaluran') {
                 asalContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
                 tujuanContainer.innerHTML = createFacilitySearchInputHTML();
                 initFacilitySearchbar();
 
-                // Tambahkan kembali input hidden item_id_pusat untuk penyaluran
-                const newItemIdInput = document.createElement('input');
-                newItemIdInput.type = 'hidden';
-                newItemIdInput.id = 'item-id-pusat';
-                newItemIdInput.name = 'item_id_pusat';
-                newItemIdInput.value = form.dataset.itemId;
-                form.appendChild(newItemIdInput);
-
             } else if (type === 'penerimaan') {
                 asalContainer.innerHTML = createFacilitySearchInputHTML();
                 tujuanContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
                 initFacilitySearchbar();
 
-                // Untuk penerimaan, kita tidak perlu item_id_pusat karena backend akan mencari berdasarkan kode material
-                // Jadi, kita tidak perlu menambahkannya kembali ke form.
-
             } else if (type === 'sales') {
                 asalContainer.innerHTML = readonlyInputHTML('P.Layang (Pusat)');
                 tujuanContainer.innerHTML = createSalesDropdownHTML();
-                
-                // Tambahkan kembali input hidden item_id_pusat untuk sales
-                const newItemIdInput = document.createElement('input');
-                newItemIdInput.type = 'hidden';
-                newItemIdInput.id = 'item-id-pusat';
-                newItemIdInput.name = 'item_id_pusat';
-                newItemIdInput.value = form.dataset.itemId;
-                form.appendChild(newItemIdInput);
             }
         }
 
@@ -656,26 +667,6 @@
             });
         }
         
-        kirimModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            form.reset();
-
-            // Simpan item_id dan kode_material dari tombol yang diklik ke dataset form
-            form.dataset.itemId = button.dataset.id;
-            form.dataset.kodeMaterial = button.dataset.kodeMaterial;
-
-            document.getElementById('jenis-penyaluran').checked = true;
-            updateFormUI('penyaluran');
-
-            document.getElementById('modal-nama-material-display').textContent = button.dataset.namaMaterial;
-            document.getElementById('modal-kode-material-display').textContent = button.dataset.kodeMaterial;
-            document.getElementById('modal-stok-akhir-display').textContent = button.dataset.stokAkhir + ' pcs';
-            
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
-        });
-
         document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
             radio.addEventListener('change', (event) => {
                 updateFormUI(event.target.value);
@@ -720,7 +711,6 @@
                             icon: 'error',
                             title: 'Oops...',
                             text: 'Terjadi kesalahan pada server. Mohon coba lagi.',
-                            // footer: '<a href="javascript:void(0)" onclick="document.querySelector(\'#error-details\').style.display=\'block\'">Lihat Detail Error</a><div id="error-details" style="display:none; text-align: left; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">' + text + '</div>'
                         });
                         throw new Error('Server returned HTML instead of JSON');
                     });
@@ -733,7 +723,10 @@
                         icon: 'success',
                         title: 'Berhasil!',
                         text: result.message
-                    }).then(() => window.location.reload());
+                    }).then(() => {
+                        // Refresh the DataTable
+                        $('#pusat-materials-table').DataTable().ajax.reload();
+                    });
                 } else if (result.errors) {
                     let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
                     Swal.fire({
@@ -811,7 +804,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity=".03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
         background-size: 60px 60px;
         opacity: 0.2;
         pointer-events: none;
@@ -835,6 +828,19 @@
             margin-bottom: 0.25rem;
             align-self: flex-start;
         }
+    }
+    
+    /* DataTables specific styles */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5em;
+    }
+    
+    .dataTables_wrapper .dataTables_length select {
+        margin-right: 0.5em;
     }
 </style>
 @endsection

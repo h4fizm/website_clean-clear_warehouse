@@ -161,4 +161,130 @@ class AktivitasHarianController extends Controller
 
         return Excel::download(new TransaksiLogExport($filters), $filename);
     }
+
+    /**
+     * API endpoint for DataTables to fetch aktivitas transaksi data
+     */
+    public function getAktivitasTransaksi(Request $request)
+    {
+        $draw = $request->get('draw');
+        $start = $request->get('start');
+        $length = $request->get('length');
+        $search = $request->get('search')['value'] ?? '';
+        $order = $request->get('order')[0] ?? null;
+        $columns = $request->get('columns') ?? [];
+        $jenisTransaksi = $request->get('jenis_transaksi');
+
+        // Build the query
+        $query = ItemTransaction::with([
+            'item',
+            'user',
+            'facilityFrom',
+            'facilityTo',
+            'regionFrom',
+            'regionTo',
+        ]);
+
+        // Filter for non-pemusnahan transactions by default
+        $query->where(function ($q) use ($jenisTransaksi) {
+            if (!$jenisTransaksi) {
+                $q->where('jenis_transaksi', '!=', 'pemusnahan');
+            } else {
+                $q->where('jenis_transaksi', $jenisTransaksi);
+            }
+        });
+
+        // Add search functionality
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_surat_persetujuan', 'like', "%{$search}%")
+                  ->orWhere('no_ba_serah_terima', 'like', "%{$search}%")
+                  ->orWhere('tujuan_sales', 'like', "%{$search}%");
+
+                $q->orWhereHas('item', function ($itemQuery) use ($search) {
+                    $itemQuery->where('nama_material', 'like', "%{$search}%")
+                              ->orWhere('kode_material', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('user', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('facilityFrom', function ($facilityQuery) use ($search) {
+                    $facilityQuery->where('name', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('facilityTo', function ($facilityQuery) use ($search) {
+                    $facilityQuery->where('name', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('regionFrom', function ($regionQuery) use ($search) {
+                    $regionQuery->where('name_region', 'like', "%{$search}%");
+                });
+
+                $q->orWhereHas('regionTo', function ($regionQuery) use ($search) {
+                    $regionQuery->where('name_region', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Get total records count
+        $totalRecords = $query->count();
+
+        // Add ordering
+        if ($order) {
+            $columnIndex = $order['column'];
+            $direction = $order['dir'];
+            $columnName = $columns[$columnIndex]['data'] ?? 'id';
+
+            switch ($columnName) {
+                case 'no_surat_persetujuan':
+                    $query->orderBy('no_surat_persetujuan', $direction);
+                    break;
+                case 'item.nama_material':
+                    $query->orderBy('item.nama_material', $direction);
+                    break;
+                case 'jenis_transaksi':
+                    $query->orderBy('jenis_transaksi', $direction);
+                    break;
+                case 'jumlah':
+                    $query->orderBy('jumlah', $direction);
+                    break;
+                case 'created_at':
+                    $query->orderBy('created_at', $direction);
+                    break;
+                default:
+                    $query->orderBy('created_at', $direction);
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Add pagination
+        $query->offset($start)->limit($length);
+
+        $transactions = $query->get();
+
+        $data = [];
+        foreach ($transactions as $transaction) {
+            $data[] = [
+                'id' => $transaction->id,
+                'no_surat_persetujuan' => $transaction->no_surat_persetujuan,
+                'item' => $transaction->item ? $transaction->item->nama_material : '-',
+                'jenis_transaksi' => $transaction->jenis_transaksi,
+                'jumlah' => $transaction->jumlah,
+                'facility_from' => $transaction->facilityFrom ? $transaction->facilityFrom->name : ($transaction->regionFrom ? $transaction->regionFrom->name_region : '-'),
+                'facility_to' => $transaction->facilityTo ? $transaction->facilityTo->name : ($transaction->regionTo ? $transaction->regionTo->name_region : '-'),
+                'created_at' => Carbon::parse($transaction->created_at)->format('d-m-Y H:i:s'),
+            ];
+        }
+
+        return response()->json([
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'data' => $data
+        ]);
+    }
 }

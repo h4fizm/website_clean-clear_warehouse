@@ -65,17 +65,23 @@ class MaterialController extends Controller
         });
 
         $itemsQuery->addSelect([
-            'penerimaan_total' => ItemTransaction::query()
-                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
-                ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.facility_to', 'items.facility_id')
-                ->when($filters['start_date'], fn($query, $date) => $query->whereDate('item_transactions.created_at', '>=', $date))
-                ->when($filters['end_date'], fn($query, $date) => $query->whereDate('item_transactions.created_at', '<=', $date))
-                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
-
-            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(sum(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id')
+            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->where('jenis_transaksi', 'transfer')
+                ->whereNotNull('facility_to')  // Ensure it's going TO a facility
+                ->whereColumn('facility_to', 'items.facility_id')  // Only items going TO this facility
+                ->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                             ->from('items as source_item')
+                             ->whereColumn('source_item.kode_material', 'items.kode_material')
+                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+                })
+                ->when($filters['start_date'], fn($query, $date) => $query->whereDate('created_at', '>=', $date))
+                ->when($filters['end_date'], fn($query, $date) => $query->whereDate('created_at', '<=', $date)),
+
+            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
+                ->where('jenis_transaksi', 'transfer')
+                ->whereNotNull('facility_from')  // Ensure it's coming FROM a facility
+                ->whereColumn('facility_from', 'items.facility_id')  // Only items coming FROM this facility
                 ->when($filters['start_date'], fn($query, $date) => $query->whereDate('created_at', '>=', $date))
                 ->when($filters['end_date'], fn($query, $date) => $query->whereDate('created_at', '<=', $date)),
 
@@ -91,7 +97,7 @@ class MaterialController extends Controller
                 COALESCE(items.updated_at, '1970-01-01'),
                 COALESCE((
                     SELECT MAX(it.created_at)
-                    FROM item_transactions AS it
+                    FROM base_transactions AS it
                     LEFT JOIN items AS source_item ON it.item_id = source_item.id
                     WHERE
                         it.item_id = items.id
@@ -153,22 +159,11 @@ class MaterialController extends Controller
             $newName = $request->input('nama_material');
             $stokAwalBaru = $request->stok_awal;
 
-            $totalPenerimaan = ItemTransaction::whereHas('item', function ($query) use ($item) {
-                $query->where('kode_material', $item->kode_material);
-            })
-                ->where('facility_to', $item->facility_id)
-                ->sum('jumlah');
-
-            $totalPenyaluran = $item->transactions()->where('jenis_transaksi', 'transfer')->sum('jumlah');
-            $totalSales = $item->transactions()->where('jenis_transaksi', 'sales')->sum('jumlah');
-
-            $stokAkhirBaru = $stokAwalBaru + $totalPenerimaan - $totalPenyaluran - $totalSales;
-
+            // Only update stok_awal, keep stok_akhir as is
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
                 'stok_awal' => $stokAwalBaru,
-                'stok_akhir' => $stokAkhirBaru,
             ]);
 
             if ($oldKode !== $newKode) {
@@ -352,5 +347,128 @@ class MaterialController extends Controller
             \Log::error('Facility Transfer Error: ' . $e->getMessage() . ' line: ' . $e->getLine());
             return response()->json(['message' => 'Terjadi kesalahan server.'], 500);
         }
+    }
+
+    /**
+     * API endpoint for DataTables to fetch facility materials data
+     */
+    public function getFacilityMaterials(Request $request, Facility $facility)
+    {
+        $draw = $request->get('draw');
+        $start = $request->get('start');
+        $length = $request->get('length');
+        $search = $request->get('search')['value'] ?? '';
+        $order = $request->get('order')[0] ?? null;
+        $columns = $request->get('columns') ?? [];
+
+        // Build the query
+        $query = Item::query()
+            ->where('facility_id', $facility->id)
+            ->where('is_active', true);
+
+        // Add search functionality
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_material', 'like', "%{$search}%")
+                  ->orWhere('kode_material', 'like', "%{$search}%");
+            });
+        }
+
+        // Get total records count
+        $totalRecords = $query->count();
+
+        // Add ordering
+        if ($order) {
+            $columnIndex = $order['column'];
+            $direction = $order['dir'];
+            $columnName = $columns[$columnIndex]['data'] ?? 'id';
+
+            switch ($columnName) {
+                case 'kode_material':
+                    $query->orderBy('kode_material', $direction);
+                    break;
+                case 'nama_material':
+                    $query->orderBy('nama_material', $direction);
+                    break;
+                case 'stok_awal':
+                    $query->orderBy('stok_awal', $direction);
+                    break;
+                case 'penerimaan_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND facility_to = items.facility_id AND EXISTS (SELECT 1 FROM items as source_item WHERE source_item.kode_material = items.kode_material AND source_item.id = base_transactions.item_id)), 0)', $direction);
+                    break;
+                case 'penyaluran_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE jenis_transaksi = "transfer" AND facility_from = items.facility_id), 0)', $direction);
+                    break;
+                case 'sales_total':
+                    $query->orderByRaw('COALESCE((SELECT SUM(jumlah) FROM base_transactions WHERE item_id = items.id AND jenis_transaksi = "sales"), 0)', $direction);
+                    break;
+                case 'stok_akhir':
+                    $query->orderBy('stok_akhir', $direction);
+                    break;
+                default:
+                    $query->orderBy('updated_at', $direction);
+                    break;
+            }
+        } else {
+            $query->orderBy('updated_at', 'desc');
+        }
+
+        // Add pagination
+        $query->offset($start)->limit($length);
+
+        // Get the items with calculated totals
+        $items = $query->get();
+
+        $data = [];
+        foreach ($items as $item) {
+            // Calculate totals for each item
+            $penerimaanTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
+                ->whereNotNull('facility_to')
+                ->where('facility_to', $item->facility_id)
+                ->whereExists(function ($subQuery) use ($item) {
+                    $subQuery->select(DB::raw(1))
+                             ->from('items as source_item')
+                             ->whereColumn('source_item.kode_material', DB::raw("'" . $item->kode_material . "'"))
+                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+                })
+                ->sum('jumlah');
+
+            $penyaluranTotal = ItemTransaction::where('jenis_transaksi', 'transfer')
+                ->whereNotNull('facility_from')
+                ->where('facility_from', $item->facility_id)
+                ->sum('jumlah');
+
+            $salesTotal = ItemTransaction::where('item_id', $item->id)
+                ->where('jenis_transaksi', 'sales')
+                ->sum('jumlah');
+
+            // Calculate the final stock
+            $stokAkhir = $item->stok_awal + $penerimaanTotal - $penyaluranTotal - $salesTotal;
+
+            $data[] = [
+                'id' => $item->id,
+                'kode_material' => $item->kode_material,
+                'nama_material' => $item->nama_material,
+                'kategori_material' => $item->kategori_material,
+                'stok_awal' => $item->stok_awal,
+                'penerimaan_total' => $penerimaanTotal,
+                'penyaluran_total' => $penyaluranTotal,
+                'sales_total' => $salesTotal,
+                'pemusnahan_total' => 0, // SPBE/BPT doesn't track pemusnahan
+                'stok_akhir' => $stokAkhir,
+                'actions' => '<a href="' . route('materials.update', $item->id) . '" class="btn btn-sm btn-primary">Edit</a> '
+                    . '<form action="' . route('materials.destroy', $item->id) . '" method="POST" class="d-inline">'
+                    . csrf_field() . method_field('DELETE') 
+                    . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
+                    . '</form>'
+            ];
+        }
+
+        return response()->json([
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'data' => $data
+        ]);
     }
 }

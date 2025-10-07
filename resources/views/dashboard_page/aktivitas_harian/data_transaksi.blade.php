@@ -39,25 +39,30 @@
             </div>
             
             <div class="card-body px-0 pt-0 pb-5">
-                <form action="{{ route('aktivitas.transaksi') }}" method="GET">
-                    <div class="d-flex flex-wrap gap-3 mb-3 px-3 align-items-center justify-content-between">
-                        {{-- Kolom Kiri: Search --}}
-                        <div class="d-flex flex-wrap gap-3">
-                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari Material, Kode, Lokasi, User..." value="{{ $search ?? '' }}" style="width: 300px; height: 38px;">
-                        </div>
-                        
-                        {{-- Kolom Kanan: Filter Tanggal & Tombol Cari --}}
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="start_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Dari:</label>
-                            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate ?? '' }}" style="width: 150px; height: 38px;">
-                            
-                            <label for="end_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Sampai:</label>
-                            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate ?? '' }}" style="width: 150px; height: 38px;">
-
-                            <button type="submit" class="btn btn-primary btn-sm mb-0">Cari</button>
-                        </div>
+                <div class="d-flex flex-wrap gap-3 mb-3 px-3 align-items-center justify-content-between">
+                    {{-- Kolom Kiri: Search --}}
+                    <div class="d-flex flex-wrap gap-3">
+                        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Cari Material, Kode, Lokasi, User..." style="width: 300px; height: 38px;">
                     </div>
-                </form>
+                    
+                    {{-- Kolom Kanan: Filter Tanggal & Tombol Cari --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="start_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Dari:</label>
+                        <input type="date" id="startDate" class="form-control form-control-sm" style="width: 150px; height: 38px;">
+                        
+                        <label for="end_date" class="form-label mb-0 text-xs text-secondary font-weight-bolder">Sampai:</label>
+                        <input type="date" id="endDate" class="form-control form-control-sm" style="width: 150px; height: 38px;">
+                        
+                        <select id="jenisTransaksi" class="form-control form-control-sm" style="width: 150px; height: 38px;">
+                            <option value="">Semua Transaksi</option>
+                            <option value="penyaluran">Penyaluran</option>
+                            <option value="penerimaan">Penerimaan</option>
+                            <option value="sales">Sales</option>
+                        </select>
+
+                        <button id="filterBtn" class="btn btn-primary btn-sm mb-0">Cari</button>
+                    </div>
+                </div>
 
                 <div class="table-responsive p-0">
                     <table class="table align-items-center mb-0" id="table-aktivitas-transaksi">
@@ -79,121 +84,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($transactions as $transaction)
-                                @if (!$transaction->item) @continue @endif
-
-                                @php
-                                    $asal = 'N/A';
-                                    $tujuan = 'N/A';
-                                    $activityAsal = null;
-                                    $activityTujuan = null;
-                                    
-                                    // CASE 1: Jika transaksi adalah SALES
-                                    if ($transaction->jenis_transaksi == 'sales') {
-                                        $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
-                                        $tujuan = $transaction->tujuan_sales;
-
-                                        $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
-                                        $activityTujuan = ['text' => 'Transaksi Sales', 'color' => 'bg-gradient-warning', 'icon' => 'fa-dollar-sign'];
-                                    
-                                    // CASE 2: Jika transaksi adalah TRANSFER (Penyaluran/Penerimaan)
-                                    } else {
-                                        $asal = $transaction->facilityFrom->name ?? $transaction->regionFrom->name_region ?? 'N/A';
-                                        $tujuan = $transaction->facilityTo->name ?? $transaction->regionTo->name_region ?? 'N/A';
-
-                                        $activityAsal = ['text' => 'Penyaluran', 'color' => 'bg-gradient-danger', 'icon' => 'fa-arrow-up'];
-                                        $activityTujuan = ['text' => 'Penerimaan', 'color' => 'bg-gradient-success', 'icon' => 'fa-arrow-down'];
-                                    }
-                                @endphp
-                                <tr>
-                                    <td class="text-center">
-                                        <p class="text-xs font-weight-bold mb-0">
-                                            {{ $loop->iteration + $transactions->firstItem() - 1 }}
-                                        </p>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column justify-content-center">
-                                            <h6 class="mb-0 text-sm font-weight-bolder">{{ $transaction->item->nama_material }}</h6>
-                                            <p class="text-xs text-secondary mb-0">Kode: {{ $transaction->item->kode_material }}</p>
-                                        </div>
-                                    </td>
-                                    <td><p class="text-xs font-weight-bold mb-0">{{ $asal }}</p></td>
-                                    <td><p class="text-xs font-weight-bold mb-0">{{ $tujuan }}</p></td>
-
-                                    {{-- Kolom stok dari snapshot historis lokasi asal --}}
-                                    <td class="text-center"><span class="badge bg-secondary text-white text-xs">{{ number_format($transaction->stok_awal_asal ?? 0) }} pcs</span></td>
-                                    <td class="text-center"><span class="badge bg-gradient-warning text-white text-xs">{{ number_format($transaction->jumlah) }} pcs</span></td>
-                                    <td class="text-center"><span class="badge bg-info text-white text-xs">{{ number_format($transaction->stok_akhir_asal ?? 0) }} pcs</span></td>
-
-                                    <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_surat_persetujuan ?? '-' }}</p></td>
-                                    <td><p class="text-xs text-secondary mb-0">{{ $transaction->no_ba_serah_terima ?? '-' }}</p></td>
-
-                                    {{-- Kolom Aktivitas Asal --}}
-                                    <td class="text-center">
-                                        @if ($activityAsal)
-                                            <span class="badge {{ $activityAsal['color'] }} text-white text-xs">
-                                                <i class="fas {{ $activityAsal['icon'] }} me-1"></i>
-                                                {{ $activityAsal['text'] }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted text-xs">-</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Kolom Aktivitas Tujuan --}}
-                                    <td class="text-center">
-                                        @if ($activityTujuan)
-                                            <span class="badge {{ $activityTujuan['color'] }} text-white text-xs">
-                                                <i class="fas {{ $activityTujuan['icon'] }} me-1"></i>
-                                                {{ $activityTujuan['text'] }}
-                                            </span>
-                                        @else
-                                            <span class="text-muted text-xs">-</span>
-                                        @endif
-                                    </td>
-
-                                    <td class="text-center"><p class="text-xs text-secondary mb-0">{{ $transaction->user->name ?? 'N/A' }}</p></td>
-                                    <td class="text-center"><p class="text-xs text-secondary mb-0">{{ \Carbon\Carbon::parse($transaction->created_at)->isoFormat('dddd, D MMMM YYYY') }}</p></td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="13" class="text-center text-muted py-4">Data tidak ditemukan</td>
-                                </tr>
-                            @endforelse
+                            <!-- Data will be loaded via AJAX -->
                         </tbody>
                     </table>
                 </div>
-
-                {{-- Paginasi kustom Anda --}}
-                @if ($transactions->hasPages())
-                    <div class="mt-4 px-3 d-flex justify-content-center">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination pagination-sm mb-0">
-                                @php
-                                    $total = $transactions->lastPage();
-                                    $current = $transactions->currentPage();
-                                    $window = 1; 
-                                @endphp
-                                <li class="page-item {{ $transactions->onFirstPage() ? 'disabled' : '' }}"><a class="page-link" href="{{ $transactions->url(1) }}">&laquo;</a></li>
-                                <li class="page-item {{ $transactions->onFirstPage() ? 'disabled' : '' }}"><a class="page-link" href="{{ $transactions->previousPageUrl() }}">&lsaquo;</a></li>
-                                @php $wasGap = false; @endphp
-                                @for ($i = 1; $i <= $total; $i++)
-                                    @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
-                                        <li class="page-item {{ ($i == $current) ? 'active' : '' }}"><a class="page-link" href="{{ $transactions->url($i) }}">{{ $i }}</a></li>
-                                        @php $wasGap = false; @endphp
-                                    @else
-                                        @if (!$wasGap)
-                                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                                            @php $wasGap = true; @endphp
-                                        @endif
-                                    @endif
-                                @endfor
-                                <li class="page-item {{ $transactions->hasMorePages() ? '' : 'disabled' }}"><a class="page-link" href="{{ $transactions->nextPageUrl() }}">&rsaquo;</a></li>
-                                <li class="page-item {{ $current == $total ? 'disabled' : '' }}"><a class="page-link" href="{{ $transactions->url($total) }}">&raquo;</a></li>
-                            </ul>
-                        </nav>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
@@ -229,6 +123,166 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+{{-- DataTables Configuration --}}
+<script>
+    $(document).ready(function() {
+        const table = $('#table-aktivitas-transaksi').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: "{{ route('api.aktivitas.transaksi') }}",
+                type: "GET",
+                data: function(d) {
+                    d.search = $('#searchInput').val();
+                    d.start_date = $('#startDate').val();
+                    d.end_date = $('#endDate').val();
+                    d.jenis_transaksi = $('#jenisTransaksi').val();
+                }
+            },
+            columns: [
+                { 
+                    data: null, 
+                    name: 'id', 
+                    searchable: false,
+                    orderable: false,
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1 + meta.settings._iDisplayStart;
+                    }
+                },
+                { 
+                    data: 'item', 
+                    name: 'item.nama_material',
+                    render: function(data, type, row) {
+                        return `<div class="d-flex flex-column justify-content-center">
+                                    <h6 class="mb-0 text-sm font-weight-bolder">${row.item.nama_material}</h6>
+                                    <p class="text-xs text-secondary mb-0">Kode: ${row.item.kode_material}</p>
+                                </div>`;
+                    }
+                },
+                { 
+                    data: 'facility_from', 
+                    name: 'facilityFrom.name',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs font-weight-bold mb-0">${row.facility_from || row.region_from || 'N/A'}</p>`;
+                    }
+                },
+                { 
+                    data: 'tujuan', 
+                    name: 'tujuan',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs font-weight-bold mb-0">${row.facility_to || row.region_to || row.tujuan_sales || 'N/A'}</p>`;
+                    }
+                },
+                { 
+                    data: 'stok_awal_asal', 
+                    name: 'stok_awal_asal',
+                    render: function(data, type, row) {
+                        return `<span class="badge bg-secondary text-white text-xs">${(row.stok_awal_asal || 0).toLocaleString('id-ID')} pcs</span>`;
+                    }
+                },
+                { 
+                    data: 'jumlah', 
+                    name: 'jumlah',
+                    render: function(data, type, row) {
+                        return `<span class="badge bg-gradient-warning text-white text-xs">${row.jumlah.toLocaleString('id-ID')} pcs</span>`;
+                    }
+                },
+                { 
+                    data: 'stok_akhir_asal', 
+                    name: 'stok_akhir_asal',
+                    render: function(data, type, row) {
+                        return `<span class="badge bg-info text-white text-xs">${(row.stok_akhir_asal || 0).toLocaleString('id-ID')} pcs</span>`;
+                    }
+                },
+                { 
+                    data: 'no_surat_persetujuan', 
+                    name: 'no_surat_persetujuan',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary mb-0">${row.no_surat_persetujuan || '-'}</p>`;
+                    }
+                },
+                { 
+                    data: 'no_ba_serah_terima', 
+                    name: 'no_ba_serah_terima',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary mb-0">${row.no_ba_serah_terima || '-'}</p>`;
+                    }
+                },
+                { 
+                    data: 'jenis_transaksi', 
+                    name: 'jenis_transaksi',
+                    render: function(data, type, row) {
+                        let activityAsal = null;
+                        
+                        if (row.jenis_transaksi == 'sales') {
+                            activityAsal = {text: 'Penyaluran', color: 'bg-gradient-danger', icon: 'fa-arrow-up'};
+                        } else {
+                            activityAsal = {text: 'Penyaluran', color: 'bg-gradient-danger', icon: 'fa-arrow-up'};
+                        }
+                        
+                        return activityAsal ? `<span class="badge ${activityAsal['color']} text-white text-xs">
+                                                    <i class="fas ${activityAsal['icon']} me-1"></i>
+                                                    ${activityAsal['text']}
+                                                </span>` : `<span class="text-muted text-xs">-</span>`;
+                    }
+                },
+                { 
+                    data: 'jenis_transaksi', 
+                    name: 'jenis_transaksi',
+                    render: function(data, type, row) {
+                        let activityTujuan = null;
+                        
+                        if (row.jenis_transaksi == 'sales') {
+                            activityTujuan = {text: 'Transaksi Sales', color: 'bg-gradient-warning', icon: 'fa-dollar-sign'};
+                        } else {
+                            activityTujuan = {text: 'Penerimaan', color: 'bg-gradient-success', icon: 'fa-arrow-down'};
+                        }
+                        
+                        return activityTujuan ? `<span class="badge ${activityTujuan['color']} text-white text-xs">
+                                                    <i class="fas ${activityTujuan['icon']} me-1"></i>
+                                                    ${activityTujuan['text']}
+                                                </span>` : `<span class="text-muted text-xs">-</span>`;
+                    }
+                },
+                { 
+                    data: 'user', 
+                    name: 'user.name',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary mb-0">${row.user ? row.user.name : 'N/A'}</p>`;
+                    }
+                },
+                { 
+                    data: 'created_at', 
+                    name: 'created_at',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary mb-0">${moment(row.created_at).locale('id').format('dddd, D MMMM YYYY')}</p>`;
+                    }
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+            },
+            dom: 'Bfrtip',
+            order: [[12, 'desc']] // Default order by transaction date
+        });
+
+        // Handle search input
+        $('#searchInput').on('keyup', function() {
+            table.search(this.value).draw();
+        });
+
+        // Handle date filter
+        $('#filterBtn').on('click', function() {
+            table.draw();
+        });
+    });
+</script>
+
 {{-- modal export excel --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -239,7 +293,6 @@
         // Cari semua tombol yang relevan
         const openExportModalBtn = document.getElementById('openExportModalBtn');
         const confirmExportBtn = document.getElementById('confirmExportBtn');
-        const searchInput = document.querySelector('input[name="search"]');
 
         // Event listener untuk membuka modal
         if (openExportModalBtn) {
@@ -256,7 +309,8 @@
                 const endDate = document.getElementById('exportEndDate').value;
                 
                 // 2. Ambil nilai filter pencarian utama dari halaman
-                const searchValue = searchInput ? searchInput.value : '';
+                const searchValue = document.getElementById('searchInput').value;
+                const jenisTransaksi = document.getElementById('jenisTransaksi').value;
 
                 // 3. Siapkan URL dasar dari route Laravel
                 const baseUrl = "{{ route('aktivitas.transaksi.export') }}";
@@ -272,9 +326,9 @@
                 if (searchValue) {
                     params.append('search', searchValue);
                 }
-                // Tambahkan filter untuk mengecualikan "pemusnahan"
-                params.append('jenis_transaksi', 'penyaluran,penerimaan,sales');
-
+                if (jenisTransaksi) {
+                    params.append('jenis_transaksi', jenisTransaksi);
+                }
 
                 // 5. Gabungkan URL dasar dengan parameter
                 const exportUrl = `${baseUrl}?${params.toString()}`;

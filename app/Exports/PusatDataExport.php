@@ -107,16 +107,16 @@ class PusatDataExport implements FromQuery, WithHeadings, WithMapping, ShouldAut
         // UBAH INI: Tambahkan subquery untuk `sales_total` dan `pemusnahan_total`
         $query->addSelect([
             'penerimaan_total' => ItemTransaction::query()
-                ->join('items as source_item', 'item_transactions.item_id', '=', 'source_item.id')
+                ->join('items as source_item', 'base_transactions.item_id', '=', 'source_item.id')
                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                ->whereColumn('item_transactions.region_to', 'items.region_id')
+                ->whereColumn('base_transactions.region_to', 'items.region_id')
                 ->when($filters['start_date'], function ($subQ, $date) {
-                    $subQ->whereDate('item_transactions.created_at', '>=', $date);
+                    $subQ->whereDate('base_transactions.created_at', '>=', $date);
                 })
                 ->when($filters['end_date'], function ($subQ, $date) {
-                    $subQ->whereDate('item_transactions.created_at', '<=', $date);
+                    $subQ->whereDate('base_transactions.created_at', '<=', $date);
                 })
-                ->selectRaw('COALESCE(SUM(item_transactions.jumlah), 0)'),
+                ->selectRaw('COALESCE(SUM(base_transactions.jumlah), 0)'),
 
             'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
                 ->whereColumn('item_id', 'items.id')

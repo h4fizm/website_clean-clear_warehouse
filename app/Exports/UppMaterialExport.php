@@ -29,47 +29,48 @@ class UppMaterialExport implements FromQuery, WithHeadings, WithMapping, ShouldA
 
         $query = ItemTransaction::with(['item', 'user'])
             ->select(
-                'item_transactions.no_surat_persetujuan',
-                'item_transactions.tahapan',
-                'item_transactions.status',
-                'item_transactions.created_at',
-                'item_transactions.updated_at',
-                'item_transactions.keterangan_transaksi',
-                'item_transactions.tanggal_pemusnahan',
-                'item_transactions.aktivitas_pemusnahan',
-                'item_transactions.penanggungjawab', // ✅ PERBAIKAN: Ambil langsung kolom penanggungjawab
-                'item_transactions.user_id',
-                'item_transactions.item_id',
-                DB::raw('GROUP_CONCAT(CONCAT(items.nama_material, " (", item_transactions.jumlah, " pcs)") SEPARATOR "\n") as materials') // ✅ PERBAIKAN: Gunakan SEPARATOR untuk baris baru
+                'base_transactions.no_surat_persetujuan',
+                'base_transactions.tahapan',
+                'base_transactions.status',
+                'base_transactions.created_at',
+                'base_transactions.updated_at',
+                'base_transactions.keterangan_transaksi',
+                'pemusnahan_transactions.tanggal_pemusnahan',
+                'pemusnahan_transactions.aktivitas_pemusnahan',
+                'pemusnahan_transactions.penanggungjawab', // ✅ FIXED: Ambil dari tabel pemusnahan_transactions
+                'base_transactions.user_id',
+                'base_transactions.item_id',
+                DB::raw('GROUP_CONCAT(CONCAT(items.nama_material, " (", base_transactions.jumlah, " pcs)") SEPARATOR "\\n") as materials') // ✅ FIXED: Gunakan base_transactions
             )
-            ->join('items', 'item_transactions.item_id', '=', 'items.id')
-            ->where('jenis_transaksi', 'pemusnahan');
+            ->leftJoin('pemusnahan_transactions', 'base_transactions.id', '=', 'pemusnahan_transactions.base_transaction_id')
+            ->join('items', 'base_transactions.item_id', '=', 'items.id')
+            ->where('base_transactions.jenis_transaksi', 'pemusnahan');
 
         // Menggunakan klausa havingRaw agar filter diterapkan setelah GROUP BY
         $query->when($filters['start_date'], function ($q, $date) {
-            return $q->havingRaw('MIN(item_transactions.created_at) >= ?', [$date]);
+            return $q->havingRaw('MIN(base_transactions.created_at) >= ?', [$date]);
         });
 
         $query->when($filters['end_date'], function ($q, $date) {
-            return $q->havingRaw('MIN(item_transactions.created_at) <= ?', [$date]);
+            return $q->havingRaw('MIN(base_transactions.created_at) <= ?', [$date]);
         });
 
         // PERBAIKAN: Tambahkan semua kolom non-agregat ke klausa GROUP BY
         $query->groupBy(
-            'item_transactions.no_surat_persetujuan',
-            'item_transactions.tahapan',
-            'item_transactions.status',
-            'item_transactions.created_at',
-            'item_transactions.updated_at',
-            'item_transactions.keterangan_transaksi',
-            'item_transactions.tanggal_pemusnahan',
-            'item_transactions.aktivitas_pemusnahan',
-            'item_transactions.user_id',
-            'item_transactions.item_id',
-            'item_transactions.penanggungjawab'
+            'base_transactions.no_surat_persetujuan',
+            'base_transactions.tahapan',
+            'base_transactions.status',
+            'base_transactions.created_at',
+            'base_transactions.updated_at',
+            'base_transactions.keterangan_transaksi',
+            'pemusnahan_transactions.tanggal_pemusnahan',
+            'pemusnahan_transactions.aktivitas_pemusnahan',
+            'base_transactions.user_id',
+            'base_transactions.item_id',
+            'pemusnahan_transactions.penanggungjawab'
         );
 
-        return $query->latest('item_transactions.created_at');
+        return $query->latest('base_transactions.created_at');
     }
 
     /**
@@ -106,7 +107,7 @@ class UppMaterialExport implements FromQuery, WithHeadings, WithMapping, ShouldA
             strip_tags($row->aktivitas_pemusnahan),
             strip_tags($row->keterangan_transaksi),
             $row->materials,
-            $row->penanggungjawab, // ✅ PERBAIKAN: Gunakan kolom penanggungjawab
+            $row->penanggungjawab, // ✅ FIXED: Gunakan kolom penanggungjawab
             Carbon::parse($row->updated_at)->locale('id')->translatedFormat('l, d F Y')
         ];
     }

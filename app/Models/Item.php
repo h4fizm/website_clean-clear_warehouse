@@ -36,6 +36,11 @@ class Item extends Model
         return $this->belongsTo(Region::class);
     }
 
+    public function baseTransactions()
+    {
+        return $this->hasMany(ItemTransaction::class, 'item_id');
+    }
+    
     public function transactions()
     {
         return $this->hasMany(ItemTransaction::class, 'item_id');

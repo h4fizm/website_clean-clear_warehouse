@@ -152,6 +152,23 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
+    // API routes for DataTables
+    Route::get('/api/pusat-materials', [PusatController::class, 'getPusatMaterials'])
+        ->name('api.pusat.materials')
+        ->middleware('can:manage data playang');
+
+    Route::get('/api/facility-materials/{facility}', [MaterialController::class, 'getFacilityMaterials'])
+        ->name('api.facility.materials')
+        ->middleware('can:manage transaksi');
+
+    Route::get('/api/aktivitas-transaksi', [AktivitasHarianController::class, 'getAktivitasTransaksi'])
+        ->name('api.aktivitas.transaksi')
+        ->middleware('can:manage aktivitas harian');
+
+    Route::get('/api/upp-materials', [UppMaterialController::class, 'getUppMaterials'])
+        ->name('api.upp.materials')
+        ->middleware('can:manage data playang');
+
     // ===== TAMBAHKAN ROUTE DI BAWAH INI =====
     Route::get('/aktivitas/transaksi/export', [AktivitasHarianController::class, 'exportTransaksiExcel'])
         ->name('aktivitas.transaksi.export')

@@ -26,42 +26,37 @@
             
             {{-- Form Pencarian dan Filter --}}
             <div class="px-4 py-2">
-                <form method="GET" action="{{ route('upp-material.index') }}">
-                    <div class="row mb-3 align-items-end">
-                        <div class="col-12 col-md-4 mb-2 mb-md-0">
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" name="search" id="searchInput" 
-                                    class="form-control" 
-                                    placeholder="Cari No. Surat..." 
-                                    value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-8 d-flex flex-wrap justify-content-md-end">
-                            <div class="d-flex align-items-center me-2">
-                                <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
-                                <input type="date" name="start_date" id="startDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;"
-                                    value="{{ request('start_date') }}">
-                            </div>
-                            <div class="d-flex align-items-center me-2">
-                                <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
-                                <input type="date" name="end_date" id="endDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;"
-                                    value="{{ request('end_date') }}">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm px-3" style="margin-top: 15px;">Filter</button>
+                <div class="row mb-3 align-items-end">
+                    <div class="col-12 col-md-4 mb-2 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchInput" 
+                                class="form-control" 
+                                placeholder="Cari No. Surat...">
                         </div>
                     </div>
-                </form>
+                    <div class="col-12 col-md-8 d-flex flex-wrap justify-content-md-end">
+                        <div class="d-flex align-items-center me-2">
+                            <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
+                            <input type="date" id="startDate" 
+                                class="form-control form-control-sm date-input" 
+                                style="max-width: 160px;">
+                        </div>
+                        <div class="d-flex align-items-center me-2">
+                            <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
+                            <input type="date" id="endDate" 
+                                class="form-control form-control-sm date-input" 
+                                style="max-width: 160px;">
+                        </div>
+                        <button id="filterBtn" class="btn btn-primary btn-sm px-3" style="margin-top: 15px;">Filter</button>
+                    </div>
+                </div>
             </div>
             
             {{-- Tabel utama --}}
             <div class="card-body px-0 pt-0 pb-5">
                 <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0">
+                    <table class="table align-items-center mb-0" id="table-upp-material">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -74,103 +69,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($upps as $upp)
-                            <tr>
-                                <td class="text-center">
-                                    <p class="text-xs font-weight-bold mb-0">{{ $loop->iteration + ($upps->currentPage() - 1) * $upps->perPage() }}</p>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column justify-content-center">
-                                        <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat_persetujuan }}</p>
-                                    </div>
-                                </td>
-                                <td>
-                                    <p class="text-xs text-secondary mb-0">{{ $upp->tahapan }}</p>
-                                </td>
-                                <td class="text-center">
-                                    @php
-                                        $statusText = strtolower($upp->status) === 'done' ? 'Done' : 'Proses';
-                                        $statusColor = strtolower($upp->status) === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
-                                    @endphp
-                                    <span class="badge {{ $statusColor }} text-white text-xs font-weight-bold change-status-btn"
-                                        data-no-surat="{{ $upp->no_surat_persetujuan }}"
-                                        data-status-sekarang="{{ $upp->status }}"
-                                        style="cursor: pointer;">
-                                        {{ $statusText }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        {{ \Carbon\Carbon::parse($upp->tgl_buat)->translatedFormat('l, d F Y') }}
-                                    </p>
-                                </td>
-                                <td class="text-center">
-                                    <p class="text-xs text-secondary font-weight-bold mb-0">
-                                        {{ \Carbon\Carbon::parse($upp->tgl_update)->translatedFormat('l, d F Y') }}
-                                    </p>
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-info text-white preview-btn me-1" data-no-surat="{{ $upp->no_surat_persetujuan }}" style="font-size: 0.75rem;" title="Preview">
-                                        <i class="fas fa-eye me-1"></i> Preview
-                                    </button>
-                                    <form action="{{ route('upp-material.destroy', $upp->no_surat_persetujuan) }}" method="POST" class="d-inline delete-upp-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger text-white" style="font-size: 0.75rem;" title="Hapus">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">Data Kosong</td>
-                            </tr>
-                            @endforelse
+                            <!-- Data will be loaded via AJAX -->
                         </tbody>
                     </table>
                 </div>
-
-                {{-- PAGINATION YANG DIPERBAIKI --}}
-                @if ($upps->hasPages())
-                <div class="mt-4 px-3 d-flex justify-content-center">
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0">
-                            @php
-                                $total = $upps->lastPage();
-                                $current = $upps->currentPage();
-                                $window = 1; 
-                            @endphp
-                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url(1) }}">&laquo;</a>
-                            </li>
-                            <li class="page-item {{ $upps->onFirstPage() ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $upps->previousPageUrl() }}">&lsaquo;</a>
-                            </li>
-                            @php $wasGap = false; @endphp
-                            @for ($i = 1; $i <= $total; $i++)
-                                @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
-                                    <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($i) }}">{{ $i }}</a>
-                                    </li>
-                                    @php $wasGap = false; @endphp
-                                @else
-                                    @if (!$wasGap)
-                                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                                        @php $wasGap = true; @endphp
-                                    @endif
-                                @endif
-                            @endfor
-                            <li class="page-item {{ $upps->hasMorePages() ? '' : 'disabled' }}">
-                                <a class="page-link" href="{{ $upps->nextPageUrl() }}">&rsaquo;</a>
-                            </li>
-                            <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $upps->appends(request()->except('page'))->url($total) }}">&raquo;</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -231,116 +133,233 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+{{-- DataTables Configuration --}}
+<script>
+    $(document).ready(function() {
+        const table = $('#table-upp-material').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: "{{ route('api.upp.materials') }}",
+                type: "GET",
+                data: function(d) {
+                    d.search = $('#searchInput').val();
+                    d.start_date = $('#startDate').val();
+                    d.end_date = $('#endDate').val();
+                }
+            },
+            columns: [
+                { 
+                    data: null, 
+                    name: 'no_surat_persetujuan', 
+                    searchable: false,
+                    orderable: false,
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1 + meta.settings._iDisplayStart;
+                    }
+                },
+                { 
+                    data: 'no_surat_persetujuan', 
+                    name: 'no_surat_persetujuan',
+                    render: function(data, type, row) {
+                        return `<div class="d-flex flex-column justify-content-center">
+                                    <p class="mb-0 text-sm font-weight-bolder text-primary">${data}</p>
+                                </div>`;
+                    }
+                },
+                { 
+                    data: 'tahapan', 
+                    name: 'tahapan',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary mb-0">${data || '-'}</p>`;
+                    }
+                },
+                { 
+                    data: 'status', 
+                    name: 'status',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        const statusText = data.toLowerCase() === 'done' ? 'Done' : 'Proses';
+                        const statusColor = data.toLowerCase() === 'done' ? 'bg-gradient-success' : 'bg-gradient-warning';
+                        return `<span class="badge ${statusColor} text-white text-xs font-weight-bold change-status-btn"
+                                        data-no-surat="${row.no_surat_persetujuan}"
+                                        data-status-sekarang="${data}"
+                                        style="cursor: pointer;">
+                                    ${statusText}
+                                </span>`;
+                    }
+                },
+                { 
+                    data: 'tgl_buat', 
+                    name: 'tgl_buat',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary font-weight-bold mb-0">
+                                    ${moment(data, 'YYYY-MM-DD').locale('id').format('dddd, D MMMM YYYY')}
+                                </p>`;
+                    }
+                },
+                { 
+                    data: 'tgl_update', 
+                    name: 'tgl_update',
+                    render: function(data, type, row) {
+                        return `<p class="text-xs text-secondary font-weight-bold mb-0">
+                                    ${moment(data, 'YYYY-MM-DD').locale('id').format('dddd, D MMMM YYYY')}
+                                </p>`;
+                    }
+                },
+                { 
+                    data: 'actions', 
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return `<button type="button" class="btn btn-sm btn-info text-white preview-btn me-1" 
+                                        data-no-surat="${row.no_surat_persetujuan}" 
+                                        style="font-size: 0.75rem;" 
+                                        title="Preview">
+                                        <i class="fas fa-eye me-1"></i> Preview
+                                    </button>
+                                    <form action="/upp-material/destroy/${row.no_surat_persetujuan}" method="POST" class="d-inline delete-upp-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger text-white" style="font-size: 0.75rem;" title="Hapus">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>`;
+                    }
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+            },
+            dom: 'Bfrtip',
+            order: [[4, 'desc']] // Default order by creation date
+        });
+
+        // Handle search input
+        $('#searchInput').on('keyup', function() {
+            table.search(this.value).draw();
+        });
+
+        // Handle date filter
+        $('#filterBtn').on('click', function() {
+            table.draw();
+        });
+    });
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
         const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
         const exportModal = new bootstrap.Modal(document.getElementById('exportExcelModal'));
 
-        // Event listener untuk tombol Preview (tetap sama)
-        document.querySelectorAll('.preview-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const noSurat = this.getAttribute('data-no-surat');
-                
-                modalContentPlaceholder.innerHTML = `
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Memuat data...</p>
+        // Event listener untuk tombol Preview
+        $('#table-upp-material').on('click', '.preview-btn', function() {
+            const noSurat = $(this).data('no-surat');
+            
+            modalContentPlaceholder.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                `;
-                
-                previewModal.show();
+                    <p class="mt-2">Memuat data...</p>
+                </div>
+            `;
+            
+            previewModal.show();
 
-                fetch(`/upp-material/preview/${noSurat}`)
-                    .then(response => {
-                        if (response.ok) {
-                            return response.text();
-                        }
-                        const contentType = response.headers.get("content-type");
-                        if (contentType && contentType.includes("application/json")) {
-                            return response.json().then(data => {
-                                throw new Error(data.error || 'Terjadi kesalahan tidak terduga.');
-                            });
-                        } else {
-                            throw new Error('Data tidak ditemukan.');
-                        }
-                    })
-                    .then(htmlContent => {
-                        modalContentPlaceholder.innerHTML = htmlContent;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching data:', error);
-                        modalContentPlaceholder.innerHTML = `
-                            <div class="alert alert-danger" role="alert">
-                                Gagal memuat data: ${error.message}
-                            </div>
-                        `;
-                    });
-            });
+            fetch(`/upp-material/preview/${noSurat}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Terjadi kesalahan tidak terduga.');
+                        });
+                    } else {
+                        throw new Error('Data tidak ditemukan.');
+                    }
+                })
+                .then(htmlContent => {
+                    modalContentPlaceholder.innerHTML = htmlContent;
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    modalContentPlaceholder.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            Gagal memuat data: ${error.message}
+                        </div>
+                    `;
+                });
         });
         
-        // Event listener BARU untuk badge Status
-        document.querySelectorAll('.change-status-btn').forEach(badge => {
-            badge.addEventListener('click', function() {
-                const noSurat = this.getAttribute('data-no-surat');
-                const statusSekarang = this.getAttribute('data-status-sekarang');
+        // Event listener untuk badge Status
+        $('#table-upp-material').on('click', '.change-status-btn', function() {
+            const noSurat = $(this).data('no-surat');
+            const statusSekarang = $(this).data('status-sekarang');
 
-                Swal.fire({
-                    title: `Ubah Status`,
-                    text: `Pilih status baru untuk pengajuan ${noSurat}.`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    showDenyButton: true,
-                    confirmButtonText: 'Ubah ke Done',
-                    denyButtonText: 'Ubah ke Proses',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    confirmButtonColor: '#28a745',
-                    denyButtonColor: '#ffc107',
-                    showLoaderOnConfirm: true,
-                    allowOutsideClick: () => !Swal.isLoading()
-                }).then((result) => {
-                    let newStatus = '';
-                    if (result.isConfirmed) {
-                        newStatus = 'done';
-                    } else if (result.isDenied) {
-                        newStatus = 'proses';
-                    } else {
-                        return; // Jika pengguna membatalkan
+            Swal.fire({
+                title: `Ubah Status`,
+                text: `Pilih status baru untuk pengajuan ${noSurat}.`,
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'Ubah ke Done',
+                denyButtonText: 'Ubah ke Proses',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                confirmButtonColor: '#28a745',
+                denyButtonColor: '#ffc107',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                let newStatus = '';
+                if (result.isConfirmed) {
+                    newStatus = 'done';
+                } else if (result.isDenied) {
+                    newStatus = 'proses';
+                } else {
+                    return; // Jika pengguna membatalkan
+                }
+
+                // Kirim permintaan perubahan status ke server
+                fetch(`/upp-material/change-status/${noSurat}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message); });
                     }
-
-                    // Kirim permintaan perubahan status ke server
-                    fetch(`/upp-material/change-status/${noSurat}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ status: newStatus })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw new Error(err.message); });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        Swal.fire({
-                            title: 'Berhasil!',
-                            text: data.message,
-                            icon: 'success'
-                        }).then(() => {
-                            window.location.reload(); // Reload halaman untuk melihat perubahan
-                        });
-                    })
-                    .catch(error => {
-                        Swal.fire({
-                            title: 'Gagal!',
-                            text: `Gagal: ${error.message}`,
-                            icon: 'error'
-                        });
+                    return response.json();
+                })
+                .then(data => {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: data.message,
+                        icon: 'success'
+                    }).then(() => {
+                        // Refresh the DataTable
+                        $('#table-upp-material').DataTable().ajax.reload();
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: `Gagal: ${error.message}`,
+                        icon: 'error'
                     });
                 });
             });
@@ -381,31 +400,57 @@
         }
 
         // SweetAlert konfirmasi hapus UPP
-        document.querySelectorAll('.delete-upp-form').forEach(form => {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
+        $('#table-upp-material').on('submit', '.delete-upp-form', function (event) {
+            event.preventDefault();
 
-                Swal.fire({
-                    title: '⚠️ Peringatan Penting: Hapus Data UPP!',
-                    html: `
-                        <p class="text-start">
-                            Penghapusan ini akan menghapus seluruh data pengajuan UPP ini, termasuk semua riwayat transaksi dan materialnya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
-                        </p>
-                        <p class="text-start mb-0">
-                            <strong>Apakah Anda yakin ingin melanjutkan?</strong>
-                        </p>
-                    `,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Ya, Hapus Sekarang!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
+            Swal.fire({
+                title: '⚠️ Peringatan Penting: Hapus Data UPP!',
+                html: `
+                    <p class="text-start">
+                        Penghapusan ini akan menghapus seluruh data pengajuan UPP ini, termasuk semua riwayat transaksi dan materialnya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                    </p>
+                    <p class="text-start mb-0">
+                        <strong>Apakah Anda yakin ingin melanjutkan?</strong>
+                    </p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus Sekarang!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit the form
+                    const form = $(this);
+                    const actionUrl = form.attr('action');
+                    
+                    fetch(actionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        body: new URLSearchParams({
+                            '_method': 'DELETE',
+                            '_token': $('meta[name="csrf-token"]').attr('content')
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Refresh the DataTable
+                            $('#table-upp-material').DataTable().ajax.reload();
+                            
+                            Swal.fire('Berhasil!', 'Data UPP berhasil dihapus.', 'success');
+                        } else {
+                            throw new Error('Terjadi kesalahan saat menghapus data.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Gagal!', 'Gagal menghapus data UPP.', 'error');
+                    });
+                }
             });
         });
     });

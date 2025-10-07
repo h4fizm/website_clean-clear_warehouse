@@ -87,7 +87,7 @@ class UppMaterialController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'noSurat' => 'required|string|max:255|unique:item_transactions,no_surat_persetujuan',
+            'noSurat' => 'required|string|max:255|unique:base_transactions,no_surat_persetujuan',
             'tanggal' => 'required|date',
             'tahapan' => 'required|string|max:255',
             'penanggungjawab' => 'required|string|max:255',
@@ -507,5 +507,97 @@ class UppMaterialController extends Controller
         $filename = "Laporan UPP Material ({$startDate} - {$endDate}).xlsx";
 
         return Excel::download(new UppMaterialExport($filters), $filename);
+    }
+
+    /**
+     * API endpoint for DataTables to fetch UPP materials data
+     */
+    public function getUppMaterials(Request $request)
+    {
+        $draw = $request->get('draw');
+        $start = $request->get('start');
+        $length = $request->get('length');
+        $search = $request->get('search')['value'] ?? '';
+        $order = $request->get('order')[0] ?? null;
+        $columns = $request->get('columns') ?? [];
+
+        // Build the query for UPP transactions
+        $query = ItemTransaction::select(
+            'no_surat_persetujuan',
+            DB::raw('MIN(created_at) as tgl_buat'),
+            DB::raw('MAX(updated_at) as tgl_update'),
+            DB::raw('MAX(tahapan) as tahapan'),
+            DB::raw('MAX(status) as status')
+        )
+        ->where('jenis_transaksi', 'pemusnahan')
+        ->where('no_surat_persetujuan', 'NOT LIKE', '[DELETED_%')
+        ->groupBy('no_surat_persetujuan');
+
+        // Add search functionality
+        if (!empty($search)) {
+            $query->where('no_surat_persetujuan', 'like', "%{$search}%");
+        }
+
+        // Get total records count
+        $totalRecords = $query->count();
+
+        // Add ordering
+        if ($order) {
+            $columnIndex = $order['column'];
+            $direction = $order['dir'];
+            $columnName = $columns[$columnIndex]['data'] ?? 'no_surat_persetujuan';
+
+            switch ($columnName) {
+                case 'no_surat_persetujuan':
+                    $query->orderByRaw('MIN(created_at) ' . $direction);
+                    break;
+                case 'tgl_buat':
+                    $query->orderByRaw('MIN(created_at) ' . $direction);
+                    break;
+                case 'tgl_update':
+                    $query->orderByRaw('MAX(updated_at) ' . $direction);
+                    break;
+                case 'tahapan':
+                    $query->orderByRaw('MAX(tahapan) ' . $direction);
+                    break;
+                case 'status':
+                    $query->orderByRaw('MAX(status) ' . $direction);
+                    break;
+                default:
+                    $query->orderByRaw('MIN(created_at) DESC');
+                    break;
+            }
+        } else {
+            $query->orderByRaw('MIN(created_at) DESC');
+        }
+
+        // Add pagination
+        $query->offset($start)->limit($length);
+
+        $upps = $query->get();
+
+        $data = [];
+        foreach ($upps as $upp) {
+            $data[] = [
+                'no_surat_persetujuan' => $upp->no_surat_persetujuan,
+                'tgl_buat' => Carbon::parse($upp->tgl_buat)->format('d-m-Y'),
+                'tgl_update' => Carbon::parse($upp->tgl_update)->format('d-m-Y'),
+                'tahapan' => $upp->tahapan,
+                'status' => $upp->status,
+                'actions' => '<a href="' . route('upp-material.edit', $upp->no_surat_persetujuan) . '" class="btn btn-sm btn-primary">Edit</a> '
+                    . '<a href="' . route('upp-material.preview', $upp->no_surat_persetujuan) . '" class="btn btn-sm btn-info">Preview</a> '
+                    . '<form action="' . route('upp-material.destroy', $upp->no_surat_persetujuan) . '" method="POST" class="d-inline">'
+                    . csrf_field() . method_field('DELETE') 
+                    . '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Yakin ingin menghapus?\')">Hapus</button>'
+                    . '</form>'
+            ];
+        }
+
+        return response()->json([
+            'draw' => (int) $draw,
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords, // Note: This should be updated to reflect filtered count
+            'data' => $data
+        ]);
     }
 }
