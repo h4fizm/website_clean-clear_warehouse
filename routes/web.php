@@ -165,6 +165,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('api.facility.materials')
         ->middleware('can:manage transaksi');
 
+    // API untuk DataTables transaksi (SPBE/BPT facilities)
+    Route::get('/api/transaksi-facilities', [TransactionController::class, 'getTransaksiFacilities'])
+        ->name('api.transaksi.facilities')
+        ->middleware('can:manage transaksi');
+
     Route::get('/api/aktivitas-transaksi', [AktivitasHarianController::class, 'getAktivitasTransaksi'])
         ->name('api.aktivitas.transaksi')
         ->middleware('can:manage aktivitas harian');

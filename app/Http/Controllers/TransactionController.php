@@ -164,4 +164,120 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data.');
         }
     }
+
+    /**
+     * API endpoint untuk DataTables - Get facilities data dengan server-side processing
+     */
+    public function getTransaksiFacilities(Request $request)
+    {
+        try {
+            // Get DataTables parameters
+            $draw = $request->get('draw', 1);
+            $start = $request->get('start', 0);
+            $length = $request->get('length', 10);
+            $search = $request->get('search', []);
+            $searchValue = $search['value'] ?? '';
+            $order = $request->get('order', []);
+            $columns = $request->get('columns', []);
+
+            // Get sales area filter
+            $salesArea = $request->get('sales_area', 'SA Jambi');
+
+            // Base query
+            $query = Facility::with('region')
+                ->whereHas('region', function($q) use ($salesArea) {
+                    $q->where('name_region', $salesArea);
+                });
+
+            // Search functionality
+            if (!empty($searchValue)) {
+                $query->where(function($q) use ($searchValue) {
+                    $q->where('name', 'like', '%' . $searchValue . '%')
+                      ->orWhere('kode_plant', 'like', '%' . $searchValue . '%')
+                      ->orWhere('province', 'like', '%' . $searchValue . '%')
+                      ->orWhere('regency', 'like', '%' . $searchValue . '%');
+                });
+            }
+
+            // Get total records
+            $totalRecords = $query->count();
+
+            // Order functionality
+            if (!empty($order)) {
+                $orderColumn = $order[0]['column'];
+                $orderDirection = $order[0]['dir'];
+
+                // Map column index to database column
+                $columnMap = [
+                    0 => 'id',
+                    1 => 'name',
+                    2 => 'kode_plant',
+                    3 => 'province',
+                    4 => 'regency',
+                    5 => 'id'
+                ];
+
+                if (isset($columnMap[$orderColumn])) {
+                    $query->orderBy($columnMap[$orderColumn], $orderDirection);
+                }
+            } else {
+                $query->orderBy('name', 'asc');
+            }
+
+            // Pagination
+            $facilities = $query->offset($start)
+                               ->limit($length)
+                               ->get();
+
+            // Format data for DataTables
+            $data = $facilities->map(function($facility) {
+                $actions = '';
+
+                // Edit button
+                $actions .= '<button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#editSpbeBptModal-' . $facility->id . '">
+                                   <i class="fas fa-edit"></i>
+                             </button>';
+
+                // Delete form
+                $actions .= '<form action="' . route('transaksi.destroy', $facility->id) . '" method="POST" class="d-inline delete-form">
+                               ' . csrf_field() . '
+                               ' . method_field('DELETE') . '
+                               <button type="submit" class="btn btn-sm btn-danger text-white delete-btn">
+                                   <i class="fas fa-trash-alt"></i>
+                               </button>
+                           </form>';
+
+                return [
+                    'id' => $facility->id,
+                    'name' => $facility->name,
+                    'kode_plant' => $facility->kode_plant,
+                    'province' => $facility->province,
+                    'regency' => $facility->regency,
+                    'actions' => $actions,
+                    'material_url' => route('materials.index', $facility)
+                ];
+            });
+
+            // Return DataTables response
+            return response()->json([
+                'draw' => $draw,
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $totalRecords,
+                'data' => $data
+            ]);
+
+        } catch (Exception $e) {
+            \Log::error('Error in getTransaksiFacilities: ' . $e->getMessage());
+
+            return response()->json([
+                'draw' => $request->get('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Internal server error'
+            ], 500);
+        }
+    }
 }

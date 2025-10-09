@@ -33,19 +33,10 @@
         <div class="card shadow mb-4" style="min-height: 450px;">
             <div class="card-header pb-0">
 
-                {{-- BARIS 1: Judul dan Search Bar (Sudah Responsif) --}}
-                <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mb-3">
-                    <div class="mb-3 mb-md-0">
-                        <h4 class="mb-0">Tabel Stok SPBE/BPT - {{ $selectedSalesArea }}</h4>
-                    </div>
-                    <div>
-                        <form action="{{ route('transaksi.index') }}" method="GET" id="search-form" class="w-100 w-md-auto" style="max-width: 320px;">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="hidden" name="sales_area" value="{{ $selectedSalesArea }}">
-                                <input type="text" name="search" id="search-input" class="form-control" placeholder="Cari Nama atau Kode Plant..." value="{{ $search ?? '' }}">
-                            </div>
-                        </form>
+                {{-- BARIS 1: Judul Tabel --}}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-12 col-md-auto me-auto mb-2 mb-md-0">
+                        <h4 class="mb-0" id="table-branch-name">Tabel Stok SPBE/BPT - {{ $selectedSalesArea }}</h4>
                     </div>
                 </div>
             
@@ -60,7 +51,8 @@
                         <div class="d-none d-md-block">
                             <div class="btn-group d-flex flex-wrap branch-buttons" role="group" aria-label="Branch selection">
                                 @foreach ($regions as $region)
-                                    <a href="{{ route('transaksi.index', ['sales_area' => $region->name_region]) }}"
+                                    <a href="javascript:void(0)"
+                                       data-region="{{ $region->name_region }}"
                                        class="btn btn-sm btn-branch-custom {{ $selectedSalesArea == $region->name_region ? 'btn-primary' : 'btn-outline-primary' }}">
                                         {{ $region->name_region }}
                                     </a>
@@ -77,7 +69,8 @@
                                 <ul class="dropdown-menu w-100" aria-labelledby="regionDropdown">
                                     @foreach ($regions as $region)
                                     <li>
-                                        <a class="dropdown-item {{ $selectedSalesArea == $region->name_region ? 'active' : '' }}" href="{{ route('transaksi.index', ['sales_area' => $region->name_region]) }}">
+                                        <a class="dropdown-item {{ $selectedSalesArea == $region->name_region ? 'active' : '' }}"
+                                           href="javascript:void(0)" data-region="{{ $region->name_region }}">
                                             {{ $region->name_region }}
                                         </a>
                                     </li>
@@ -87,46 +80,43 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mb-3">
+                    <p class="text-sm text-secondary">Gunakan fitur pencarian dan filter bawaan tabel di bawah ini untuk mencari data atau mengatur urutan.</p>
+                </div>
             </div>
 
-            <div class="card-body px-0 pt-0 pb-5">
-                
-                {{-- LOKASI ALERTS --}}
-                <div class="px-4 pt-3">
+            <div class="card-body px-4 pt-4 pb-5">
+
+                {{-- Area untuk menampilkan Bootstrap Alert dan Validasi Server-Side --}}
+                <div class="mb-4">
                     @if(session('success'))
                         <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
-                            <span class="alert-icon"><i class="ni ni-like-2"></i></span>
-                            <span class="alert-text"><strong>Sukses!</strong> {{ session('success') }}</span>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
                     @if(session('error'))
                         <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
-                            <span class="alert-icon"><i class="ni ni-support-16"></i></span>
-                            <span class="alert-text"><strong>Gagal!</strong> {{ session('error') }}</span>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
-
                     @if ($errors->any())
-                    <div class="alert alert-danger text-white" role="alert">
+                    <div class="alert alert-danger text-white alert-dismissible fade show" role="alert">
                         <strong class="d-block">Gagal! Terdapat beberapa kesalahan:</strong>
                         <ul class="mb-0 ps-3">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                     @endif
                 </div>
 
-                {{-- ISI TABEL --}}
-                <div class="table-responsive p-0">
-                    <table class="table align-items-center mb-0" id="table-material-1">
+                <div class="table-responsive">
+                    <table id="transaksi-table" class="table align-items-center mb-0" style="width:100%">
                         <thead>
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">No</th>
@@ -138,88 +128,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($facilities as $facility)
-                                <tr>
-                                    <td class="text-center">
-                                        <p class="text-xs font-weight-bold mb-0">{{ ($facilities->currentPage() - 1) * $facilities->perPage() + $loop->iteration }}</p>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex px-2 py-1 align-items-center">
-                                            <a href="{{ route('materials.index', $facility) }}" class="mb-0 text-sm font-weight-bolder text-decoration-underline text-primary">
-                                                {{ $facility->name }}
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td><p class="text-xs text-secondary mb-0">{{ $facility->kode_plant }}</p></td>
-                                    <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->province }}</p></td>
-                                    <td><p class="text-xs text-secondary font-weight-bold mb-0">{{ $facility->regency }}</p></td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-info text-white me-1" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#editSpbeBptModal-{{ $facility->id }}">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <form action="{{ route('transaksi.destroy', $facility->id) }}" method="POST" class="d-inline delete-form">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger text-white">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
-                                        Data tidak ditemukan.
-                                    </td>
-                                </tr>
-                            @endforelse
+                            <!-- Data will be loaded via AJAX -->
                         </tbody>
                     </table>
                 </div>
-                
-                {{-- PAGINATION --}}
-                @if ($facilities->hasPages())
-                    @php $facilities->appends(request()->query()); @endphp
-                    <div class="mt-4 px-3 d-flex justify-content-center">
-                       <nav aria-label="Page navigation">
-                            <ul class="pagination pagination-sm mb-0">
-                                @php
-                                    $total = $facilities->lastPage();
-                                    $current = $facilities->currentPage();
-                                    $window = 1;
-                                @endphp
-                                <li class="page-item {{ $facilities->onFirstPage() ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $facilities->url(1) }}">&laquo;</a>
-                                </li>
-                                <li class="page-item {{ $facilities->onFirstPage() ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $facilities->previousPageUrl() }}">&lsaquo;</a>
-                                </li>
-                                @php $wasGap = false; @endphp
-                                @for ($i = 1; $i <= $total; $i++)
-                                    @if ($i == 1 || $i == $total || abs($i - $current) <= $window)
-                                        <li class="page-item {{ ($i == $current) ? 'active' : '' }}">
-                                            <a class="page-link" href="{{ $facilities->url($i) }}">{{ $i }}</a>
-                                        </li>
-                                        @php $wasGap = false; @endphp
-                                    @else
-                                        @if (!$wasGap)
-                                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                                            @php $wasGap = true; @endphp
-                                        @endif
-                                    @endif
-                                @endfor
-                                <li class="page-item {{ $facilities->hasMorePages() ? '' : 'disabled' }}">
-                                    <a class="page-link" href="{{ $facilities->nextPageUrl() }}">&rsaquo;</a>
-                                </li>
-                                <li class="page-item {{ $current == $total ? 'disabled' : '' }}">
-                                    <a class="page-link" href="{{ $facilities->url($total) }}">&raquo;</a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
@@ -268,8 +180,215 @@
 
 
 @push('scripts')
-{{-- SweetAlert2 CDN --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+
+{{-- DataTables Configuration --}}
+<script>
+    $(document).ready(function() {
+        // Get current sales area from URL or default
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentSalesArea = urlParams.get('sales_area') || '{{ $selectedSalesArea }}';
+
+        const table = $('#transaksi-table').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            ajax: {
+                url: "{{ route('api.transaksi.facilities') }}",
+                type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: function(d) {
+                    d.sales_area = currentSalesArea;
+                },
+                error: function(xhr, error, code) {
+                    console.log('DataTable Error - Status:', xhr.status);
+                    console.log('DataTable Error - Response:', xhr.responseText);
+                    console.log('Error details:', error, code);
+
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        $('#transaksi-table').hide();
+                        $('#transaksi-table').after('<div class="alert alert-warning">Authentication required. Please refresh the page and log in again.</div>');
+                    } else {
+                        $('#transaksi-table').after('<div class="alert alert-danger">Error loading data: ' + xhr.status + ' ' + error + '</div>');
+                    }
+                },
+                dataSrc: function(json) {
+                    return json.data;
+                }
+            },
+            columns: [
+                {
+                    data: null,
+                    name: 'id',
+                    searchable: false,
+                    orderable: false,
+                    className: 'text-center',
+                    render: function(data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
+                },
+                {
+                    data: 'name',
+                    name: 'name',
+                    render: function(data, type, row) {
+                        return '<a href="' + row.material_url + '" class="text-sm font-weight-bolder text-decoration-underline text-primary">' + data + '</a>';
+                    }
+                },
+                {
+                    data: 'kode_plant',
+                    name: 'kode_plant',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + '</span>';
+                    }
+                },
+                {
+                    data: 'province',
+                    name: 'province',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + '</span>';
+                    }
+                },
+                {
+                    data: 'regency',
+                    name: 'regency',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-primary text-white text-xs">' + data + '</span>';
+                    }
+                },
+                {
+                    data: 'actions',
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        return data || '';
+                    }
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json',
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                emptyTable: "Tidak ada data tersedia",
+                paginate: {
+                    first: "«",
+                    previous: "‹",
+                    next: "›",
+                    last: "»"
+                },
+                processing: "Sedang memuat..."
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 d-flex justify-content-center"p><"col-sm-12"i>>',
+            order: [[1, 'asc']], // Default order by name
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+          });
+
+        // Function to update table with new sales area
+        function updateTableWithSalesArea(salesArea) {
+            currentSalesArea = salesArea;
+
+            // Update URL
+            const newUrl = new URL(window.location);
+            if (salesArea) {
+                newUrl.searchParams.set('sales_area', salesArea);
+            } else {
+                newUrl.searchParams.delete('sales_area');
+            }
+            window.history.pushState({}, '', newUrl);
+
+            // Update dynamic elements
+            $('#dynamic-branch-name').text(salesArea);
+            $('#table-branch-name').text('Tabel Stok SPBE/BPT - ' + salesArea);
+
+            // Reload table with new filter
+            table.ajax.reload();
+        }
+
+        // Handle region button clicks
+        $('.btn-branch-custom').on('click', function(e) {
+            e.preventDefault();
+            const salesArea = $(this).data('region');
+
+            // Update active button styling
+            $('.btn-branch-custom').removeClass('btn-primary').addClass('btn-outline-primary');
+            $(this).removeClass('btn-outline-primary').addClass('btn-primary');
+
+            updateTableWithSalesArea(salesArea);
+        });
+
+        // Handle dropdown selection for mobile
+        $('.dropdown-item').on('click', function(e) {
+            e.preventDefault();
+            const salesArea = $(this).data('region');
+
+            // Update dropdown text
+            $('#regionDropdown').text('Pilih Region: ' + salesArea);
+
+            // Update active styling for dropdown items
+            $('.dropdown-item').removeClass('active');
+            $(this).addClass('active');
+
+            updateTableWithSalesArea(salesArea);
+        });
+
+        // Delete functionality with SweetAlert2
+        $('#transaksi-table').on('click', '.delete-btn, .btn-danger', function(e) {
+            e.preventDefault();
+            const form = $(this).closest('form');
+
+            Swal.fire({
+                title: 'Anda yakin?',
+                text: "Data yang dihapus tidak dapat dikembalikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+
+        // Convert buttons to icons
+        table.on('draw', function() {
+            // Convert edit buttons to pencil icon
+            $('.btn-info').each(function() {
+                if ($(this).find('i').length === 0) {
+                    $(this).html('<i class="fas fa-edit"></i>');
+                    $(this).addClass('edit-icon');
+                    $(this).attr('title', 'Edit');
+                }
+            });
+
+            // Convert delete buttons to trash icon
+            $('.btn-danger').each(function() {
+                if ($(this).find('i').length === 0) {
+                    $(this).html('<i class="fas fa-trash-alt"></i>');
+                    $(this).addClass('delete-icon');
+                    $(this).attr('title', 'Hapus');
+                }
+            });
+        });
+    });
+</script>
 
 {{-- Script untuk membuka kembali modal jika ada error validasi --}}
 @if ($errors->any() && session('error_facility_id'))
@@ -281,41 +400,45 @@
     });
 </script>
 @endif
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // == SCRIPT UNTUK TOMBOL DELETE DENGAN SWEETALERT ==
-        const deleteForms = document.querySelectorAll('.delete-form');
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                Swal.fire({
-                    title: 'Anda yakin?',
-                    text: "Data yang dihapus tidak dapat dikembalikan!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Ya, hapus!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            });
-        });
-    });
-</script>
 @endpush
 
 
 @push('styles')
-{{-- Style ini mengembalikan seperti style awal Anda, tanpa horizontal scroll --}}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
+
 <style>
-    .welcome-card { background-color: white; color: #344767; border-radius: 1rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); overflow: hidden; position: relative; padding: 1.5rem !important; }
-    .welcome-card-icon { height: 60px; width: auto; opacity: 0.9; }
-    
+    /* General styles for welcome card */
+    .welcome-card {
+        background-color: white;
+        color: #344767;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        position: relative;
+        padding: 1.5rem !important;
+    }
+
+    .welcome-card-icon {
+        height: 60px;
+        width: auto;
+        opacity: 0.9;
+    }
+
+    .welcome-card-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity=".03"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0 20v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zm0 20v-4H4v4H0v2h4v4h2v-4h4v-2H6zM36 4V0h-2v4h-4v2h4v4h2V6h4V4zm0 10V10h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 4V0H4v4H0v2h4v4h2V6h4V4z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+        background-size: 60px 60px;
+        opacity: 0.2;
+        pointer-events: none;
+    }
+
+    /* Branch buttons styling */
     @media (min-width: 768px) {
         .branch-selection-text-desktop { margin-bottom: 0.5rem; white-space: nowrap; }
         .btn-branch-custom { padding: 0.4rem 0.6rem; font-size: 0.78rem; }
@@ -326,8 +449,138 @@
         .branch-buttons { justify-content: center !important; gap: 0.25rem; margin-bottom: 1rem; }
         .btn-branch-custom { padding: 0.3rem 0.6rem; font-size: 0.75rem; flex-grow: 1; min-width: unset; }
         .card-header { padding: 1rem !important; }
-        #table-material-1 thead th { font-size: 0.65rem !important; }
-        #table-material-1 tbody td { font-size: 0.75rem !important; }
+        #transaksi-table thead th { font-size: 0.65rem !important; }
+        #transaksi-table tbody td { font-size: 0.75rem !important; }
+    }
+
+      /* DataTables specific styles */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5em;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        margin-right: 0.5em;
+    }
+
+/* Center pagination */
+.dataTables_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination {
+    justify-content: center;
+    margin: 0;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.25rem 0.5rem;
+    margin: 0 0.1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    display: inline-block;
+    border: 1px solid transparent;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #007bff !important;
+    color: white !important;
+    border: 1px solid #007bff !important;
+}
+
+/* Ensure pagination buttons are styled properly */
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #e9ecef;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+    /* Action button styling for icons */
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        margin: 0 0.1rem;
+    }
+
+    .action-buttons i {
+        font-size: 0.875rem;
+    }
+
+    /* Align action icons with other column data */
+    .dataTables_wrapper .dataTables_scrollBody .table td:last-child,
+    .dataTables_wrapper .dataTables_scrollBody .table th:last-child {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* Style action buttons to match other data */
+    .table .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 2.4rem;
+        padding: 0.25rem;
+        min-width: 3rem;
+        margin: 0 0.05rem;
+        line-height: 1;
+        font-size: 0.875rem;
+    }
+
+    /* Ensure icons are properly centered and aligned */
+    .table .btn i {
+        font-size: 0.875rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+
+    /* Fix table overflow and responsive issues */
+    .dataTables_wrapper {
+        width: 100% !important;
+        overflow-x: hidden;
+    }
+
+    #transaksi-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed;
+    }
+
+    #transaksi-table th,
+    #transaksi-table td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length {
+            float: none !important;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            float: none !important;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        #transaksi-table th,
+        #transaksi-table td {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.25rem;
+        }
     }
 </style>
 @endpush
