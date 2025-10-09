@@ -17,9 +17,9 @@
                 </div>
             </div>
 
-            <div class="card-body px-0 pt-0 pb-5">
+            <div class="card-body px-4 pt-4 pb-5">
                 {{-- Notifikasi --}}
-                <div class="px-4 pt-2">
+                <div class="mb-4">
                     @if(session('success'))
                         <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -34,7 +34,7 @@
                     @endif
                 </div>
 
-                <div class="table-responsive p-0">
+                <div class="table-responsive">
                     <table class="table align-items-center mb-0" id="table-material">
                         <thead>
                             <tr>
@@ -211,15 +211,29 @@
                     name: 'id', 
                     searchable: false,
                     orderable: false,
+                    className: 'text-center',
                     render: function(data, type, row, meta) {
                         return meta.row + 1 + meta.settings._iDisplayStart;
                     }
                 },
-                { data: 'nama_material', name: 'nama_material' },
-                { data: 'kode_material', name: 'kode_material' },
+                { 
+                    data: 'nama_material', 
+                    name: 'nama_material',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + '</span>';
+                    }
+                },
+                { 
+                    data: 'kode_material', 
+                    name: 'kode_material',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + '</span>';
+                    }
+                },
                 { 
                     data: 'stok_awal', 
                     name: 'stok_awal',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-secondary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -227,6 +241,7 @@
                 { 
                     data: 'penerimaan_total', 
                     name: 'penerimaan_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-primary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -234,6 +249,7 @@
                 { 
                     data: 'penyaluran_total', 
                     name: 'penyaluran_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-info text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -241,6 +257,7 @@
                 { 
                     data: 'sales_total', 
                     name: 'sales_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-warning text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -248,6 +265,7 @@
                 { 
                     data: 'stok_akhir', 
                     name: 'stok_akhir',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-success text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -255,15 +273,17 @@
                 { 
                     data: 'created_at', 
                     name: 'updated_at',
+                    className: 'text-center',
                     render: function(data, type, row) {
-                        return data ? data : '-';
+                        return data ? '<span class="badge bg-gradient-dark text-white text-xs">' + data + '</span>' : '-';
                     }
                 },
                 { 
                     data: 'actions', 
                     name: 'actions',
                     orderable: false,
-                    searchable: false
+                    searchable: false,
+                    className: 'text-center'
                 }
             ],
             language: {
@@ -276,22 +296,22 @@
                 zeroRecords: "Tidak ada data yang ditemukan",
                 emptyTable: "Tidak ada data tersedia",
                 paginate: {
-                    first: "Pertama",
-                    last: "Terakhir",
-                    next: "Selanjutnya",
-                    previous: "Sebelumnya"
+                    first: "«",
+                    previous: "‹",
+                    next: "›",
+                    last: "»"
                 }
             },
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                  '<"row"<"col-sm-12"tr>>' +
-                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                 '<"row"<"col-sm-12"i><"col-sm-12"p>>',
             order: [[8, 'desc']], // Default order by last activity date
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
 
         // Edit functionality
-        $('#table-material').on('click', '.edit-btn', function() {
+        $('#table-material').on('click', '.edit-btn, .edit-icon', function() {
             const row = $(this).closest('tr');
             const rowData = table.row(row).data();
 
@@ -309,7 +329,7 @@
         });
 
         // Delete functionality
-        $('#table-material').on('click', '.btn-danger', function(e) {
+        $('#table-material').on('click', '.delete-btn, .btn-danger', function(e) {
             e.preventDefault();
             const form = $(this).closest('form');
             
@@ -351,7 +371,7 @@
         });
 
         // Process transaction functionality
-        $('#table-material').on('click', '.transaksi-btn', function() {
+        $('#table-material').on('click', '.transaksi-btn, .transaksi-icon', function() {
             try {
                 const rowData = table.row($(this).closest('tr')).data();
                 console.log('Transaction row data:', rowData); // Debug log
@@ -732,3 +752,26 @@
 </script>
 
 @endpush
+
+<style>
+/* Center pagination */
+.dataTables_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.25rem 0.5rem;
+    margin: 0 0.1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    display: inline-block;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #007bff !important;
+    color: white !important;
+    border: 1px solid #007bff !important;
+}
+</style>

@@ -41,7 +41,7 @@
                 </div>
 
                 {{-- Area untuk menampilkan Bootstrap Alert dan Validasi Server-Side --}}
-                <div class="px-0 pt-2">
+                <div class="mb-4">
                     @if(session('success'))
                         <div class="alert alert-success text-white alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -72,8 +72,8 @@
                 </div>
 
             </div>
-            <div class="card-body px-0 pt-0 pb-5">
-                <div class="table-responsive p-0">
+            <div class="card-body px-4 pt-4 pb-5">
+                <div class="table-responsive">
                     <table id="pusat-materials-table" class="table align-items-center mb-0" style="width:100%">
                         <thead>
                             <tr>
@@ -349,15 +349,29 @@
                     name: 'id',
                     searchable: false,
                     orderable: false,
+                    className: 'text-center',
                     render: function(data, type, row, meta) {
                         return meta.row + meta.settings._iDisplayStart + 1;
                     }
                 },
-                { data: 'nama_material', name: 'nama_material' },
-                { data: 'kode_material', name: 'kode_material' },
+                { 
+                    data: 'nama_material', 
+                    name: 'nama_material',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + '</span>';
+                    }
+                },
+                { 
+                    data: 'kode_material', 
+                    name: 'kode_material',
+                    render: function(data, type, row) {
+                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + '</span>';
+                    }
+                },
                 {
                     data: 'stok_awal',
                     name: 'stok_awal',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-secondary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -365,6 +379,7 @@
                 {
                     data: 'penerimaan_total',
                     name: 'penerimaan_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-primary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -372,6 +387,7 @@
                 {
                     data: 'penyaluran_total',
                     name: 'penyaluran_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-info text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -379,6 +395,7 @@
                 {
                     data: 'sales_total',
                     name: 'sales_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-warning text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -386,6 +403,7 @@
                 {
                     data: 'pemusnahan_total',
                     name: 'pemusnahan_total',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-danger text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -393,6 +411,7 @@
                 {
                     data: 'stok_akhir',
                     name: 'stok_akhir',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return '<span class="badge bg-gradient-success text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
                     }
@@ -400,12 +419,13 @@
                 {
                     data: 'created_at',
                     name: 'created_at',
+                    className: 'text-center',
                     render: function(data, type, row) {
                         if (!data) return '-';
                         if (type === 'display' && data !== '-') {
-                            return moment(data, 'DD-MM-YYYY HH:mm:ss').locale('id').format('DD MMMM YYYY, HH:mm');
+                            return '<span class="badge bg-gradient-dark text-white text-xs">' + moment(data, 'DD-MM-YYYY HH:mm:ss').locale('id').format('DD MMMM YYYY, HH:mm') + '</span>';
                         }
-                        return data;
+                        return '<span class="badge bg-gradient-dark text-white text-xs">' + data + '</span>';
                     }
                 },
                 {
@@ -413,6 +433,7 @@
                     name: 'actions',
                     orderable: false,
                     searchable: false,
+                    className: 'text-center',
                     render: function(data, type, row) {
                         return data || '';
                     }
@@ -428,15 +449,15 @@
                 zeroRecords: "Tidak ada data yang ditemukan",
                 emptyTable: "Tidak ada data tersedia",
                 paginate: {
-                    first: "Pertama",
-                    last: "Terakhir",
-                    next: "Selanjutnya",
-                    previous: "Sebelumnya"
+                    first: "«",
+                    previous: "‹",
+                    next: "›",
+                    last: "»"
                 }
             },
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                  '<"row"<"col-sm-12"tr>>' +
-                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                 '<"row"<"col-sm-12"i><"col-sm-12"p>>',
             order: [[9, 'desc']], // Default order by last activity date
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
@@ -444,7 +465,7 @@
 
         
         // Edit functionality
-        $('#pusat-materials-table').on('click', '.edit-btn', function() {
+        $('#pusat-materials-table').on('click', '.edit-btn, .edit-icon', function() {
             const row = $(this).closest('tr');
             const rowData = table.row(row).data();
             
@@ -463,7 +484,7 @@
         });
 
         // Delete functionality
-        $('#pusat-materials-table').on('click', '.btn-danger', function(e) {
+        $('#pusat-materials-table').on('click', '.delete-btn, .btn-danger', function(e) {
             e.preventDefault();
             const form = $(this).closest('form');
             
@@ -488,7 +509,7 @@
                 if (result.isConfirmed) {
                     Swal.fire({
                         title: 'Konfirmasi Terakhir',
-                        text: "Apakah Anda benar-benar yakin ingin melanjutkan? Data ini akan dihapus secara permanen dari database.",
+                        text: "Apakah Anda benar-benur yakin ingin melanjutkan? Data ini akan dihapus secara permanen dari database.",
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: '#d33',
@@ -505,7 +526,7 @@
         });
 
         // Process transaction functionality
-        $('#pusat-materials-table').on('click', '.kirim-btn', function() {
+        $('#pusat-materials-table').on('click', '.kirim-btn, .kirim-icon', function() {
             try {
                 const rowData = table.row($(this).closest('tr')).data();
                 console.log('Row data:', rowData); // Debug log
@@ -887,5 +908,28 @@
     .dataTables_wrapper .dataTables_length select {
         margin-right: 0.5em;
     }
+</style>
+
+<style>
+/* Center pagination */
+.dataTables_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.25rem 0.5rem;
+    margin: 0 0.1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    display: inline-block;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: #007bff !important;
+    color: white !important;
+    border: 1px solid #007bff !important;
+}
 </style>
 @endsection
