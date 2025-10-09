@@ -409,7 +409,39 @@ class MaterialController extends Controller
                     ->whereColumn('item_id', 'items.id')
                     ->where('jenis_transaksi', 'sales'),
                 'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
-                    ->whereColumn('item_id', 'items.id')
+                    ->where(function ($query) use ($facility) {
+                        $query->whereColumn('item_id', 'items.id')
+                              ->orWhere(function ($q) use ($facility) {
+                                  $q->where('jenis_transaksi', 'penyaluran')
+                                    ->where('facility_from', $facility->id)
+                                    ->whereExists(function ($subQuery) {
+                                        $subQuery->select(DB::raw(1))
+                                                 ->from('items as source_item')
+                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
+                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
+                                    });
+                              })
+                              ->orWhere(function ($q) use ($facility) {
+                                  $q->where('jenis_transaksi', 'penerimaan')
+                                    ->where('facility_to', $facility->id)
+                                    ->whereExists(function ($subQuery) {
+                                        $subQuery->select(DB::raw(1))
+                                                 ->from('items as source_item')
+                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
+                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
+                                    });
+                              })
+                              ->orWhere(function ($q) use ($facility) {
+                                  $q->where('jenis_transaksi', 'sales')
+                                    ->where('facility_from', $facility->id)
+                                    ->whereExists(function ($subQuery) {
+                                        $subQuery->select(DB::raw(1))
+                                                 ->from('items as source_item')
+                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
+                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
+                                    });
+                              });
+                    })
             ]);
 
         // Add search functionality
@@ -492,7 +524,7 @@ class MaterialController extends Controller
                 'sales_total' => (int) $item->sales_total,
                 'pemusnahan_total' => 0, // SPBE/BPT doesn't track pemusnahan
                 'stok_akhir' => $stokAkhir,
-                'created_at' => $item->latest_transaction_date ? Carbon::parse($item->latest_transaction_date)->format('d-m-Y H:i:s') : null,
+                'created_at' => $item->latest_transaction_date ? Carbon::parse($item->latest_transaction_date)->format('Y-m-d H:i:s') : null,
                 'actions' => '<button class="btn btn-sm btn-primary btn-info edit-btn" data-item-id="' . $item->id . '">Edit</button> '
                     . '<button class="btn btn-sm btn-success transaksi-btn" data-item-id="' . $item->id . '">Transaksi</button> '
                     . '<form action="' . route('materials.destroy', $item->id) . '" method="POST" class="d-inline">'

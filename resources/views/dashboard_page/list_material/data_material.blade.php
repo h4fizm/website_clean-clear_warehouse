@@ -189,6 +189,82 @@
 
 {{-- DataTables Configuration --}}
 <script>
+    // Function to format date as 'hari, tanggal bulan tahun'
+    function formatDateIndonesia(dateString) {
+        if (!dateString) return '-';
+        
+        // Handle different date formats that might come from the server
+        let date;
+        
+        // If dateString is already in ISO format (YYYY-MM-DD) or includes time
+        if (typeof dateString === 'string') {
+            // Remove timezone offset by creating a new Date object and setting it to UTC
+            if (dateString.includes(' ')) {
+                // If it includes time (like "2025-09-10 12:30:00")
+                // Parse as local time then adjust for timezone
+                date = new Date(dateString);
+            } else if (dateString.includes('/')) {
+                // If it's in format like "09/10/2025"
+                date = new Date(dateString);
+            } else if (dateString.length === 10) {
+                // If it's in format like "2025-09-10" (YYYY-MM-DD)
+                // Parse as local time by adding 'T00:00:00' to avoid timezone issues
+                date = new Date(dateString + 'T00:00:00');
+            } else {
+                // For any other format, try to parse directly
+                date = new Date(dateString);
+            }
+        } else {
+            // If dateString is already a Date object
+            date = dateString;
+        }
+        
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            // If the date is invalid, try to parse differently
+            date = new Date(dateString.replace(/\s+/, 'T')); // Try ISO format
+            if (isNaN(date.getTime())) {
+                return dateString; // Return original if still can't parse
+            }
+        }
+        
+        // Array for day names in Indonesian
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        
+        // Array for month names in Indonesian
+        const months = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        // Get the day, date, month, and year
+        const dayName = days[date.getDay()];
+        const dayNumber = date.getDate();
+        const monthName = months[date.getMonth()];
+        const year = date.getFullYear();
+        
+        // Return formatted date: 'hari, tanggal bulan tahun'
+        return `${dayName}, ${dayNumber} ${monthName} ${year}`;
+    }
+    
+    // Function to check if a date is outdated (older than 30 days) and add a visual indicator
+    function formatDateWithStaleness(dateString) {
+        const formattedDate = formatDateIndonesia(dateString);
+        if (!dateString || dateString === '-') return formattedDate;
+        
+        const date = new Date(dateString);
+        const today = new Date();
+        const diffTime = Math.abs(today - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // If the date is more than 30 days old, add a warning indicator
+        if (diffDays > 30) {
+            return `<span title="Data lebih dari ${diffDays} hari yang lalu" class="text-warning">${formattedDate} <i class="fas fa-exclamation-triangle" style="font-size: 0.7rem;"></i></span>`;
+        }
+        
+        return `<span title="Data mutakhir">${formattedDate}</span>`;
+    }
+
     $(document).ready(function() {
         const table = $('#table-material').DataTable({
             processing: true,
@@ -275,7 +351,12 @@
                     name: 'updated_at',
                     className: 'text-center',
                     render: function(data, type, row) {
-                        return data ? '<span class="badge bg-secondary text-white text-xs">' + data + '</span>' : '-';
+                        if (!data) return '-';
+                        // Format the date as 'hari, tanggal bulan tahun' if type is display
+                        if (type === 'display') {
+                            return '<span class="badge bg-secondary text-white text-xs">' + formatDateWithStaleness(data) + '</span>';
+                        }
+                        return '<span class="badge bg-secondary text-white text-xs">' + data + '</span>';
                     }
                 },
                 { 
