@@ -392,13 +392,14 @@ class PusatController extends Controller
             $newKategori = $request->input('kategori_material');
 
             $stokAwalBaru = $request->stok_awal;
-            
-            // Only update stok_awal, keep stok_akhir as is
+
+            // Update hanya stok_awal, stok_akhir tetap tidak berubah
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
                 'kategori_material' => $newKategori,
                 'stok_awal' => $stokAwalBaru,
+                // stok_akhir tidak diubah agar tetap sesuai dengan transaksi yang terjadi
             ]);
 
             if ($oldKode !== $newKode || $item->wasChanged('nama_material') || $item->wasChanged('kategori_material')) {
@@ -414,7 +415,7 @@ class PusatController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Data material berhasil diperbarui!'
+            'message' => 'Data material berhasil diperbarui! Hanya stok awal yang diubah.'
         ]);
     }
 
@@ -593,11 +594,12 @@ class PusatController extends Controller
 
         $data = [];
         foreach ($items as $item) {
-            // Calculate the final stock using the pre-calculated totals
-            $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total - $item->pemusnahan_total;
+            // Use the actual stok_akhir from database since it's now properly maintained
+            // This ensures consistency between what's displayed and what's stored
+            $stokAkhir = $item->stok_akhir;
 
-            // Debug: Log individual item calculations
-            \Log::info("Item {$item->nama_material} ({$item->kode_material}): stok_awal={$item->stok_awal}, penerimaan={$item->penerimaan_total}, penyaluran={$item->penyaluran_total}, sales={$item->sales_total}, stok_akhir={$stokAkhir}");
+            // Debug: Log individual item data
+            \Log::info("Item {$item->nama_material} ({$item->kode_material}): stok_awal={$item->stok_awal}, stok_akhir={$stokAkhir}");
 
             $data[] = [
                 'id' => $item->id,

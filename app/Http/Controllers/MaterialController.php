@@ -174,11 +174,12 @@ class MaterialController extends Controller
             $newName = $request->input('nama_material');
             $stokAwalBaru = $request->stok_awal;
 
-            // Only update stok_awal, keep stok_akhir as is
+            // Update hanya stok_awal, stok_akhir tetap tidak berubah
             $item->update([
                 'nama_material' => $newName,
                 'kode_material' => $newKode,
                 'stok_awal' => $stokAwalBaru,
+                // stok_akhir tidak diubah agar tetap sesuai dengan transaksi yang terjadi
             ]);
 
             if ($oldKode !== $newKode) {
@@ -199,7 +200,7 @@ class MaterialController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Data material berhasil diperbarui!'
+            'message' => 'Data material berhasil diperbarui! Hanya stok awal yang diubah.'
         ]);
     }
 
@@ -476,8 +477,9 @@ class MaterialController extends Controller
 
         $data = [];
         foreach ($items as $item) {
-            // Calculate the final stock using pre-calculated totals
-            $stokAkhir = $item->stok_awal + $item->penerimaan_total - $item->penyaluran_total - $item->sales_total;
+            // Use the actual stok_akhir from database since it's now properly maintained
+            // This ensures consistency between what's displayed and what's stored
+            $stokAkhir = $item->stok_akhir;
 
             $data[] = [
                 'id' => $item->id,

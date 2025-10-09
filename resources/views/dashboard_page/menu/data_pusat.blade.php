@@ -67,40 +67,8 @@
                     @endif
                 </div>
                 
-                <div class="row mb-3 align-items-start">
-                    {{-- Input Search --}}
-                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" name="search" id="searchInput" 
-                                class="form-control" 
-                                placeholder="Cari material...">
-                        </div>
-                    </div>
-
-                    {{-- Date Range + Filter Button --}}
-                    <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
-                        {{-- Start Date --}}
-                        <div class="d-flex align-items-center me-2 mb-3">
-                            <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
-                            <input type="date" name="start_date" id="startDate" 
-                                class="form-control form-control-sm date-input" 
-                                style="max-width: 160px;">
-                        </div>
-
-                        {{-- End Date --}}
-                        <div class="d-flex align-items-center me-2 mb-3">
-                            <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
-                            <input type="date" name="end_date" id="endDate" 
-                                class="form-control form-control-sm date-input" 
-                                style="max-width: 160px;">
-                        </div>
-
-                        {{-- Button Filter (diturunkan sedikit) --}}
-                        <div class="align-self-end">
-                            <button id="filterBtn" class="btn btn-primary btn-sm px-3">Filter</button>
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <p class="text-sm text-secondary">Gunakan fitur pencarian dan filter bawaan tabel di bawah ini untuk mencari data atau mengatur urutan.</p>
                 </div>
 
             </div>
@@ -317,6 +285,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
 {{-- DataTables Configuration --}}
 <script>
@@ -331,11 +300,6 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                     'X-Requested-With': 'XMLHttpRequest'
-                },
-                data: function(d) {
-                    d.search = $('#searchInput').val();
-                    d.start_date = $('#startDate').val();
-                    d.end_date = $('#endDate').val();
                 },
                 error: function(xhr, error, code) {
                     console.log('DataTable Error - Status:', xhr.status);
@@ -455,26 +419,27 @@
                 }
             ],
             language: {
-                processing: "Sedang memproses...",
-                lengthMenu: "Tampilkan _MENU_ data",
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json',
                 search: "Cari:",
-                zeroRecords: "Tidak ada data yang ditemukan",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
                 info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                 infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)"
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                emptyTable: "Tidak ada data tersedia",
+                paginate: {
+                    first: "Pertama",
+                    last: "Terakhir",
+                    next: "Selanjutnya",
+                    previous: "Sebelumnya"
+                }
             },
-            dom: 'Bfrtip',
-            order: [[9, 'desc']] // Default order by last activity date
-        });
-
-        // Handle search input
-        $('#searchInput').on('keyup', function() {
-            table.search(this.value).draw();
-        });
-
-        // Handle date filter
-        $('#filterBtn').on('click', function() {
-            table.draw();
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            order: [[9, 'desc']], // Default order by last activity date
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
 
         
@@ -909,27 +874,7 @@
         opacity: 0.2;
         pointer-events: none;
     }
-    .date-input {
-        width: auto;
-        flex-grow: 1;
-    }
-
-    /* Mobile specific styles (max-width 767.98px for Bootstrap's 'md' breakpoint) */
-    @media (max-width: 767.98px) {
-        .date-range-picker {
-            flex-direction: column;
-            align-items: stretch !important;
-        }
-        .date-range-picker .form-control {
-            margin-right: 0 !important;
-            margin-bottom: 0.5rem;
-        }
-        .date-range-picker label {
-            margin-bottom: 0.25rem;
-            align-self: flex-start;
-        }
-    }
-    
+      
     /* DataTables specific styles */
     .dataTables_wrapper .dataTables_paginate .paginate_button {
         padding: 0.375rem 0.75rem;

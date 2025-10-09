@@ -12,31 +12,8 @@
                     <h3 class="mb-0">Daftar Stok Material - {{ $facility->name }}</h3>
                 </div>
                 
-                <div class="row mb-3 align-items-start">
-                    <div class="col-12 col-md-4 mt-2 mb-md-0">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama atau Kode Material...">
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-8 d-flex flex-wrap align-items-center justify-content-md-end">
-                        <div class="d-flex align-items-center me-2 mb-3">
-                            <label for="startDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Dari:</label>
-                            <input type="date" id="startDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;">
-                        </div>
-                        <div class="d-flex align-items-center me-2 mb-3">
-                            <label for="endDate" class="me-2 text-secondary text-xxs font-weight-bolder opacity-7 mb-0">Sampai:</label>
-                            <input type="date" id="endDate" 
-                                    class="form-control form-control-sm date-input" 
-                                    style="max-width: 160px;">
-                        </div>
-                        <div class="align-self-end">
-                            <button id="filterBtn" class="btn btn-primary btn-sm px-3">Filter</button>
-                        </div>
-                    </div>
+                <div class="mb-3">
+                    <p class="text-sm text-secondary">Gunakan fitur pencarian dan filter bawaan tabel di bawah ini untuk mencari data atau mengatur urutan.</p>
                 </div>
             </div>
 
@@ -149,7 +126,7 @@
                         <div class="d-flex">
                             <div class="form-check me-4">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penyaluran" value="penyaluran" checked>
-                                <label class="form-check-label" for="jenis-penyaluran">Penyaluran</label>
+                                <label class="form-check-label" for="jenis-penyaluran">Produk Transfer</label>
                             </div>
                             <div class="form-check me-4">
                                 <input class="form-check-input" type="radio" name="jenis_transaksi" id="jenis-penerimaan" value="penerimaan">
@@ -223,11 +200,6 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                data: function(d) {
-                    d.search = $('#searchInput').val();
-                    d.start_date = $('#startDate').val();
-                    d.end_date = $('#endDate').val();
-                },
                 error: function(xhr, error, code) {
                     console.log('DataTable Error:', xhr.responseText);
                     console.log('Error details:', error, code);
@@ -295,20 +267,27 @@
                 }
             ],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json',
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                emptyTable: "Tidak ada data tersedia",
+                paginate: {
+                    first: "Pertama",
+                    last: "Terakhir",
+                    next: "Selanjutnya",
+                    previous: "Sebelumnya"
+                }
             },
-            dom: 'Bfrtip',
-            order: [[8, 'desc']] // Default order by last activity date
-        });
-
-        // Handle search input
-        $('#searchInput').on('keyup', function() {
-            table.search(this.value).draw();
-        });
-
-        // Handle date filter
-        $('#filterBtn').on('click', function() {
-            table.draw();
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            order: [[8, 'desc']], // Default order by last activity date
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
 
         // Edit functionality
@@ -390,19 +369,34 @@
                 const today = new Date();
                 document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
 
-                // Set default transaction type and initialize form
+                // Reset form dan set default transaction type
+                document.getElementById('transaksiMaterialForm').reset();
+                document.getElementById('modal-item-id').value = rowData.id;
+                document.getElementById('modal-kode-material-hidden').value = rowData.kode_material;
+                document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
                 document.getElementById('jenis-penyaluran').checked = true;
 
-                // Check if updateFormUI function exists before calling
-                if (typeof window.updateFormUI === 'function') {
+                // Initialize form UI - ensure global variables are available
+                if (typeof locations !== 'undefined' && typeof currentFacility !== 'undefined') {
                     window.updateFormUI('penyaluran');
                 } else {
-                    console.error('updateFormUI function not found');
+                    console.error('Global variables not initialized yet');
+                    // Wait for DOM to be ready and then initialize
+                    setTimeout(() => {
+                        if (typeof window.updateFormUI === 'function') {
+                            window.updateFormUI('penyaluran');
+                        }
+                    }, 100);
                 }
 
-                // Show modal
-                const kirimModal = new bootstrap.Modal(document.getElementById('transaksiMaterialModal'));
-                kirimModal.show();
+                // Show modal and ensure form is properly initialized
+                const transaksiModal = new bootstrap.Modal(document.getElementById('transaksiMaterialModal'));
+                transaksiModal.show();
+
+                // Ensure form is initialized after modal is shown
+                setTimeout(() => {
+                    window.updateFormUI('penyaluran');
+                }, 200);
             } catch (error) {
                 console.error('Error in transaksi button handler:', error);
                 Swal.fire({
@@ -482,159 +476,174 @@
     });
 </script>
 
+{{-- Global Variables and Functions for Transaction Modal --}}
+<script>
+    // Global variables
+    let locations, currentFacility, transaksiModal, form;
+
+    // Fungsi untuk membuat input teks non-editable (readonly)
+    const readonlyInputHTML = (loc, nameAttr) => `
+        <input type="text" class="form-control" value="${loc.name}" readonly>
+        <input type="hidden" name="${nameAttr}" value="${loc.id}">
+    `;
+
+    // Fungsi untuk membuat input teks dengan fitur pencarian (autocomplete)
+    function createSearchInputHTML(nameAttr) {
+        return `
+            <div class="position-relative w-100">
+                <input type="text" class="form-control facility-search" placeholder="Cari Lokasi..." autocomplete="off">
+                <input type="hidden" name="${nameAttr}">
+                <div class="list-group position-absolute w-100 shadow-sm facility-suggestions"
+                        style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
+            </div>
+        `;
+    }
+
+    // Fungsi untuk membuat dropdown tujuan sales
+    function createSalesDropdownHTML(nameAttr) {
+        return `
+            <select class="form-select" name="${nameAttr}">
+                <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
+                <option value="Vendor UPP">Vendor UPP</option>
+                <option value="Sales Agen">Sales Agen</option>
+                <option value="Sales BPT">Sales BPT</option>
+                <option value="Sales SPBE">Sales SPBE</option>
+            </select>
+        `;
+    }
+
+    // Fungsi untuk menginisialisasi fitur pencarian
+    function initSearchbar(container, availableLocations, nameAttr) {
+        const searchInput = container.querySelector(".facility-search");
+        const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
+        const suggestionsBox = container.querySelector(".facility-suggestions");
+
+        if (!searchInput) return;
+
+        searchInput.addEventListener("input", function() {
+            const query = this.value.toLowerCase();
+            suggestionsBox.innerHTML = "";
+            hiddenInput.value = ""; // Reset hidden input saat mulai mengetik
+
+            if (!query) {
+                suggestionsBox.style.display = "none";
+                return;
+            }
+            const results = availableLocations.filter(loc => loc.name.toLowerCase().includes(query));
+            if (results.length > 0) {
+                results.forEach(loc => {
+                    const item = document.createElement("button");
+                    item.type = "button";
+                    item.className = "list-group-item list-group-item-action";
+                    item.textContent = loc.name;
+                    item.dataset.id = loc.id;
+                    item.addEventListener("click", function() {
+                        searchInput.value = loc.name;
+                        hiddenInput.value = loc.id;
+                        suggestionsBox.style.display = "none";
+                    });
+                    suggestionsBox.appendChild(item);
+                });
+                suggestionsBox.style.display = "block";
+            } else {
+                suggestionsBox.style.display = "none";
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!container.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+    }
+
+    // Make function globally accessible
+    window.updateFormUI = function(type) {
+        // Check if required elements and variables exist
+        if (!locations || !currentFacility) {
+            console.error('Required global variables not initialized');
+            return;
+        }
+
+        const asalContainer = document.getElementById('asal-container');
+        const tujuanContainer = document.getElementById('tujuan-container');
+        const asalLabel = document.getElementById('asal-label');
+        const tujuanLabel = document.getElementById('tujuan-label');
+
+        if (!asalContainer || !tujuanContainer || !asalLabel || !tujuanLabel) {
+            console.error('Required DOM elements not found');
+            return;
+        }
+
+        const selectedType = type || document.querySelector('input[name="jenis_transaksi"]:checked')?.value;
+
+        if (!selectedType) {
+            console.error('No transaction type selected');
+            return;
+        }
+
+        // Filter lokasi lain yang tidak sama dengan lokasi saat ini
+        const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
+        console.log('Available locations for selection:', otherLocations); // Debug log
+        console.log('Current facility:', currentFacility); // Debug log
+
+        // Hapus input yang ada di dalam container
+        asalContainer.innerHTML = '';
+        tujuanContainer.innerHTML = '';
+
+        // Tentukan form yang akan dimuat berdasarkan jenis transaksi
+        if (selectedType === 'penyaluran') {
+            asalLabel.textContent = "Asal Penyaluran";
+            tujuanLabel.textContent = "Tujuan Penyaluran";
+            asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
+            tujuanContainer.innerHTML = createSearchInputHTML("tujuan_id");
+            initSearchbar(tujuanContainer, otherLocations, "tujuan_id");
+        } else if (selectedType === 'penerimaan') {
+            asalLabel.textContent = "Asal Penerimaan";
+            tujuanLabel.textContent = "Tujuan Penerimaan";
+            asalContainer.innerHTML = createSearchInputHTML("asal_id");
+            tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
+            initSearchbar(asalContainer, otherLocations, "asal_id");
+        } else if (selectedType === 'sales') {
+            asalLabel.textContent = "Asal Transaksi";
+            tujuanLabel.textContent = "Tujuan Sales";
+            asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
+            tujuanContainer.innerHTML = createSalesDropdownHTML("tujuan_sales");
+        }
+
+        console.log(`Form UI updated for transaction type: ${selectedType}`); // Debug log
+    }
+</script>
+
 {{-- Script Transaksi --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Asumsi variabel $locations dan $facility tersedia dari controller
-        const locations = @json($locations);
-        const currentFacility = @json($facility);
-        const transaksiModal = document.getElementById('transaksiMaterialModal');
-        const form = document.getElementById('transaksiMaterialForm');
+        // Initialize global variables
+        locations = @json($locations);
+        currentFacility = @json($facility);
+        transaksiModal = document.getElementById('transaksiMaterialModal');
+        form = document.getElementById('transaksiMaterialForm');
 
-        // Fungsi untuk membuat input teks non-editable (readonly)
-        const readonlyInputHTML = (loc, nameAttr) => `
-            <input type="text" class="form-control" value="${loc.name}" readonly>
-            <input type="hidden" name="${nameAttr}" value="${loc.id}">
-        `;
-
-        // Fungsi untuk membuat input teks dengan fitur pencarian (autocomplete)
-        function createSearchInputHTML(nameAttr) {
-            return `
-                <div class="position-relative w-100">
-                    <input type="text" class="form-control facility-search" placeholder="Cari Lokasi..." autocomplete="off">
-                    <input type="hidden" name="${nameAttr}">
-                    <div class="list-group position-absolute w-100 shadow-sm facility-suggestions" 
-                            style="z-index: 1050; max-height: 200px; overflow-y: auto; display: none;"></div>
-                </div>
-            `;
-        }
-
-        // Fungsi untuk membuat dropdown tujuan sales
-        function createSalesDropdownHTML(nameAttr) {
-            return `
-                <select class="form-select" name="${nameAttr}">
-                    <option value="" selected disabled>-- Pilih Tujuan Sales --</option>
-                    <option value="Vendor UPP">Vendor UPP</option>
-                    <option value="Sales Agen">Sales Agen</option>
-                    <option value="Sales BPT">Sales BPT</option>
-                    <option value="Sales SPBE">Sales SPBE</option>
-                </select>
-            `;
-        }
-        
-        // Fungsi untuk menginisialisasi fitur pencarian
-        function initSearchbar(container, availableLocations, nameAttr) {
-            const searchInput = container.querySelector(".facility-search");
-            const hiddenInput = container.querySelector(`input[name="${nameAttr}"]`);
-            const suggestionsBox = container.querySelector(".facility-suggestions");
-
-            if (!searchInput) return;
-
-            searchInput.addEventListener("input", function() {
-                const query = this.value.toLowerCase();
-                suggestionsBox.innerHTML = "";
-                hiddenInput.value = ""; // Reset hidden input saat mulai mengetik
-                
-                if (!query) {
-                    suggestionsBox.style.display = "none";
-                    return;
-                }
-                const results = availableLocations.filter(loc => loc.name.toLowerCase().includes(query));
-                if (results.length > 0) {
-                    results.forEach(loc => {
-                        const item = document.createElement("button");
-                        item.type = "button";
-                        item.className = "list-group-item list-group-item-action";
-                        item.textContent = loc.name;
-                        item.dataset.id = loc.id;
-                        item.addEventListener("click", function() {
-                            searchInput.value = loc.name;
-                            hiddenInput.value = loc.id;
-                            suggestionsBox.style.display = "none";
-                        });
-                        suggestionsBox.appendChild(item);
-                    });
-                    suggestionsBox.style.display = "block";
-                } else {
-                    suggestionsBox.style.display = "none";
-                }
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!container.contains(e.target)) {
-                    suggestionsBox.style.display = 'none';
-                }
-            });
-        }
-        
-        // Make function globally accessible
-        window.updateFormUI = function(type) {
-            const selectedType = type || document.querySelector('input[name="jenis_transaksi"]:checked').value;
-            const asalContainer = document.getElementById('asal-container');
-            const tujuanContainer = document.getElementById('tujuan-container');
-            const asalLabel = document.getElementById('asal-label');
-            const tujuanLabel = document.getElementById('tujuan-label');
-            // Filter lokasi lain yang tidak sama dengan lokasi saat ini
-            const otherLocations = locations.filter(loc => loc.id != currentFacility.id);
-
-            // Hapus input yang ada di dalam container
-            asalContainer.innerHTML = '';
-            tujuanContainer.innerHTML = '';
-
-            // Tentukan form yang akan dimuat berdasarkan jenis transaksi
-            if (selectedType === 'penyaluran') {
-                asalLabel.textContent = "Asal Penyaluran";
-                tujuanLabel.textContent = "Tujuan Penyaluran";
-                asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
-                tujuanContainer.innerHTML = createSearchInputHTML("tujuan_id");
-                initSearchbar(tujuanContainer, otherLocations, "tujuan_id");
-            } else if (selectedType === 'penerimaan') {
-                asalLabel.textContent = "Asal Penerimaan";
-                tujuanLabel.textContent = "Tujuan Penerimaan";
-                asalContainer.innerHTML = createSearchInputHTML("asal_id");
-                tujuanContainer.innerHTML = readonlyInputHTML(currentFacility, "tujuan_id");
-                initSearchbar(asalContainer, otherLocations, "asal_id");
-            } else if (selectedType === 'sales') {
-                asalLabel.textContent = "Asal Transaksi";
-                tujuanLabel.textContent = "Tujuan Sales";
-                asalContainer.innerHTML = readonlyInputHTML(currentFacility, "asal_id");
-                tujuanContainer.innerHTML = createSalesDropdownHTML("tujuan_sales");
-            }
-        }
-
-        // Event listener saat modal transaksi terbuka
-        transaksiModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            form.reset();
-
-            // Set jenis transaksi default
-            document.getElementById('jenis-penyaluran').checked = true;
-            updateFormUI();
-
-            document.getElementById('modal-item-id').value = button.getAttribute('data-item-id');
-            document.getElementById('modal-nama-material').textContent = button.getAttribute('data-nama-material');
-            document.getElementById('modal-kode-material').textContent = button.getAttribute('data-kode-material');
-            document.getElementById('modal-stok-akhir').textContent = button.getAttribute('data-stok-akhir') + ' pcs';
-            
-            // Mengisi tanggal secara otomatis
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = (today.getMonth() + 1).toString().padStart(2, '0');
-            const day = today.getDate().toString().padStart(2, '0');
-            document.getElementById('tanggal-transaksi').value = `${year}-${month}-${day}`;
-        });
+        console.log('Global variables initialized:', { locations, currentFacility }); // Debug log
 
         // Event listener saat radio button jenis transaksi berubah
         document.querySelectorAll('input[name="jenis_transaksi"]').forEach(radio => {
-            radio.addEventListener('change', updateFormUI);
+            radio.addEventListener('change', function() {
+                console.log('Transaction type changed to:', this.value);
+                window.updateFormUI();
+            });
         });
+
+        // Initialize form with default transaction type
+        setTimeout(() => {
+            window.updateFormUI('penyaluran');
+        }, 100);
 
         // Event listener untuk tombol submit
         document.getElementById('submitTransaksi').addEventListener('click', function() {
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
-            data.kode_material = form.dataset.kodeMaterial;
+
             const jenisTransaksi = document.querySelector('input[name="jenis_transaksi"]:checked').value;
             data.jenis_transaksi = jenisTransaksi;
 
