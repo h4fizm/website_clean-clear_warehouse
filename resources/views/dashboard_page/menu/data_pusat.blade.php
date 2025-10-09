@@ -423,9 +423,9 @@
                     render: function(data, type, row) {
                         if (!data) return '-';
                         if (type === 'display' && data !== '-') {
-                            return '<span class="badge bg-gradient-dark text-white text-xs">' + moment(data, 'DD-MM-YYYY HH:mm:ss').locale('id').format('DD MMMM YYYY, HH:mm') + '</span>';
+                            return '<span class="badge bg-secondary text-white text-xs">' + moment(data, 'DD-MM-YYYY HH:mm:ss').locale('id').format('DD MMMM YYYY, HH:mm') + '</span>';
                         }
-                        return '<span class="badge bg-gradient-dark text-white text-xs">' + data + '</span>';
+                        return '<span class="badge bg-secondary text-white text-xs">' + data + '</span>';
                     }
                 },
                 {
@@ -457,7 +457,7 @@
             },
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                  '<"row"<"col-sm-12"tr>>' +
-                 '<"row"<"col-sm-12"i><"col-sm-12"p>>',
+                 '<"row"<"col-sm-12 d-flex justify-content-center"p><"col-sm-12"i>>',
             order: [[9, 'desc']], // Default order by last activity date
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
@@ -565,6 +565,42 @@
                     text: 'Terjadi kesalahan saat membuka modal transaksi'
                 });
             }
+        });
+        
+        // Convert text buttons to icons
+        table.on('draw', function() {
+            // Convert edit buttons to pencil icon with yellow color
+            $('.edit-btn, .btn-primary').each(function() {
+                if ($(this).text().trim() === 'Edit' || $(this).text().trim() === 'edit' || $(this).text().trim() === 'Ubah') {
+                    $(this).html('<i class="fas fa-pencil-alt"></i>');
+                    $(this).addClass('edit-icon');
+                    $(this).removeClass('btn-primary');
+                    $(this).addClass('btn-warning'); // Yellow color
+                    $(this).attr('title', 'Edit');
+                }
+            });
+            
+            // Convert send/kirim buttons to paper plane icon with green color
+            $('.kirim-btn, .btn-success').each(function() {
+                if ($(this).text().trim() === 'Kirim' || $(this).text().trim() === 'kirim' || $(this).text().trim() === 'Proses') {
+                    $(this).html('<i class="fas fa-paper-plane"></i>');
+                    $(this).addClass('kirim-icon');
+                    $(this).removeClass('btn-success');
+                    $(this).addClass('btn-success'); // Green color
+                    $(this).attr('title', 'Kirim Material');
+                }
+            });
+            
+            // Convert delete buttons to trash icon with red color
+            $('.btn-danger').not('.delete-btn').each(function() {
+                if ($(this).text().trim() === 'Hapus' || $(this).text().trim() === 'hapus' || $(this).text().trim() === 'Delete') {
+                    $(this).html('<i class="fas fa-trash"></i>');
+                    $(this).addClass('delete-btn');
+                    $(this).removeClass('btn-danger');
+                    $(this).addClass('btn-danger'); // Red color
+                    $(this).attr('title', 'Hapus');
+                }
+            });
         });
     });
 </script>
@@ -917,12 +953,18 @@
     text-align: center;
 }
 
+.dataTables_wrapper .dataTables_paginate .pagination {
+    justify-content: center;
+    margin: 0;
+}
+
 .dataTables_wrapper .dataTables_paginate .paginate_button {
     padding: 0.25rem 0.5rem;
     margin: 0 0.1rem;
     border-radius: 4px;
     font-size: 0.875rem;
     display: inline-block;
+    border: 1px solid transparent;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,
@@ -930,6 +972,55 @@
     background: #007bff !important;
     color: white !important;
     border: 1px solid #007bff !important;
+}
+
+/* Ensure pagination buttons are styled properly */
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #e9ecef;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+/* Action button styling for icons */
+.action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    margin: 0 0.1rem;
+}
+
+.action-buttons i {
+    font-size: 0.875rem;
+}
+
+/* Align action icons with other column data */
+.dataTables_wrapper .dataTables_scrollBody .table td:last-child,
+.dataTables_wrapper .dataTables_scrollBody .table th:last-child {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Style action buttons to match other data */
+.table .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 2.4rem;
+    padding: 0.25rem;
+    min-width: 3rem;
+    margin: 0 0.05rem;
+    line-height: 1;
+    font-size: 0.875rem;
+}
+
+/* Ensure icons are properly centered and aligned */
+.table .btn i {
+    font-size: 0.875rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
 }
 </style>
 @endsection
