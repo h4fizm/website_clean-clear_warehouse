@@ -15,11 +15,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RolePermissionSeeder::class);
         $this->call(UserSeeder::class);
-        $this->call(RegionSeeder::class);
-        $this->call(FacilitySeeder::class);
-        $this->call(ItemSeeder::class);  // My optimized items seeder
-        $this->call(MaterialCapacitySeeder::class);
-        $this->call(BaseTransactionsSeeder::class);  // My optimized transactions seeder
+        $this->call(MaterialManagementSeeder::class);
+
     }
 
 

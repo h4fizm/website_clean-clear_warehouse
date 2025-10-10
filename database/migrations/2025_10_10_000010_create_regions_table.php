@@ -4,16 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::create('regions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_region');
-            $table->timestamps(); // Add timestamps as required by Eloquent
+            $table->id('region_id'); // ID unik untuk setiap Region
+            $table->string('nama_regions', 50); // Nama Region/SA (misal: "Pusat", "SA Jambi", dll)
+            $table->timestamps();
         });
     }
 
