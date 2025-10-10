@@ -5,18 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Region extends Model
+class Plant extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'region_id';
+    protected $primaryKey = 'plant_id';
     protected $fillable = [
-        'nama_regions',
+        'region_id',
+        'nama_plant',
+        'kode_plant',
+        'kategori_plant',
+        'provinsi',
+        'kabupaten',
     ];
 
-    public function plants()
+    public function region()
     {
-        return $this->hasMany(Plant::class, 'region_id');
+        return $this->belongsTo(Region::class, 'region_id');
     }
 
     public function currentStocks()

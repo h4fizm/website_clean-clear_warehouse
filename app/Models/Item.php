@@ -9,40 +9,30 @@ class Item extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'item_id';
     protected $fillable = [
-        'facility_id',
-        'region_id',
-        'is_active', // ✅ Kolom 'is_active' ditambahkan di sini
         'nama_material',
         'kode_material',
         'kategori_material',
-        'stok_awal',
-        'stok_akhir',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIPS
-    |--------------------------------------------------------------------------
-    */
-
-    public function facility()
+    public function initialStocks()
     {
-        return $this->belongsTo(Facility::class);
+        return $this->hasMany(InitialStock::class, 'item_id');
     }
 
-    public function region()
+    public function currentStocks()
     {
-        return $this->belongsTo(Region::class);
+        return $this->hasMany(CurrentStock::class, 'item_id');
     }
 
-    public function baseTransactions()
+    public function transactionLogs()
     {
-        return $this->hasMany(ItemTransaction::class, 'item_id');
+        return $this->hasMany(TransactionLog::class, 'item_id');
     }
-    
-    public function transactions()
+
+    public function destructionSubmissions()
     {
-        return $this->hasMany(ItemTransaction::class, 'item_id');
+        return $this->hasMany(DestructionSubmission::class, 'item_id');
     }
 }
