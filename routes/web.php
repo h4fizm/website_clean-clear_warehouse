@@ -58,12 +58,7 @@ Route::middleware(['auth'])->group(function () {
     // --- Halaman Utama Setelah Login ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // --- API untuk data stok berdasarkan nama material, bulan, dan tahun ---
-    Route::get('/api/stock-data', [DashboardController::class, 'getStockDataApi'])->name('api.stock.data');
-
-    // --- API untuk MENYIMPAN kapasitas ---
-    Route::post('/api/stock-capacity', [DashboardController::class, 'updateCapacityApi'])->name('api.capacity.update');
-
+    
     // ALL MATERIAL EXPORT EXCEL
     Route::get('/export-excel', [DashboardController::class, 'exportExcel'])->name('dashboard.exportExcel');
 
@@ -152,32 +147,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('materials.transaction')
         ->middleware('can:manage transaksi');
 
-    // API routes for DataTables
-    Route::get('/api/pusat-materials', [PusatController::class, 'getPusatMaterials'])
-        ->name('api.pusat.materials')
-        ->middleware('can:manage data playang');
-
-    // Temporary debug route for testing API without authentication
-    Route::get('/api/pusat-materials-debug', [PusatController::class, 'getPusatMaterials'])
-        ->name('api.pusat.materials.debug');
-
-    Route::get('/api/facility-materials/{facility}', [MaterialController::class, 'getFacilityMaterials'])
-        ->name('api.facility.materials')
-        ->middleware('can:manage transaksi');
-
-    // API untuk DataTables transaksi (SPBE/BPT facilities)
-    Route::get('/api/transaksi-facilities', [TransactionController::class, 'getTransaksiFacilities'])
-        ->name('api.transaksi.facilities')
-        ->middleware('can:manage transaksi');
-
-    Route::get('/api/aktivitas-transaksi', [AktivitasHarianController::class, 'getAktivitasTransaksi'])
-        ->name('api.aktivitas.transaksi')
-        ->middleware('can:manage aktivitas harian');
-
-    Route::get('/api/upp-materials', [UppMaterialController::class, 'getUppMaterials'])
-        ->name('api.upp.materials')
-        ->middleware('can:manage data playang');
-
+    
     // ===== TAMBAHKAN ROUTE DI BAWAH INI =====
     Route::get('/aktivitas/transaksi/export', [AktivitasHarianController::class, 'exportTransaksiExcel'])
         ->name('aktivitas.transaksi.export')

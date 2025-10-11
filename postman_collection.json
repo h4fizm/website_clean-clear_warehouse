@@ -1,0 +1,1238 @@
+{
+	"info": {
+		"_postman_id": "clean-clear-warehouse-api",
+		"name": "Clean & Clear Warehouse API",
+		"description": "API endpoints for Clean & Clear Warehouse Management System with Sanctum Token Authentication",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "webUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Auto-login and get token if not already authenticated",
+					"if (!pm.collectionVariables.get('apiToken')) {",
+					"    console.log('No API token found, attempting login...');",
+					"    pm.sendRequest({",
+					"        url: pm.collectionVariables.get('baseUrl') + '/login',",
+					"        method: 'POST',",
+					"        header: {",
+					"            'Content-Type': 'application/json',",
+					"            'Accept': 'application/json'",
+					"        },",
+					"        body: {",
+					"            mode: 'raw',",
+					"            raw: JSON.stringify({",
+					"                email: pm.collectionVariables.get('userEmail') || 'admin@example.com',",
+					"                password: pm.collectionVariables.get('userPassword') || 'password'",
+					"            })",
+					"        }",
+					"    }, function (err, res) {",
+					"        if (res.code === 200) {",
+					"            const responseJson = res.json();",
+					"            if (responseJson.success) {",
+					"                pm.collectionVariables.set('apiToken', responseJson.token);",
+					"                pm.collectionVariables.set('userName', responseJson.user.name);",
+					"                pm.collectionVariables.set('userId', responseJson.user.id);",
+					"                console.log('✅ Login successful as:', responseJson.user.name);",
+					"                console.log('✅ Token stored in environment variable');",
+					"            }",
+					"        } else {",
+					"            console.log('❌ Login failed. Please check credentials in environment variables.');",
+					"        }",
+					"    });",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "API Login (Token-based)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const responseJson = pm.response.json();",
+									"if (responseJson.success) {",
+									"    pm.environment.set('apiToken', responseJson.token);",
+									"    pm.environment.set('userName', responseJson.user.name);",
+									"    pm.environment.set('userId', responseJson.user.id);",
+									"    pm.test('✅ Login successful', () => {",
+									"        pm.expect(responseJson.success).to.be.true;",
+									"        pm.expect(responseJson.message).to.eql('Login successful');",
+									"        pm.expect(responseJson.token).to.not.be.empty;",
+									"        console.log('Token stored in environment: ' + responseJson.token);",
+									"    });",
+									"} else {",
+									"    pm.test('❌ Login failed', () => {",
+									"        pm.expect(responseJson.success).to.be.false;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Check Auth Status (with token)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/check-auth",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"check-auth"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const responseJson = pm.response.json();",
+									"if (responseJson.authenticated) {",
+									"    pm.test('✅ Authenticated', () => {",
+									"        pm.expect(responseJson.authenticated).to.be.true;",
+									"        pm.expect(responseJson.user.email).to.eql(pm.environment.get('userEmail'));",
+									"    });",
+									"} else {",
+									"    pm.test('❌ Not authenticated', () => {",
+									"        pm.expect(responseJson.authenticated).to.be.false;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Logout (revoke token)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const responseJson = pm.response.json();",
+									"if (responseJson.success) {",
+									"    pm.environment.unset('apiToken');",
+									"    pm.environment.unset('userName');",
+									"    pm.environment.unset('userId');",
+									"    pm.test('✅ Logout successful', () => {",
+									"        pm.expect(responseJson.success).to.be.true;",
+									"    });",
+									"    console.log('Token removed from environment');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🌍 Regions API",
+			"item": [
+				{
+					"name": "Get All Regions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/regions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"regions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Region by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/regions/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"regions",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Plants by Region",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/regions/1/plants",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"regions",
+								"1",
+								"plants"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🏭 Plants API",
+			"item": [
+				{
+					"name": "Get All Plants",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/plants",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plants"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Plant by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/plants/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plants",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📦 Items API",
+			"item": [
+				{
+					"name": "Get All Items",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Item by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Items by Category - Baik",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items/category/Baik",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items",
+								"category",
+								"Baik"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Items by Category - Baru",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items/category/Baru",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items",
+								"category",
+								"Baru"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Items by Category - Rusak",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items/category/Rusak",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items",
+								"category",
+								"Rusak"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Items by Category - Afkir",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/items/category/Afkir",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"items",
+								"category",
+								"Afkir"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 Stocks API",
+			"item": [
+				{
+					"name": "Get Current Stocks",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stocks/current",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stocks",
+								"current"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stocks by Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stocks/current/location/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stocks",
+								"current",
+								"location",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stocks by Item",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stocks/current/item/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stocks",
+								"current",
+								"item",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Initial Stocks",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stocks/initial",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stocks",
+								"initial"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Initial Stocks by Item",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stocks/initial/item/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stocks",
+								"initial",
+								"item",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📝 Transaction Logs API",
+			"item": [
+				{
+					"name": "Get All Transaction Logs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions by Date Range",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs/date-range?start_date=2025-01-01&end_date=2025-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs",
+								"date-range"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2025-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions by Type - Penerimaan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs/type/Penerimaan",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs",
+								"type",
+								"Penerimaan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions by Type - Penyaluran",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs/type/Penyaluran",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs",
+								"type",
+								"Penyaluran"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions by Type - Transaksi Sales",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs/type/Transaksi Sales",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs",
+								"type",
+								"Transaksi Sales"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions by Type - Pemusnahan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/logs/type/Pemusnahan",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"logs",
+								"type",
+								"Pemusnahan"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔥 Destruction Submissions API",
+			"item": [
+				{
+					"name": "Get All Destruction Submissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/destruction-submissions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"destruction-submissions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Submissions by Status - PROSES",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/destruction-submissions/status/PROSES",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"destruction-submissions",
+								"status",
+								"PROSES"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Submissions by Status - DONE",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/destruction-submissions/status/DONE",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"destruction-submissions",
+								"status",
+								"DONE"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Submissions by Status - DITOLAK",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/destruction-submissions/status/DITOLAK",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"destruction-submissions",
+								"status",
+								"DITOLAK"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🎯 Destination Sales API",
+			"item": [
+				{
+					"name": "Get All Destination Sales",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/destination-sales",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"destination-sales"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 Dashboard API",
+			"item": [
+				{
+					"name": "Get Stock Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stock-data",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stock-data"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Stock Capacity",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"item_id\": 1,\n    \"location_id\": 1,\n    \"capacity\": 1000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/stock-capacity",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stock-capacity"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔄 Legacy API (Compatibility)",
+			"item": [
+				{
+					"name": "Get Pusat Materials (DataTable)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pusat-materials",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pusat-materials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facility Materials",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/facility-materials/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facility-materials",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaksi Facilities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transaksi-facilities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transaksi-facilities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Aktivitas Transaksi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/aktivitas-transaksi",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aktivitas-transaksi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get UPP Materials",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{apiToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upp-materials",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"upp-materials"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🌐 Public API (No Auth)",
+			"item": [
+				{
+					"name": "Debug Route - No Auth Required",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pusat-materials-debug",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pusat-materials-debug"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

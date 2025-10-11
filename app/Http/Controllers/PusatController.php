@@ -36,7 +36,7 @@ class PusatController extends Controller
             $filters['end_date'] = Carbon::now()->endOfMonth()->toDateString();
         }
 
-        $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+        $pusatRegion = Region::where('nama_regions', 'P.Layang (Pusat)')->first();
 
         $query = Item::query()
             ->whereNull('facility_id') // Hanya ambil item yang ada di gudang pusat
@@ -486,7 +486,7 @@ class PusatController extends Controller
 
         try {
             // Get the pusat region ID
-            $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->first();
+            $pusatRegion = Region::where('nama_regions', 'P.Layang (Pusat)')->first();
 
         // Build the query with optimized joins
         $query = Item::query()
