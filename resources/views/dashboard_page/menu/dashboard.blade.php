@@ -337,7 +337,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column justify-content-center">
-                                            <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat_persetujuan }}</p>
+                                            <p class="mb-0 text-sm font-weight-bolder text-primary">{{ $upp->no_surat }}</p>
                                         </div>
                                     </td>
                                     <td>
@@ -364,11 +364,11 @@
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-info text-white me-1 preview-upp-btn"
-                                            data-no-surat="{{ $upp->no_surat_persetujuan }}"
+                                            data-no-surat="{{ $upp->no_surat }}"
                                             title="Preview">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <form action="{{ route('upp-material.destroy', $upp->no_surat_persetujuan) }}" method="POST" class="d-inline delete-upp-form">
+                                        <form action="{{ route('upp-material.destroy', $upp->no_surat) }}" method="POST" class="d-inline delete-upp-form">
                                             @csrf
                                             @method('DELETE')
                                             <input type="hidden" name="redirect_to" value="dashboard">

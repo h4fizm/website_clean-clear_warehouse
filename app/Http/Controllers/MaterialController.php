@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use App\Models\ItemTransaction;
-use App\Models\Facility;
+use App\Models\TransactionLog;
+use App\Models\CurrentStock;
+use App\Models\Plant;
 use App\Models\Region;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class MaterialController extends Controller
      * Menampilkan daftar stok material untuk fasilitas tertentu.
      * Mencakup perbaikan filter dan query untuk menampilkan data yang lebih akurat.
      */
-    public function index(Facility $facility, Request $request)
+    public function index(Plant $plant, Request $request)
     {
         $filters = [
             'search' => $request->query('search'),

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\Region;
-use App\Models\ItemTransaction;
+use App\Models\DestructionSubmission;
+use App\Models\TransactionLog;
+use App\Models\CurrentStock;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -21,30 +23,30 @@ class UppMaterialController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ItemTransaction::select(
-            'no_surat_persetujuan',
-            DB::raw('MIN(created_at) as tgl_buat'),
+        $query = DestructionSubmission::select(
+            'no_surat',
+            DB::raw('MIN(tanggal_pengajuan) as tgl_buat'),
             DB::raw('MAX(updated_at) as tgl_update'),
             DB::raw('MAX(tahapan) as tahapan'),
-            DB::raw('MAX(status) as status')
+            DB::raw('MAX(status_pengajuan) as status')
         )
-            ->where('jenis_transaksi', 'pemusnahan')
-            ->where('no_surat_persetujuan', 'NOT LIKE', '[DELETED_%')
-            ->groupBy('no_surat_persetujuan');
+            ->whereNotNull('no_surat')
+            ->where('no_surat', '!=', '')
+            ->groupBy('no_surat');
 
         if ($request->filled('search')) {
-            $query->where('no_surat_persetujuan', 'like', '%' . $request->search . '%');
+            $query->where('no_surat', 'like', '%' . $request->search . '%');
         }
         if ($request->filled('start_date')) {
             $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $query->havingRaw('MIN(created_at) >= ?', [$startDate]);
+            $query->havingRaw('MIN(tanggal_pengajuan) >= ?', [$startDate]);
         }
         if ($request->filled('end_date')) {
             $endDate = Carbon::parse($request->end_date)->endOfDay();
-            $query->havingRaw('MIN(created_at) <= ?', [$endDate]);
+            $query->havingRaw('MIN(tanggal_pengajuan) <= ?', [$endDate]);
         }
 
-        $query->orderByRaw('MIN(created_at) DESC');
+        $query->orderByRaw('MIN(tanggal_pengajuan) DESC');
 
         $upps = $query->paginate(5)->appends($request->all());
 
@@ -64,11 +66,25 @@ class UppMaterialController extends Controller
             return response()->json([]);
         }
 
-        $materials = Item::where('kategori_material', 'afkir')
-            ->where('region_id', $pusatRegion->id)
-            ->where('stok_akhir', '>', 0)
-            ->select('id', 'nama_material', 'kode_material', 'stok_akhir')
-            ->get();
+        // Get materials in afkir category that have stock in the center region
+        $items = Item::where('kategori_material', 'afkir')->get();
+        $materials = [];
+
+        foreach ($items as $item) {
+            $currentStock = CurrentStock::where('item_id', $item->item_id)
+                ->where('lokasi_id', $pusatRegion->id)
+                ->where('current_quantity', '>', 0)
+                ->first();
+
+            if ($currentStock) {
+                $materials[] = [
+                    'id' => $item->item_id,
+                    'nama_material' => $item->nama_material,
+                    'kode_material' => $item->kode_material,
+                    'stok_akhir' => $currentStock->current_quantity
+                ];
+            }
+        }
 
         return response()->json($materials);
     }
@@ -87,7 +103,7 @@ class UppMaterialController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'noSurat' => 'required|string|max:255|unique:base_transactions,no_surat_persetujuan',
+            'noSurat' => 'required|string|max:255|unique:destruction_submissions,no_surat',
             'tanggal' => 'required|date',
             'tahapan' => 'required|string|max:255',
             'penanggungjawab' => 'required|string|max:255',

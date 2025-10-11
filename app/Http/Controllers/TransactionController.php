@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Facility;
+use App\Models\Plant;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -16,15 +16,15 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        $regions = Region::where('name_region', '!=', 'P.Layang (Pusat)')->get();
+        $regions = Region::where('nama_regions', '!=', 'P.Layang (Pusat)')->get();
         $selectedSalesAreaName = $request->query('sales_area', 'SA Jambi');
         $searchQuery = $request->query('search');
-        $selectedRegion = Region::where('name_region', $selectedSalesAreaName)->first();
-        $facilitiesQuery = $selectedRegion ? $selectedRegion->facilities() : Facility::query()->whereNull('id');
+        $selectedRegion = Region::where('nama_regions', $selectedSalesAreaName)->first();
+        $facilitiesQuery = $selectedRegion ? Plant::where('region_id', $selectedRegion->region_id) : Plant::query()->whereNull('region_id');
 
         if ($searchQuery) {
             $facilitiesQuery->where(function ($query) use ($searchQuery) {
-                $query->where('name', 'like', '%' . $searchQuery . '%')
+                $query->where('nama_plant', 'like', '%' . $searchQuery . '%')
                     ->orWhere('kode_plant', 'like', '%' . $searchQuery . '%');
             });
         }
@@ -44,7 +44,7 @@ class TransactionController extends Controller
      */
     public function create()
     {
-        $regions = Region::where('name_region', '!=', 'P.Layang (Pusat)')->get();
+        $regions = Region::where('nama_regions', '!=', 'P.Layang (Pusat)')->get();
         return view('dashboard_page.menu.tambah_spbe-bpt', ['regions' => $regions]);
     }
 
@@ -55,24 +55,24 @@ class TransactionController extends Controller
     {
         // Aturan validasi
         $rules = [
-            'name' => 'required|string|max:255|unique:facilities,name',
-            'kode_plant' => 'required|string|max:255|unique:facilities,kode_plant',
-            'type' => 'required|string|in:SPBE,BPT',
-            'name_region' => 'required|string|exists:regions,name_region',
-            'province' => 'required|string|max:255',
-            'regency' => 'required|string|max:255',
+            'nama_plant' => 'required|string|max:255|unique:plants,nama_plant',
+            'kode_plant' => 'required|string|max:255|unique:plants,kode_plant',
+            'kategori_plant' => 'required|string|in:SPBE,BPT',
+            'name_region' => 'required|string|exists:regions,nama_regions',
+            'provinsi' => 'required|string|max:255',
+            'kabupaten' => 'required|string|max:255',
         ];
 
         // Pesan error kustom
         $messages = [
-            'name.required' => 'Nama SPBE/BPT tidak boleh kosong.',
-            'name.unique' => 'Nama SPBE/BPT ini sudah terdaftar.',
+            'nama_plant.required' => 'Nama SPBE/BPT tidak boleh kosong.',
+            'nama_plant.unique' => 'Nama SPBE/BPT ini sudah terdaftar.',
             'kode_plant.required' => 'Kode Plant tidak boleh kosong.',
             'kode_plant.unique' => 'Kode Plant ini sudah terdaftar.',
-            'type.required' => 'Jenis SPBE/BPT harus dipilih.',
+            'kategori_plant.required' => 'Jenis SPBE/BPT harus dipilih.',
             'name_region.required' => 'SA Region harus dipilih.',
-            'province.required' => 'Nama Provinsi tidak boleh kosong.',
-            'regency.required' => 'Nama Kabupaten tidak boleh kosong.',
+            'provinsi.required' => 'Nama Provinsi tidak boleh kosong.',
+            'kabupaten.required' => 'Nama Kabupaten tidak boleh kosong.',
         ];
 
         // Validasi input
@@ -85,15 +85,15 @@ class TransactionController extends Controller
         }
 
         try {
-            $region = Region::where('name_region', $request->name_region)->first();
+            $region = Region::where('nama_regions', $request->name_region)->first();
 
-            Facility::create([
-                'name' => $request->name,
+            Plant::create([
+                'nama_plant' => $request->nama_plant,
                 'kode_plant' => $request->kode_plant,
-                'type' => $request->type,
-                'province' => $request->province,
-                'regency' => $request->regency,
-                'region_id' => $region->id,
+                'kategori_plant' => $request->kategori_plant,
+                'provinsi' => $request->provinsi,
+                'kabupaten' => $request->kabupaten,
+                'region_id' => $region->region_id,
             ]);
 
             return redirect()->route('transaksi.index')->with('success', 'Data SPBE/BPT baru berhasil ditambahkan.');
@@ -105,34 +105,34 @@ class TransactionController extends Controller
     /**
      * Memperbarui data facility di database.
      */
-    public function update(Request $request, Facility $facility)
+    public function update(Request $request, Plant $plant)
     {
         // Aturan validasi
         $rules = [
-            'name' => [
+            'nama_plant' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('facilities')->ignore($facility->id)
+                Rule::unique('plants')->ignore($plant->plant_id)
             ],
             'kode_plant' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('facilities')->ignore($facility->id)
+                Rule::unique('plants')->ignore($plant->plant_id)
             ],
-            'province' => 'required|string|max:255',
-            'regency' => 'required|string|max:255',
+            'provinsi' => 'required|string|max:255',
+            'kabupaten' => 'required|string|max:255',
         ];
 
         // Pesan error kustom
         $messages = [
-            'name.required' => 'Nama SPBE/BPT tidak boleh kosong.',
-            'name.unique' => 'Nama SPBE/BPT ini sudah digunakan oleh data lain.',
+            'nama_plant.required' => 'Nama SPBE/BPT tidak boleh kosong.',
+            'nama_plant.unique' => 'Nama SPBE/BPT ini sudah digunakan oleh data lain.',
             'kode_plant.required' => 'Kode Plant tidak boleh kosong.',
             'kode_plant.unique' => 'Kode Plant ini sudah digunakan oleh data lain.',
-            'province.required' => 'Nama Provinsi tidak boleh kosong.',
-            'regency.required' => 'Nama Kabupaten tidak boleh kosong.',
+            'provinsi.required' => 'Nama Provinsi tidak boleh kosong.',
+            'kabupaten.required' => 'Nama Kabupaten tidak boleh kosong.',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -141,11 +141,11 @@ class TransactionController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput()
-                ->with('error_facility_id', $facility->id);
+                ->with('error_plant_id', $plant->plant_id);
         }
 
         try {
-            $facility->update($validator->validated());
+            $plant->update($validator->validated());
             return redirect()->back()->with('success', 'Data SPBE/BPT berhasil diperbarui.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memperbarui data.');
@@ -155,10 +155,10 @@ class TransactionController extends Controller
     /**
      * Menghapus data facility dari database.
      */
-    public function destroy(Facility $facility)
+    public function destroy(Plant $plant)
     {
         try {
-            $facility->delete();
+            $plant->delete();
             return redirect()->back()->with('success', 'Data SPBE/BPT berhasil dihapus.');
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data.');
@@ -184,18 +184,18 @@ class TransactionController extends Controller
             $salesArea = $request->get('sales_area', 'SA Jambi');
 
             // Base query
-            $query = Facility::with('region')
+            $query = Plant::with('region')
                 ->whereHas('region', function($q) use ($salesArea) {
-                    $q->where('name_region', $salesArea);
+                    $q->where('nama_regions', $salesArea);
                 });
 
             // Search functionality
             if (!empty($searchValue)) {
                 $query->where(function($q) use ($searchValue) {
-                    $q->where('name', 'like', '%' . $searchValue . '%')
+                    $q->where('nama_plant', 'like', '%' . $searchValue . '%')
                       ->orWhere('kode_plant', 'like', '%' . $searchValue . '%')
-                      ->orWhere('province', 'like', '%' . $searchValue . '%')
-                      ->orWhere('regency', 'like', '%' . $searchValue . '%');
+                      ->orWhere('provinsi', 'like', '%' . $searchValue . '%')
+                      ->orWhere('kabupaten', 'like', '%' . $searchValue . '%');
                 });
             }
 
@@ -209,19 +209,19 @@ class TransactionController extends Controller
 
                 // Map column index to database column
                 $columnMap = [
-                    0 => 'id',
-                    1 => 'name',
+                    0 => 'plant_id',
+                    1 => 'nama_plant',
                     2 => 'kode_plant',
-                    3 => 'province',
-                    4 => 'regency',
-                    5 => 'id'
+                    3 => 'provinsi',
+                    4 => 'kabupaten',
+                    5 => 'plant_id'
                 ];
 
                 if (isset($columnMap[$orderColumn])) {
                     $query->orderBy($columnMap[$orderColumn], $orderDirection);
                 }
             } else {
-                $query->orderBy('name', 'asc');
+                $query->orderBy('nama_plant', 'asc');
             }
 
             // Pagination
@@ -230,18 +230,18 @@ class TransactionController extends Controller
                                ->get();
 
             // Format data for DataTables
-            $data = $facilities->map(function($facility) {
+            $data = $facilities->map(function($plant) {
                 $actions = '';
 
                 // Edit button
                 $actions .= '<button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn"
                                    data-bs-toggle="modal"
-                                   data-bs-target="#editSpbeBptModal-' . $facility->id . '">
+                                   data-bs-target="#editSpbeBptModal-' . $plant->plant_id . '">
                                    <i class="fas fa-edit"></i>
                              </button>';
 
                 // Delete form
-                $actions .= '<form action="' . route('transaksi.destroy', $facility->id) . '" method="POST" class="d-inline delete-form">
+                $actions .= '<form action="' . route('transaksi.destroy', $plant->plant_id) . '" method="POST" class="d-inline delete-form">
                                ' . csrf_field() . '
                                ' . method_field('DELETE') . '
                                <button type="submit" class="btn btn-sm btn-danger text-white delete-btn">
@@ -250,13 +250,13 @@ class TransactionController extends Controller
                            </form>';
 
                 return [
-                    'id' => $facility->id,
-                    'name' => $facility->name,
-                    'kode_plant' => $facility->kode_plant,
-                    'province' => $facility->province,
-                    'regency' => $facility->regency,
+                    'id' => $plant->plant_id,
+                    'name' => $plant->nama_plant,
+                    'kode_plant' => $plant->kode_plant,
+                    'province' => $plant->provinsi,
+                    'regency' => $plant->kabupaten,
                     'actions' => $actions,
-                    'material_url' => route('materials.index', $facility)
+                    'material_url' => route('materials.index', $plant->plant_id)
                 ];
             });
 

@@ -22,9 +22,9 @@
                     @csrf
                     
                     <div class="col-12">
-                        <label for="name" class="form-label">Nama SPBE/BPT</label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
-                        @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label for="nama_plant" class="form-label">Nama SPBE/BPT</label>
+                        <input type="text" class="form-control @error('nama_plant') is-invalid @enderror" id="nama_plant" name="nama_plant" value="{{ old('nama_plant') }}" required>
+                        @error('nama_plant') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     
                     <div class="col-12">
@@ -34,18 +34,18 @@
                     </div>
                     
                     <div class="col-12">
-                        <label for="type" class="form-label">Jenis</label>
+                        <label for="kategori_plant" class="form-label">Jenis</label>
                         <div class="d-flex align-items-center mt-2">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="type" id="jenis-spbe" value="SPBE" {{ old('type') == 'SPBE' ? 'checked' : '' }} required>
+                                <input class="form-check-input" type="radio" name="kategori_plant" id="jenis-spbe" value="SPBE" {{ old('kategori_plant') == 'SPBE' ? 'checked' : '' }} required>
                                 <label class="form-check-label" for="jenis-spbe">SPBE</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="type" id="jenis-bpt" value="BPT" {{ old('type') == 'BPT' ? 'checked' : '' }}>
+                                <input class="form-check-input" type="radio" name="kategori_plant" id="jenis-bpt" value="BPT" {{ old('kategori_plant') == 'BPT' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="jenis-bpt">BPT</label>
                             </div>
                         </div>
-                        @error('type') <small class="text-danger">{{ $message }}</small> @enderror
+                        @error('kategori_plant') <small class="text-danger">{{ $message }}</small> @enderror
                     </div>
                     
                     <div class="col-12">
@@ -54,8 +54,8 @@
                             <option value="">Pilih SA Region</option>
                             {{-- Dropdown diisi secara dinamis --}}
                             @foreach ($regions as $region)
-                                <option value="{{ $region->name_region }}" {{ old('name_region') == $region->name_region ? 'selected' : '' }}>
-                                    {{ $region->name_region }}
+                                <option value="{{ $region->nama_regions }}" {{ old('name_region') == $region->nama_regions ? 'selected' : '' }}>
+                                    {{ $region->nama_regions }}
                                 </option>
                             @endforeach
                         </select>
@@ -63,15 +63,15 @@
                     </div>
                     
                     <div class="col-12">
-                        <label for="province" class="form-label">Nama Provinsi</label>
-                        <input type="text" class="form-control @error('province') is-invalid @enderror" id="province" name="province" value="{{ old('province') }}" required>
-                        @error('province') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label for="provinsi" class="form-label">Nama Provinsi</label>
+                        <input type="text" class="form-control @error('provinsi') is-invalid @enderror" id="provinsi" name="provinsi" value="{{ old('provinsi') }}" required>
+                        @error('provinsi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    
+
                     <div class="col-12">
-                        <label for="regency" class="form-label">Nama Kabupaten</label>
-                        <input type="text" class="form-control @error('regency') is-invalid @enderror" id="regency" name="regency" value="{{ old('regency') }}" required>
-                        @error('regency') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label for="kabupaten" class="form-label">Nama Kabupaten</label>
+                        <input type="text" class="form-control @error('kabupaten') is-invalid @enderror" id="kabupaten" name="kabupaten" value="{{ old('kabupaten') }}" required>
+                        @error('kabupaten') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     
                     <div class="col-12 text-end">

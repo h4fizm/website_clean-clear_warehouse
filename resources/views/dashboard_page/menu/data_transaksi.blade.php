@@ -52,9 +52,9 @@
                             <div class="btn-group d-flex flex-wrap branch-buttons" role="group" aria-label="Branch selection">
                                 @foreach ($regions as $region)
                                     <a href="javascript:void(0)"
-                                       data-region="{{ $region->name_region }}"
-                                       class="btn btn-sm btn-branch-custom {{ $selectedSalesArea == $region->name_region ? 'btn-primary' : 'btn-outline-primary' }}">
-                                        {{ $region->name_region }}
+                                       data-region="{{ $region->nama_regions }}"
+                                       class="btn btn-sm btn-branch-custom {{ $selectedSalesArea == $region->nama_regions ? 'btn-primary' : 'btn-outline-primary' }}">
+                                        {{ $region->nama_regions }}
                                     </a>
                                 @endforeach
                             </div>
@@ -69,9 +69,9 @@
                                 <ul class="dropdown-menu w-100" aria-labelledby="regionDropdown">
                                     @foreach ($regions as $region)
                                     <li>
-                                        <a class="dropdown-item {{ $selectedSalesArea == $region->name_region ? 'active' : '' }}"
-                                           href="javascript:void(0)" data-region="{{ $region->name_region }}">
-                                            {{ $region->name_region }}
+                                        <a class="dropdown-item {{ $selectedSalesArea == $region->nama_regions ? 'active' : '' }}"
+                                           href="javascript:void(0)" data-region="{{ $region->nama_regions }}">
+                                            {{ $region->nama_regions }}
                                         </a>
                                     </li>
                                     @endforeach
@@ -138,34 +138,34 @@
 </div>
 
 {{-- MODALS --}}
-@foreach ($facilities as $facility)
-<div class="modal fade" id="editSpbeBptModal-{{ $facility->id }}" tabindex="-1" aria-labelledby="editSpbeBptModalLabel-{{ $facility->id }}" aria-hidden="true">
+@foreach ($facilities as $plant)
+<div class="modal fade" id="editSpbeBptModal-{{ $plant->plant_id }}" tabindex="-1" aria-labelledby="editSpbeBptModalLabel-{{ $plant->plant_id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editSpbeBptModalLabel-{{ $facility->id }}">Edit Data SPBE/BPT</h5>
+                <h5 class="modal-title" id="editSpbeBptModalLabel-{{ $plant->plant_id }}">Edit Data SPBE/BPT</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('transaksi.update', $facility->id) }}" method="POST">
+            <form action="{{ route('transaksi.update', $plant->plant_id) }}" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="modal-body">
-                    @php $error_id = session('error_facility_id'); @endphp
+                    @php $error_id = session('error_plant_id'); @endphp
                     <div class="mb-3">
-                        <label for="edit-name-{{$facility->id}}" class="form-label">Nama SPBE/BPT</label>
-                        <input type="text" class="form-control @if($errors->has('name') && $error_id == $facility->id) is-invalid @endif" id="edit-name-{{$facility->id}}" name="name" value="{{ old('name', $facility->name) }}" required>
+                        <label for="edit-nama_plant-{{$plant->plant_id}}" class="form-label">Nama SPBE/BPT</label>
+                        <input type="text" class="form-control @if($errors->has('nama_plant') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-nama_plant-{{$plant->plant_id}}" name="nama_plant" value="{{ old('nama_plant', $plant->nama_plant) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-kode_plant-{{$facility->id}}" class="form-label">Kode Plant</label>
-                        <input type="text" class="form-control @if($errors->has('kode_plant') && $error_id == $facility->id) is-invalid @endif" id="edit-kode_plant-{{$facility->id}}" name="kode_plant" value="{{ old('kode_plant', $facility->kode_plant) }}" required>
+                        <label for="edit-kode_plant-{{$plant->plant_id}}" class="form-label">Kode Plant</label>
+                        <input type="text" class="form-control @if($errors->has('kode_plant') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-kode_plant-{{$plant->plant_id}}" name="kode_plant" value="{{ old('kode_plant', $plant->kode_plant) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-province-{{$facility->id}}" class="form-label">Nama Provinsi</label>
-                        <input type="text" class="form-control @if($errors->has('province') && $error_id == $facility->id) is-invalid @endif" id="edit-province-{{$facility->id}}" name="province" value="{{ old('province', $facility->province) }}" required>
+                        <label for="edit-provinsi-{{$plant->plant_id}}" class="form-label">Nama Provinsi</label>
+                        <input type="text" class="form-control @if($errors->has('provinsi') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-provinsi-{{$plant->plant_id}}" name="provinsi" value="{{ old('provinsi', $plant->provinsi) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-regency-{{$facility->id}}" class="form-label">Nama Kabupaten</label>
-                        <input type="text" class="form-control @if($errors->has('regency') && $error_id == $facility->id) is-invalid @endif" id="edit-regency-{{$facility->id}}" name="regency" value="{{ old('regency', $facility->regency) }}" required>
+                        <label for="edit-kabupaten-{{$plant->plant_id}}" class="form-label">Nama Kabupaten</label>
+                        <input type="text" class="form-control @if($errors->has('kabupaten') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-kabupaten-{{$plant->plant_id}}" name="kabupaten" value="{{ old('kabupaten', $plant->kabupaten) }}" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -391,10 +391,10 @@
 </script>
 
 {{-- Script untuk membuka kembali modal jika ada error validasi --}}
-@if ($errors->any() && session('error_facility_id'))
+@if ($errors->any() && session('error_plant_id'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var errorModalId = 'editSpbeBptModal-{{ session('error_facility_id') }}';
+        var errorModalId = 'editSpbeBptModal-{{ session('error_plant_id') }}';
         var errorModal = new bootstrap.Modal(document.getElementById(errorModalId));
         errorModal.show();
     });
