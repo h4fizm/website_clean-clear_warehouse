@@ -11,16 +11,17 @@ use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PusatDataExport;
 use App\Models\Item;
-use App\Models\Facility;
-use App\Models\ItemTransaction;
-use Carbon\Carbon;
+use App\Models\Plant;
 use App\Models\Region;
+use App\Models\TransactionLog;
+use App\Models\CurrentStock;
+use App\Models\DestinationSale;
+use Carbon\Carbon;
 
 class PusatController extends Controller
 {
     /**
      * Menampilkan daftar stok material di gudang pusat.
-     * Query telah diperbarui untuk hanya menampilkan item yang aktif.
      */
     public function index(Request $request)
     {
@@ -36,13 +37,18 @@ class PusatController extends Controller
             $filters['end_date'] = Carbon::now()->endOfMonth()->toDateString();
         }
 
-        $pusatRegion = Region::where('nama_regions', 'P.Layang (Pusat)')->first();
+        // Pusat menggunakan lokasi_id = 1 secara langsung
+        $pusatLokasiId = 1;
 
-        $query = Item::query()
-            ->whereNull('facility_id') // Hanya ambil item yang ada di gudang pusat
-            ->where('is_active', true) // ✅ PERBAIKAN: Hanya ambil yang aktif
-            ->select('items.*');
+        // Query untuk items yang ada di pusat
+        $query = Item::query();
 
+        // Filter berdasarkan item yang memiliki stok di pusat
+        $query->whereHas('currentStocks', function ($q) use ($pusatLokasiId) {
+            $q->where('lokasi_id', $pusatLokasiId);
+        });
+
+        // Search functionality
         $query->when($filters['search'], function ($q, $search) {
             return $q->where(function ($subQ) use ($search) {
                 $subQ->where('nama_material', 'like', '%' . $search . '%')
@@ -50,69 +56,92 @@ class PusatController extends Controller
             });
         });
 
-        $query->addSelect([
-            'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->where('jenis_transaksi', 'transfer')
-                ->whereNotNull('region_to')  // Ensure it's going TO a region
-                ->whereColumn('region_to', 'items.region_id')  // Only items going TO this region (Pusat)
-                ->whereExists(function ($subQuery) {
-                    $subQuery->select(DB::raw(1))
-                             ->from('items as source_item')
-                             ->whereColumn('source_item.kode_material', 'items.kode_material')
-                             ->whereColumn('source_item.id', 'base_transactions.item_id');
+        // Get items dengan relasi currentStocks dan transactionLogs
+        $items = $query->with(['currentStocks' => function ($q) use ($pusatLokasiId) {
+            $q->where('lokasi_id', $pusatLokasiId);
+        }, 'transactionLogs' => function ($q) use ($pusatLokasiId, $filters) {
+            $q->where(function ($subQ) use ($pusatLokasiId) {
+                $subQ->where('lokasi_actor_id', $pusatLokasiId)
+                      ->orWhere('lokasi_tujuan_id', $pusatLokasiId);
+            });
+            if ($filters['start_date']) {
+                $q->whereDate('tanggal_transaksi', '>=', $filters['start_date']);
+            }
+            if ($filters['end_date']) {
+                $q->whereDate('tanggal_transaksi', '<=', $filters['end_date']);
+            }
+        }])->paginate(10)->withQueryString();
+
+        // Get semua facilities/SPBE untuk dropdown
+        $plants = Plant::with('region')->get();
+
+        // Prepare data untuk view
+        $processedItems = collect();
+        foreach ($items as $item) {
+            $currentStock = $item->getStockAtLocation($pusatLokasiId);
+
+            // Hitung total transaksi berdasarkan filter tanggal
+            $penerimaanTotal = $item->transactionLogs()
+                ->where('tipe_pergerakan', 'Penerimaan')
+                ->where('lokasi_tujuan_id', $pusatLokasiId)
+                ->when($filters['start_date'], fn($q) => $q->whereDate('tanggal_transaksi', '>=', $filters['start_date']))
+                ->when($filters['end_date'], fn($q) => $q->whereDate('tanggal_transaksi', '<=', $filters['end_date']))
+                ->sum('kuantitas');
+
+            $penyaluranTotal = $item->transactionLogs()
+                ->where('tipe_pergerakan', 'Penyaluran')
+                ->where('lokasi_actor_id', $pusatLokasiId)
+                ->when($filters['start_date'], fn($q) => $q->whereDate('tanggal_transaksi', '>=', $filters['start_date']))
+                ->when($filters['end_date'], fn($q) => $q->whereDate('tanggal_transaksi', '<=', $filters['end_date']))
+                ->sum('kuantitas');
+
+            $salesTotal = $item->transactionLogs()
+                ->where('tipe_pergerakan', 'Transaksi Sales')
+                ->where('lokasi_actor_id', $pusatLokasiId)
+                ->when($filters['start_date'], fn($q) => $q->whereDate('tanggal_transaksi', '>=', $filters['start_date']))
+                ->when($filters['end_date'], fn($q) => $q->whereDate('tanggal_transaksi', '<=', $filters['end_date']))
+                ->sum('kuantitas');
+
+            $latestTransaction = $item->transactionLogs()
+                ->where(function ($q) use ($pusatLokasiId) {
+                    $q->where('lokasi_actor_id', $pusatLokasiId)
+                      ->orWhere('lokasi_tujuan_id', $pusatLokasiId);
                 })
-                ->when($filters['start_date'], fn($subQ, $date) => $subQ->whereDate('base_transactions.created_at', '>=', $date))
-                ->when($filters['end_date'], fn($subQ, $date) => $subQ->whereDate('base_transactions.created_at', '<=', $date)),
+                ->orderBy('tanggal_transaksi', 'desc')
+                ->first();
 
-            'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->where('jenis_transaksi', 'transfer')
-                ->whereNotNull('region_from')  // Ensure it's coming FROM a region
-                ->whereColumn('region_from', 'items.region_id')  // Only items coming FROM this region (Pusat)
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
+            $processedItems->push([
+                'item_id' => $item->item_id,
+                'nama_material' => $item->nama_material,
+                'kode_material' => $item->kode_material,
+                'kategori_material' => $item->kategori_material,
+                'stok_awal' => 0, // TODO: Hitung dari initial stock jika ada
+                'stok_akhir' => $currentStock,
+                'penerimaan_total' => $penerimaanTotal,
+                'penyaluran_total' => $penyaluranTotal,
+                'sales_total' => $salesTotal,
+                'latest_transaction_date' => $latestTransaction ? $latestTransaction->tanggal_transaksi : $item->updated_at,
+                'item' => $item // untuk keperluan API
+            ]);
+        }
 
-            'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id')
-                ->where('jenis_transaksi', 'sales')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
-
-            'pemusnahan_total_proses' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id')
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->where('status', 'proses')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
-
-            'pemusnahan_total_done' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                ->whereColumn('item_id', 'items.id')
-                ->where('jenis_transaksi', 'pemusnahan')
-                ->where('status', 'done')
-                ->when($filters['start_date'], fn($subQ) => $subQ->whereDate('created_at', '>=', $filters['start_date']))
-                ->when($filters['end_date'], fn($subQ) => $subQ->whereDate('created_at', '<=', $filters['end_date'])),
-
-            'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
-                ->whereColumn('item_id', 'items.id'),
-        ]);
-
-        $query->orderByDesc(DB::raw("
-            GREATEST(
-                COALESCE(items.updated_at, '1970-01-01'),
-                COALESCE((
-                    SELECT MAX(created_at)
-                    FROM base_transactions
-                    WHERE base_transactions.item_id = items.id
-                ), '1970-01-01')
-            )
-        "));
-
-        $items = $query->paginate(10)->withQueryString();
-        $facilities = Facility::orderBy('name')->get();
+        // Convert ke LengthAwarePaginator
+        $currentPage = $items->currentPage();
+        $perPage = $items->perPage();
+        $total = $processedItems->count();
+        $itemsForView = new \Illuminate\Pagination\LengthAwarePaginator(
+            $processedItems->forPage($currentPage, $perPage),
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('dashboard_page.menu.data_pusat', [
-            'items' => $items,
+            'items' => $itemsForView,
             'filters' => $filters,
-            'facilities' => $facilities,
+            'facilities' => $plants,
+            'pusatLokasiId' => $pusatLokasiId
         ]);
     }
 
@@ -122,19 +151,18 @@ class PusatController extends Controller
      */
     /**
      * Metode untuk melakukan transaksi transfer, penerimaan, atau sales.
-     * Perbaikan: Menangani kasus penerimaan material yang sudah tidak aktif.
      */
     public function transfer(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'item_id_pusat' => 'required_if:jenis_transaksi,penyaluran,sales|exists:items,id',
+            'item_id_pusat' => 'required_if:jenis_transaksi,penyaluran,sales|exists:items,item_id',
             'kode_material' => 'required|string',
             'jenis_transaksi' => 'required|in:penyaluran,penerimaan,sales',
             'jumlah' => 'required|integer|min:1',
             'tanggal_transaksi' => 'required|date',
             'no_surat_persetujuan' => 'nullable|string',
             'no_ba_serah_terima' => 'nullable|string',
-            'facility_id_selected' => 'required_if:jenis_transaksi,penyaluran,penerimaan|exists:facilities,id',
+            'facility_id_selected' => 'required_if:jenis_transaksi,penyaluran,penerimaan|exists:plants,plant_id',
             'tujuan_sales' => 'required_if:jenis_transaksi,sales|string|in:Vendor UPP,Sales Agen,Sales BPT,Sales SPBE'
         ]);
 
@@ -147,157 +175,116 @@ class PusatController extends Controller
                 $jenis_transaksi = $request->jenis_transaksi;
                 $jumlah = (int) $request->jumlah;
                 $tanggal_transaksi = Carbon::parse($request->tanggal_transaksi);
-                $pusatRegion = Region::where('name_region', 'P.Layang (Pusat)')->firstOrFail();
 
-                if ($jenis_transaksi == 'penyaluran' || $jenis_transaksi == 'sales') {
-                    $itemPusat = Item::where('id', $request->item_id_pusat)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-                } else {
-                    $itemPusat = Item::where('kode_material', $request->kode_material)
-                        ->whereNull('facility_id')
-                        ->lockForUpdate()
-                        ->firstOrFail();
-                }
+                // Pusat menggunakan lokasi_id = 1 secara langsung
+                $pusatLokasiId = 1;
+
+                // Cari item berdasarkan kode material
+                $item = Item::where('kode_material', $request->kode_material)->firstOrFail();
 
                 if ($jenis_transaksi == 'penyaluran') {
-                    if ($itemPusat->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => "Stok di gudang pusat tidak mencukupi untuk penyaluran!"]);
+                    // Transfer dari Pusat ke Plant
+                    $plantTujuan = Plant::findOrFail($request->facility_id_selected);
+
+                    // Cek stok di pusat
+                    $stokPusat = $item->getStockAtLocation($pusatLokasiId);
+                    if ($stokPusat < $jumlah) {
+                        throw ValidationException::withMessages(['jumlah' => "Stok di gudang pusat tidak mencukupi! Stok tersedia: {$stokPusat} pcs"]);
                     }
 
-                    $facilityTujuan = Facility::findOrFail($request->facility_id_selected);
-                    
-                    // Lock the source item and get its stock before decrementing
-                    $itemPusat->lockForUpdate();
-                    $stokAwalPusat = $itemPusat->stok_akhir;
-                    
-                    // Find the destination item
-                    $itemTujuan = Item::where('facility_id', $facilityTujuan->id)
-                                      ->where('kode_material', $itemPusat->kode_material)
-                                      ->lockForUpdate() // Lock the destination item (or table for insert)
-                                      ->first();
-                    
-                    $stokAwalTujuan = 0;
+                    // Cek stok di tujuan
+                    $stokTujuan = $item->getStockAtLocation($plantTujuan->plant_id);
 
-                    // Decrement stock from the source (Pusat) AFTER finding destination item
-                    $itemPusat->decrement('stok_akhir', $jumlah);
+                    // Kurangi stok pusat
+                    $stokAkhirPusat = $item->decrementStockAtLocation($pusatLokasiId, $jumlah);
 
-                    if ($itemTujuan === null) {
-                        // Item does not exist at destination, so create it.
-                        $itemTujuan = Item::create([
-                            'facility_id' => $facilityTujuan->id,
-                            'kode_material' => $itemPusat->kode_material,
-                            'nama_material' => $itemPusat->nama_material,
-                            'stok_awal' => $jumlah,
-                            'stok_akhir' => $jumlah,
-                            'region_id' => $facilityTujuan->region_id,
-                            'kategori_material' => $itemPusat->kategori_material,
-                            'is_active' => true,
-                        ]);
-                        // The stock at the destination before this transaction was 0
-                        $stokAwalTujuan = 0;
-                    } else {
-                        // Item exists, so update it based on the user's cumulative logic.
-                        $stokAwalTujuan = $itemTujuan->stok_akhir; // Get stock before incrementing
-                        
-                        $itemTujuan->increment('stok_awal', $jumlah);
-                        $itemTujuan->increment('stok_akhir', $jumlah);
+                    // Tambah stok tujuan
+                    $stokAkhirTujuan = $item->incrementStockAtLocation($plantTujuan->plant_id, $jumlah);
 
-                        // If it was inactive, reactivate it.
-                        if (!$itemTujuan->is_active) {
-                            $itemTujuan->update(['is_active' => true]);
-                        }
-                    }
-
-                    // Create the transaction log
-                    ItemTransaction::create([
-                        'item_id' => $itemPusat->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'penyaluran',
-                        'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalPusat,
-                        'stok_akhir_asal' => $itemPusat->stok_akhir,
-                        'stok_awal_tujuan' => $stokAwalTujuan,
-                        'stok_akhir_tujuan' => $itemTujuan->fresh()->stok_akhir, // Get the fresh value after increments
-                        'facility_from' => null,
-                        'region_from' => $pusatRegion->id,
-                        'facility_to' => $facilityTujuan->id,
-                        'region_to' => $facilityTujuan->region_id,
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => $tanggal_transaksi,
-                        'updated_at' => $tanggal_transaksi,
+                    // Catat transaksi
+                    TransactionLog::create([
+                        'tanggal_transaksi' => $tanggal_transaksi,
+                        'item_id' => $item->item_id,
+                        'tipe_pergerakan' => 'Penyaluran',
+                        'kuantitas' => $jumlah,
+                        'stok_akhir_sebelum' => $stokPusat,
+                        'stok_akhir_sesudah' => $stokAkhirPusat,
+                        'lokasi_actor_id' => $pusatLokasiId,
+                        'lokasi_tujuan_id' => $plantTujuan->plant_id,
+                        'keterangan' => $request->no_surat_persetujuan ? 'No. Surat: ' . $request->no_surat_persetujuan : null,
                     ]);
 
-                    return ['success' => true, 'message' => 'Penyaluran material dari pusat berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Penyaluran material dari pusat berhasil!'];
 
                 } elseif ($jenis_transaksi == 'penerimaan') {
-                    $itemAsal = Item::where('facility_id', $request->facility_id_selected)
-                        ->where('kode_material', $itemPusat->kode_material)
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                    // Transfer dari Plant ke Pusat
+                    $plantAsal = Plant::findOrFail($request->facility_id_selected);
 
-                    if ($itemAsal->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => "Stok di fasilitas asal tidak mencukupi untuk pengiriman!"]);
+                    // Cek stok di plant asal
+                    $stokAsal = $item->getStockAtLocation($plantAsal->plant_id);
+                    if ($stokAsal < $jumlah) {
+                        throw ValidationException::withMessages(['jumlah' => "Stok di {$plantAsal->nama_plant} tidak mencukupi! Stok tersedia: {$stokAsal} pcs"]);
                     }
 
-                    // Perbaikan: Mengaktifkan item pusat jika statusnya tidak aktif
-                    if (!$itemPusat->is_active) {
-                        $itemPusat->update(['is_active' => true]);
-                    }
+                    // Cek stok di pusat
+                    $stokPusat = $item->getStockAtLocation($pusatLokasiId);
 
-                    $stokAwalAsal = $itemAsal->stok_akhir;
-                    $stokAwalPusat = $itemPusat->stok_akhir;
+                    // Kurangi stok asal
+                    $stokAkhirAsal = $item->decrementStockAtLocation($plantAsal->plant_id, $jumlah);
 
-                    $itemAsal->decrement('stok_akhir', $jumlah);
-                    $itemPusat->increment('stok_akhir', $jumlah);
+                    // Tambah stok pusat
+                    $stokAkhirPusat = $item->incrementStockAtLocation($pusatLokasiId, $jumlah);
 
-                    ItemTransaction::create([
-                        'item_id' => $itemAsal->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'penerimaan',
-                        'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAwalAsal - $jumlah,
-                        'stok_awal_tujuan' => $stokAwalPusat,
-                        'stok_akhir_tujuan' => $stokAwalPusat + $jumlah,
-                        'facility_from' => $request->facility_id_selected,
-                        'region_from' => $itemAsal->region_id,
-                        'facility_to' => null,
-                        'region_to' => $pusatRegion->id,
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => $tanggal_transaksi,
-                        'updated_at' => $tanggal_transaksi,
+                    // Catat transaksi
+                    TransactionLog::create([
+                        'tanggal_transaksi' => $tanggal_transaksi,
+                        'item_id' => $item->item_id,
+                        'tipe_pergerakan' => 'Penerimaan',
+                        'kuantitas' => $jumlah,
+                        'stok_akhir_sebelum' => $stokAsal,
+                        'stok_akhir_sesudah' => $stokAkhirAsal,
+                        'lokasi_actor_id' => $plantAsal->plant_id,
+                        'lokasi_tujuan_id' => $pusatLokasiId,
+                        'keterangan' => $request->no_surat_persetujuan ? 'No. Surat: ' . $request->no_surat_persetujuan : null,
                     ]);
 
-                    return ['success' => true, 'message' => 'Penerimaan material ke pusat berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Penerimaan material ke pusat berhasil!'];
 
                 } elseif ($jenis_transaksi == 'sales') {
-                    if ($itemPusat->stok_akhir < $jumlah) {
-                        throw ValidationException::withMessages(['jumlah' => "Stok di gudang pusat tidak mencukupi untuk sales!"]);
+                    // Sales dari Pusat
+                    $destinationSale = DestinationSale::where('nama_tujuan', $request->tujuan_sales)->first();
+
+                    if (!$destinationSale) {
+                        // Buat destination baru jika belum ada
+                        $destinationSale = DestinationSale::create([
+                            'nama_tujuan' => $request->tujuan_sales,
+                            'keterangan' => 'Sales destination'
+                        ]);
                     }
 
-                    $stokAwalAsal = $itemPusat->stok_akhir;
+                    // Cek stok di pusat
+                    $stokPusat = $item->getStockAtLocation($pusatLokasiId);
+                    if ($stokPusat < $jumlah) {
+                        throw ValidationException::withMessages(['jumlah' => "Stok di gudang pusat tidak mencukupi! Stok tersedia: {$stokPusat} pcs"]);
+                    }
 
-                    $itemPusat->decrement('stok_akhir', $jumlah);
+                    // Kurangi stok pusat
+                    $stokAkhirPusat = $item->decrementStockAtLocation($pusatLokasiId, $jumlah);
 
-                    ItemTransaction::create([
-                        'item_id' => $itemPusat->id,
-                        'user_id' => Auth::id(),
-                        'jenis_transaksi' => 'sales',
-                        'jumlah' => $jumlah,
-                        'stok_awal_asal' => $stokAwalAsal,
-                        'stok_akhir_asal' => $stokAwalAsal - $jumlah,
-                        'region_from' => $pusatRegion->id,
-                        'tujuan_sales' => $request->tujuan_sales,
-                        'no_surat_persetujuan' => $request->no_surat_persetujuan,
-                        'no_ba_serah_terima' => $request->no_ba_serah_terima,
-                        'created_at' => $tanggal_transaksi,
-                        'updated_at' => $tanggal_transaksi,
+                    // Catat transaksi
+                    TransactionLog::create([
+                        'tanggal_transaksi' => $tanggal_transaksi,
+                        'item_id' => $item->item_id,
+                        'tipe_pergerakan' => 'Transaksi Sales',
+                        'kuantitas' => $jumlah,
+                        'stok_akhir_sebelum' => $stokPusat,
+                        'stok_akhir_sesudah' => $stokAkhirPusat,
+                        'lokasi_actor_id' => $pusatLokasiId,
+                        'destination_sales_id' => $destinationSale->destination_id,
+                        'keterangan' => $request->no_surat_persetujuan ? 'No. Surat: ' . $request->no_surat_persetujuan : null,
                     ]);
 
-                    return ['success' => true, 'message' => 'Transaksi sales dari pusat berhasil dicatat!'];
+                    return ['success' => true, 'message' => 'Transaksi sales dari pusat berhasil!'];
                 }
             });
 
@@ -307,7 +294,7 @@ class PusatController extends Controller
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Log::error('Transfer Error: ' . $e->getMessage() . ' on line ' . $e->getLine());
-            return response()->json(['message' => 'Terjadi kesalahan pada server saat memproses transaksi.'], 500);
+            return response()->json(['message' => 'Terjadi kesalahan pada server: ' . $e->getMessage()], 500);
         }
     }
 
@@ -482,193 +469,122 @@ class PusatController extends Controller
 
         // Ensure valid values
         $start = max(0, $start);
-        $length = max(1, min(100, $length)); // Limit to 100 records max
+        $length = max(1, min(100, $length));
 
         try {
-            // Get the pusat region ID
-            $pusatRegion = Region::where('nama_regions', 'P.Layang (Pusat)')->first();
+            // Pusat menggunakan lokasi_id = 1 secara langsung
+            $pusatLokasiId = 1;
 
-        // Build the query with optimized joins
-        $query = Item::query()
-            ->whereNull('facility_id') // Only items in pusat
-            ->where('is_active', true) // Only active items
-            ->select([
-                'items.*',
-                // Penyaluran: transaksi KELUAR dari pusat (item_id langsung cocok)
-                'penyaluran_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                    ->where('jenis_transaksi', 'penyaluran')
-                    ->whereColumn('item_id', 'items.id'),
-                // Sales: transaksi sales dari pusat (item_id langsung cocok)
-                'sales_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                    ->whereColumn('item_id', 'items.id')
-                    ->where('jenis_transaksi', 'sales'),
-                // Pemusnahan: transaksi pemusnahan dari pusat (item_id langsung cocok)
-                'pemusnahan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                    ->whereColumn('item_id', 'items.id')
-                    ->where('jenis_transaksi', 'pemusnahan')
-                    ->where('status', 'done'),
-                // Penerimaan: transaksi MASUK ke pusat (cari berdasarkan kode_material yang sama)
-                'penerimaan_total' => ItemTransaction::selectRaw('COALESCE(SUM(jumlah), 0)')
-                    ->where('jenis_transaksi', 'penerimaan')
-                    ->whereExists(function ($subQuery) {
-                        $subQuery->select(DB::raw(1))
-                                 ->from('items as source_item')
-                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                                 ->whereColumn('source_item.id', 'base_transactions.item_id')
-                                 ->whereNotNull('source_item.facility_id'); // Source harus dari facility
-                    }),
-                // Latest transaction date considering all related transactions
-                'latest_transaction_date' => ItemTransaction::selectRaw('MAX(created_at)')
-                    ->where(function ($query) {
-                        $query->whereColumn('item_id', 'items.id')
-                              ->orWhere(function ($q) {
-                                  $q->where('jenis_transaksi', 'penyaluran')
-                                    ->whereNull('region_from') // From pusat (no region_from means from pusat)
-                                    ->whereExists(function ($subQuery) {
-                                        $subQuery->select(DB::raw(1))
-                                                 ->from('items as source_item')
-                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
-                                    });
-                              })
-                              ->orWhere(function ($q) {
-                                  $q->where('jenis_transaksi', 'penerimaan')
-                                    ->whereNull('region_to') // To pusat (no region_to means to pusat)
-                                    ->whereExists(function ($subQuery) {
-                                        $subQuery->select(DB::raw(1))
-                                                 ->from('items as source_item')
-                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
-                                    });
-                              })
-                              ->orWhere(function ($q) {
-                                  $q->where('jenis_transaksi', 'sales')
-                                    ->whereNull('region_from') // From pusat (no region_from means from pusat)
-                                    ->whereExists(function ($subQuery) {
-                                        $subQuery->select(DB::raw(1))
-                                                 ->from('items as source_item')
-                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
-                                    });
-                              })
-                              ->orWhere(function ($q) {
-                                  $q->where('jenis_transaksi', 'pemusnahan')
-                                    ->whereExists(function ($subQuery) {
-                                        $subQuery->select(DB::raw(1))
-                                                 ->from('items as source_item')
-                                                 ->whereColumn('source_item.kode_material', 'items.kode_material')
-                                                 ->whereColumn('source_item.id', 'base_transactions.item_id');
-                                    });
-                              });
-                    })
-            ]);
+            // Build query untuk items yang ada di pusat
+            $query = Item::query()
+                ->whereHas('currentStocks', function ($q) use ($pusatLokasiId) {
+                    $q->where('lokasi_id', $pusatLokasiId);
+                });
 
-        // Add search functionality
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_material', 'like', "%{$search}%")
-                  ->orWhere('kode_material', 'like', "%{$search}%");
-            });
-        }
-
-        // Get total records count
-        $totalRecords = $query->count();
-
-        // Add ordering
-        if ($order) {
-            $columnIndex = $order['column'];
-            $direction = $order['dir'];
-            $columnName = $columns[$columnIndex]['data'] ?? 'id';
-
-            switch ($columnName) {
-                case 'kode_material':
-                    $query->orderBy('kode_material', $direction);
-                    break;
-                case 'nama_material':
-                    $query->orderBy('nama_material', $direction);
-                    break;
-                case 'stok_awal':
-                    $query->orderBy('stok_awal', $direction);
-                    break;
-                case 'penerimaan_total':
-                    $query->orderBy('penerimaan_total', $direction);
-                    break;
-                case 'penyaluran_total':
-                    $query->orderBy('penyaluran_total', $direction);
-                    break;
-                case 'sales_total':
-                    $query->orderBy('sales_total', $direction);
-                    break;
-                case 'pemusnahan_total':
-                    $query->orderBy('pemusnahan_total', $direction);
-                    break;
-                case 'stok_akhir':
-                    // Will be calculated below, so order by the calculated value
-                    $query->orderBy(DB::raw('(stok_awal + COALESCE(penerimaan_total, 0) - COALESCE(penyaluran_total, 0) - COALESCE(sales_total, 0) - COALESCE(pemusnahan_total, 0))'), $direction);
-                    break;
-                case 'created_at':
-                    $query->orderBy('latest_transaction_date', $direction);
-                    break;
-                default:
-                    $query->orderBy('updated_at', $direction);
-                    break;
+            // Add search functionality
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_material', 'like', "%{$search}%")
+                      ->orWhere('kode_material', 'like', "%{$search}%");
+                });
             }
-        } else {
-            $query->orderBy('updated_at', 'desc');
-        }
 
-        // Get the filtered records count before pagination
-        $filteredQuery = clone $query;
-        $filteredRecords = $filteredQuery->count();
+            // Get total records count
+            $totalRecords = $query->count();
 
-        // Add pagination - ensure both parameters are provided
-        if ($length > 0) {
-            $query->skip($start)->take($length);
-        }
+            // Add ordering
+            if ($order) {
+                $columnIndex = $order['column'];
+                $direction = $order['dir'];
+                $columnName = $columns[$columnIndex]['data'] ?? 'item_id';
 
-        // Get the items with pre-calculated totals
-        $items = $query->get();
+                switch ($columnName) {
+                    case 'kode_material':
+                        $query->orderBy('kode_material', $direction);
+                        break;
+                    case 'nama_material':
+                        $query->orderBy('nama_material', $direction);
+                        break;
+                    case 'created_at':
+                        $query->orderBy('updated_at', $direction);
+                        break;
+                    default:
+                        $query->orderBy('updated_at', 'desc');
+                        break;
+                }
+            } else {
+                $query->orderBy('updated_at', 'desc');
+            }
 
-        // Debug: Log query and results
-        \Log::info('Pusat API Query SQL: ' . $query->toSql());
-        \Log::info('Pusat API Count: ' . $items->count());
+            // Get the filtered records count before pagination
+            $filteredQuery = clone $query;
+            $filteredRecords = $filteredQuery->count();
 
-        $data = [];
-        foreach ($items as $item) {
-            // Use the actual stok_akhir from database since it's now properly maintained
-            // This ensures consistency between what's displayed and what's stored
-            $stokAkhir = $item->stok_akhir;
+            // Add pagination
+            if ($length > 0) {
+                $query->skip($start)->take($length);
+            }
 
-            // Debug: Log individual item data
-            \Log::info("Item {$item->nama_material} ({$item->kode_material}): stok_awal={$item->stok_awal}, stok_akhir={$stokAkhir}");
+            // Get the items
+            $items = $query->get();
 
-            $data[] = [
-                'id' => $item->id,
-                'kode_material' => $item->kode_material,
-                'nama_material' => $item->nama_material,
-                'kategori_material' => $item->kategori_material,
-                'stok_awal' => $item->stok_awal,
-                'penerimaan_total' => (int) $item->penerimaan_total,
-                'penyaluran_total' => (int) $item->penyaluran_total,
-                'sales_total' => (int) $item->sales_total,
-                'pemusnahan_total' => (int) $item->pemusnahan_total,
-                'stok_akhir' => $stokAkhir,
-                'created_at' => $item->latest_transaction_date ? Carbon::parse($item->latest_transaction_date)->format('Y-m-d H:i:s') : Carbon::parse($item->updated_at)->format('Y-m-d H:i:s'),
-                'actions' => '<button class="btn btn-sm btn-primary btn-info edit-btn" data-item-id="' . $item->id . '">Edit</button> '
-                    . '<button class="btn btn-sm btn-success kirim-btn" data-item-id="' . $item->id . '">Kirim</button> '
-                    . '<form action="' . route('pusat.destroy', $item->id) . '" method="POST" class="d-inline">'
-                    . csrf_field() . method_field('DELETE')
-                    . '<button type="submit" class="btn btn-sm btn-danger">Hapus</button>'
-                    . '</form>'
-            ];
-        }
+            $data = [];
+            foreach ($items as $item) {
+                // Get current stock at pusat
+                $currentStock = $item->getStockAtLocation($pusatLokasiId);
 
-        return response()->json([
+                // Calculate totals from transaction logs
+                $penerimaanTotal = TransactionLog::where('item_id', $item->item_id)
+                    ->where('tipe_pergerakan', 'Penerimaan')
+                    ->where('lokasi_tujuan_id', $pusatLokasiId)
+                    ->sum('kuantitas');
+
+                $penyaluranTotal = TransactionLog::where('item_id', $item->item_id)
+                    ->where('tipe_pergerakan', 'Penyaluran')
+                    ->where('lokasi_actor_id', $pusatLokasiId)
+                    ->sum('kuantitas');
+
+                $salesTotal = TransactionLog::where('item_id', $item->item_id)
+                    ->where('tipe_pergerakan', 'Transaksi Sales')
+                    ->where('lokasi_actor_id', $pusatLokasiId)
+                    ->sum('kuantitas');
+
+                $latestTransaction = TransactionLog::where('item_id', $item->item_id)
+                    ->where(function ($q) use ($pusatLokasiId) {
+                        $q->where('lokasi_actor_id', $pusatLokasiId)
+                          ->orWhere('lokasi_tujuan_id', $pusatLokasiId);
+                    })
+                    ->orderBy('tanggal_transaksi', 'desc')
+                    ->first();
+
+                $data[] = [
+                    'id' => $item->item_id,
+                    'kode_material' => $item->kode_material,
+                    'nama_material' => $item->nama_material,
+                    'kategori_material' => $item->kategori_material,
+                    'stok_awal' => 0, // TODO: Hitung dari initial stock
+                    'penerimaan_total' => (int) $penerimaanTotal,
+                    'penyaluran_total' => (int) $penyaluranTotal,
+                    'sales_total' => (int) $salesTotal,
+                    'pemusnahan_total' => 0, // Tidak ada pemusnahan untuk sementara
+                    'stok_akhir' => (int) $currentStock,
+                    'created_at' => $latestTransaction ? $latestTransaction->tanggal_transaksi->format('Y-m-d H:i:s') : $item->updated_at->format('Y-m-d H:i:s'),
+                    'actions' => '<button class="btn btn-sm btn-warning edit-btn" data-item-id="' . $item->item_id . '" title="Edit"><i class="fas fa-pencil-alt"></i></button> '
+                        . '<button class="btn btn-sm btn-success kirim-btn" data-item-id="' . $item->item_id . '" title="Kirim"><i class="fas fa-paper-plane"></i></button> '
+                        . '<form action="' . route('pusat.destroy', $item->item_id) . '" method="POST" class="d-inline">'
+                        . csrf_field() . method_field('DELETE')
+                        . '<button type="submit" class="btn btn-sm btn-danger" title="Hapus"><i class="fas fa-trash"></i></button>'
+                        . '</form>'
+                ];
+            }
+
+            return response()->json([
                 'draw' => $draw,
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
                 'data' => $data
             ]);
+
         } catch (\Exception $e) {
             \Log::error('Pusat API Error: ' . $e->getMessage() . ' on line ' . $e->getLine());
             return response()->json([

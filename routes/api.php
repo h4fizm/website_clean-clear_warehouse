@@ -19,8 +19,8 @@ use App\Http\Controllers\AktivitasHarianController;
 |
 */
 
-// Group semua API routes dengan middleware auth:sanctum for token authentication
-Route::middleware(['auth:sanctum'])->group(function () {
+// Group API routes dengan middleware auth (session-based) untuk web compatibility
+Route::middleware(['web', 'auth'])->group(function () {
 
     // =================== DASHBOARD API ===================
 
@@ -166,8 +166,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // API untuk transaksi facilities (DataTable)
     Route::get('/transaksi-facilities', [TransactionController::class, 'getTransaksiFacilities'])
-        ->name('api.transaksi.facilities')
-        ->middleware('can:manage transaksi');
+        ->name('api.transaksi.facilities');
 
     // API untuk aktivitas transaksi (DataTable)
     Route::get('/aktivitas-transaksi', [AktivitasHarianController::class, 'getAktivitasTransaksi'])

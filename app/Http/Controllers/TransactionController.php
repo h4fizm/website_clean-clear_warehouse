@@ -16,7 +16,7 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        $regions = Region::where('nama_regions', '!=', 'P.Layang (Pusat)')->get();
+        $regions = Region::where('nama_regions', '!=', 'Pusat (P.Layang)')->get();
         $selectedSalesAreaName = $request->query('sales_area', 'SA Jambi');
         $searchQuery = $request->query('search');
         $selectedRegion = Region::where('nama_regions', $selectedSalesAreaName)->first();
@@ -44,7 +44,7 @@ class TransactionController extends Controller
      */
     public function create()
     {
-        $regions = Region::where('nama_regions', '!=', 'P.Layang (Pusat)')->get();
+        $regions = Region::where('nama_regions', '!=', 'Pusat (P.Layang)')->get();
         return view('dashboard_page.menu.tambah_spbe-bpt', ['regions' => $regions]);
     }
 
@@ -146,22 +146,87 @@ class TransactionController extends Controller
 
         try {
             $plant->update($validator->validated());
-            return redirect()->back()->with('success', 'Data SPBE/BPT berhasil diperbarui.');
+
+            // Debug: Log request detection
+            \Log::info('Update request detection', [
+                'expectsJson' => $request->expectsJson(),
+                'ajax' => $request->ajax(),
+                'xRequestedWith' => $request->header('X-Requested-With'),
+                'accept' => $request->header('Accept'),
+                'contentType' => $request->header('Content-Type')
+            ]);
+
+            // Check if request is AJAX (multiple ways to detect)
+            $isAjax = $request->expectsJson() ||
+                     $request->ajax() ||
+                     $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+                     $request->header('Accept') === 'application/json';
+
+            if ($isAjax) {
+                \Log::info('Returning JSON response for AJAX request');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data SPBE/BPT berhasil diperbarui.'
+                ]);
+            }
+
+            \Log::info('Returning redirect response for non-AJAX request');
+            return redirect()->route('transaksi.index')->with('success', 'Data SPBE/BPT berhasil diperbarui.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memperbarui data.');
+            // Check if request is AJAX
+            $isAjax = $request->expectsJson() ||
+                     $request->ajax() ||
+                     $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+                     $request->header('Accept') === 'application/json';
+
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan sistem saat memperbarui data.'
+                ], 500);
+            }
+
+            return redirect()->route('transaksi.index')->with('error', 'Terjadi kesalahan sistem saat memperbarui data.');
         }
     }
 
     /**
      * Menghapus data facility dari database.
      */
-    public function destroy(Plant $plant)
+    public function destroy(Request $request, Plant $plant)
     {
         try {
             $plant->delete();
-            return redirect()->back()->with('success', 'Data SPBE/BPT berhasil dihapus.');
+
+            // Check if request is AJAX (multiple ways to detect)
+            $isAjax = $request->expectsJson() ||
+                     $request->ajax() ||
+                     $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+                     $request->header('Accept') === 'application/json';
+
+            if ($isAjax) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data SPBE/BPT berhasil dihapus.'
+                ]);
+            }
+
+            return redirect()->route('transaksi.index')->with('success', 'Data SPBE/BPT berhasil dihapus.');
         } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus data.');
+            // Check if request is AJAX
+            $isAjax = $request->expectsJson() ||
+                     $request->ajax() ||
+                     $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+                     $request->header('Accept') === 'application/json';
+
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat menghapus data.'
+                ], 500);
+            }
+
+            return redirect()->route('transaksi.index')->with('error', 'Terjadi kesalahan saat menghapus data.');
         }
     }
 
@@ -235,8 +300,12 @@ class TransactionController extends Controller
 
                 // Edit button
                 $actions .= '<button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn"
-                                   data-bs-toggle="modal"
-                                   data-bs-target="#editSpbeBptModal-' . $plant->plant_id . '">
+                                   data-plant-id="' . $plant->plant_id . '"
+                                   data-plant-name="' . htmlspecialchars($plant->nama_plant) . '"
+                                   data-plant-code="' . htmlspecialchars($plant->kode_plant) . '"
+                                   data-plant-province="' . htmlspecialchars($plant->provinsi) . '"
+                                   data-plant-regency="' . htmlspecialchars($plant->kabupaten) . '"
+                                   onclick="openEditModal(' . $plant->plant_id . ')">
                                    <i class="fas fa-edit"></i>
                              </button>';
 

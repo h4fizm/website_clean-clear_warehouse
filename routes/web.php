@@ -64,8 +64,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Laman Data P.Layang (Pusat)
     Route::get('/pusat', [PusatController::class, 'index'])
-        ->name('pusat.index')
-        ->middleware(['can:manage data playang']);
+        ->name('pusat.index');
 
     // Route baru untuk export Excel
     Route::get('/pusat/export', [PusatController::class, 'exportExcel'])
@@ -104,48 +103,39 @@ Route::middleware(['auth'])->group(function () {
 
     // --- Laman Transaksi SPBE/BPT ---
     Route::get('/transaksi', [TransactionController::class, 'index'])
-        ->name('transaksi.index')
-        ->middleware('can:manage transaksi');
+        ->name('transaksi.index');
 
     // Gunakan route ini untuk menampilkan halaman form tambah
     Route::get('/transaksi/tambah', [TransactionController::class, 'create'])
-        ->name('transaksi.create')
-        ->middleware('can:manage transaksi');
+        ->name('transaksi.create');
 
     // Route ini untuk memproses form saat disubmit
     Route::post('/transaksi', [TransactionController::class, 'store'])
-        ->name('transaksi.store')
-        ->middleware('can:manage transaksi');
+        ->name('transaksi.store');
 
     // Route untuk Update Facility (SPBE/BPT)
     Route::patch('/transaksi/{facility}', [TransactionController::class, 'update'])
-        ->name('transaksi.update')
-        ->middleware('can:manage transaksi');
+        ->name('transaksi.update');
 
     // Route untuk Delete Facility (SPBE/BPT)
     Route::delete('/transaksi/{facility}', [TransactionController::class, 'destroy'])
-        ->name('transaksi.destroy')
-        ->middleware('can:manage transaksi');
+        ->name('transaksi.destroy');
 
     // Route Melihat List Material SPBE/BPT
-    Route::get('/facilities/{facility}/materials', [MaterialController::class, 'index'])
-        ->name('materials.index')
-        ->middleware('can:manage transaksi');
+    Route::get('/facilities/{plant}/materials', [MaterialController::class, 'index'])
+        ->name('materials.index');
 
     // Route untuk memproses update data material
     Route::patch('/materials/{item}', [MaterialController::class, 'update'])
-        ->name('materials.update')
-        ->middleware('can:manage transaksi');
+        ->name('materials.update');
 
     // Route untuk menghapus data material
     Route::delete('/materials/{item}', [MaterialController::class, 'destroy'])
-        ->name('materials.destroy')
-        ->middleware('can:manage transaksi');
+        ->name('materials.destroy');
 
     // Route untuk memproses transaksi material dari facility
     Route::post('/materials/transaction', [MaterialController::class, 'processTransaction'])
-        ->name('materials.transaction')
-        ->middleware('can:manage transaksi');
+        ->name('materials.transaction');
 
     
     // ===== TAMBAHKAN ROUTE DI BAWAH INI =====

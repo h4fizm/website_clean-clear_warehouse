@@ -137,35 +137,34 @@
     </div>
 </div>
 
-{{-- MODALS --}}
-@foreach ($facilities as $plant)
-<div class="modal fade" id="editSpbeBptModal-{{ $plant->plant_id }}" tabindex="-1" aria-labelledby="editSpbeBptModalLabel-{{ $plant->plant_id }}" aria-hidden="true">
+{{-- DYNAMIC EDIT MODAL --}}
+<div class="modal fade" id="editSpbeBptModal" tabindex="-1" aria-labelledby="editSpbeBptModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editSpbeBptModalLabel-{{ $plant->plant_id }}">Edit Data SPBE/BPT</h5>
+                <h5 class="modal-title" id="editSpbeBptModalLabel">Edit Data SPBE/BPT</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('transaksi.update', $plant->plant_id) }}" method="POST">
+            <form id="editForm" action="" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="modal-body">
-                    @php $error_id = session('error_plant_id'); @endphp
+                    <input type="hidden" id="edit-plant-id" name="plant_id">
                     <div class="mb-3">
-                        <label for="edit-nama_plant-{{$plant->plant_id}}" class="form-label">Nama SPBE/BPT</label>
-                        <input type="text" class="form-control @if($errors->has('nama_plant') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-nama_plant-{{$plant->plant_id}}" name="nama_plant" value="{{ old('nama_plant', $plant->nama_plant) }}" required>
+                        <label for="edit-nama_plant" class="form-label">Nama SPBE/BPT</label>
+                        <input type="text" class="form-control" id="edit-nama_plant" name="nama_plant" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-kode_plant-{{$plant->plant_id}}" class="form-label">Kode Plant</label>
-                        <input type="text" class="form-control @if($errors->has('kode_plant') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-kode_plant-{{$plant->plant_id}}" name="kode_plant" value="{{ old('kode_plant', $plant->kode_plant) }}" required>
+                        <label for="edit-kode_plant" class="form-label">Kode Plant</label>
+                        <input type="text" class="form-control" id="edit-kode_plant" name="kode_plant" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-provinsi-{{$plant->plant_id}}" class="form-label">Nama Provinsi</label>
-                        <input type="text" class="form-control @if($errors->has('provinsi') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-provinsi-{{$plant->plant_id}}" name="provinsi" value="{{ old('provinsi', $plant->provinsi) }}" required>
+                        <label for="edit-provinsi" class="form-label">Nama Provinsi</label>
+                        <input type="text" class="form-control" id="edit-provinsi" name="provinsi" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit-kabupaten-{{$plant->plant_id}}" class="form-label">Nama Kabupaten</label>
-                        <input type="text" class="form-control @if($errors->has('kabupaten') && $error_id == $plant->plant_id) is-invalid @endif" id="edit-kabupaten-{{$plant->plant_id}}" name="kabupaten" value="{{ old('kabupaten', $plant->kabupaten) }}" required>
+                        <label for="edit-kabupaten" class="form-label">Nama Kabupaten</label>
+                        <input type="text" class="form-control" id="edit-kabupaten" name="kabupaten" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -176,7 +175,6 @@
         </div>
     </div>
 </div>
-@endforeach
 
 
 @push('scripts')
@@ -206,6 +204,8 @@
                 },
                 data: function(d) {
                     d.sales_area = currentSalesArea;
+                    // Add cache-busting parameter
+                    d._ = new Date().getTime();
                 },
                 error: function(xhr, error, code) {
                     console.log('DataTable Error - Status:', xhr.status);
@@ -220,6 +220,9 @@
                     }
                 },
                 dataSrc: function(json) {
+                    console.log('API Data received:', json);
+                    console.log('Total records:', json.recordsTotal);
+                    console.log('Data rows:', json.data.length);
                     return json.data;
                 }
             },
@@ -315,9 +318,16 @@
             $('#dynamic-branch-name').text(salesArea);
             $('#table-branch-name').text('Tabel Stok SPBE/BPT - ' + salesArea);
 
-            // Reload table with new filter
-            table.ajax.reload();
+            // Force reload table with new filter
+            console.log('Force reloading DataTable for sales area:', salesArea);
+            table.ajax.reload(null, false); // false = keep current page
         }
+
+        // Function to force refresh DataTable (for debugging)
+        window.forceRefreshTable = function() {
+            console.log('Force refreshing DataTable...');
+            table.ajax.reload();
+        };
 
         // Handle region button clicks
         $('.btn-branch-custom').on('click', function(e) {
@@ -346,10 +356,81 @@
             updateTableWithSalesArea(salesArea);
         });
 
+        // Function to open edit modal with data - global scope
+        window.openEditModal = function(plantId) {
+            console.log('=== OPEN EDIT MODAL ===');
+            console.log('Plant ID:', plantId);
+
+            // Find the button that triggered this function
+            const button = $('#transaksi-table').find('[data-plant-id="' + plantId + '"]');
+            console.log('Found button:', button.length > 0);
+
+            if (button.length === 0) {
+                console.error('Button not found for plant ID:', plantId);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Edit button not found. Please refresh the page.'
+                });
+                return;
+            }
+
+            // Get data from button attributes
+            const plantName = button.data('plant-name');
+            const plantCode = button.data('plant-code');
+            const plantProvince = button.data('plant-province');
+            const plantRegency = button.data('plant-regency');
+
+            console.log('Plant data:', { plantName, plantCode, plantProvince, plantRegency });
+
+            // Check modal element exists
+            const modalEl = document.getElementById('editSpbeBptModal');
+            if (!modalEl) {
+                console.error('Modal element not found');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Modal not found. Please refresh the page.'
+                });
+                return;
+            }
+
+            // Fill modal fields
+            $('#edit-plant-id').val(plantId);
+            $('#edit-nama_plant').val(plantName || '');
+            $('#edit-kode_plant').val(plantCode || '');
+            $('#edit-provinsi').val(plantProvince || '');
+            $('#edit-kabupaten').val(plantRegency || '');
+
+            // Set form action
+            const formAction = '/transaksi/' + plantId;
+            $('#editForm').attr('action', formAction);
+            console.log('Form action set to:', formAction);
+
+            try {
+                // Show modal
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+                console.log('Modal shown successfully');
+            } catch (error) {
+                console.error('Error showing modal:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to open edit modal.'
+                });
+            }
+        };
+
         // Delete functionality with SweetAlert2
-        $('#transaksi-table').on('click', '.delete-btn, .btn-danger', function(e) {
+        $(document).on('click', '.delete-btn, .btn-danger', function(e) {
             e.preventDefault();
+            console.log('Delete button clicked');
             const form = $(this).closest('form');
+            console.log('Delete form found:', form.length > 0);
+
+            const url = form.attr('action');
+            const method = form.find('input[name="_method"]').val();
 
             Swal.fire({
                 title: 'Anda yakin?',
@@ -362,20 +443,221 @@
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit();
+                    console.log('Submitting delete AJAX request to:', url);
+
+                    $.ajax({
+                        url: url,
+                        method: 'POST',
+                        data: {
+                            _method: method,
+                            _token: form.find('input[name="_token"]').val()
+                        },
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        success: function(response) {
+                            console.log('Delete successful:', response);
+
+                            // Reload table with null to reset pagination and get fresh data
+                            table.ajax.reload(null, false); // false = keep current page
+
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Data SPBE/BPT berhasil dihapus.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Delete failed:', xhr);
+                            console.error('Response text:', xhr.responseText);
+
+                            let errorMessage = 'Terjadi kesalahan saat menghapus data.';
+
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: errorMessage
+                            });
+                        }
+                    });
                 }
             });
         });
 
-        // Convert buttons to icons
+        // Handle edit form submission
+        $(document).on('submit', '#editForm', function(e) {
+            e.preventDefault();
+            console.log('=== EDIT FORM SUBMISSION ===');
+
+            const form = $(this);
+            const url = form.attr('action');
+            const formData = form.serialize();
+
+            console.log('Form action:', url);
+            console.log('Form data:', formData);
+            console.log('CSRF token:', $('meta[name="csrf-token"]').attr('content'));
+
+            if (!url || url === '') {
+                console.error('Form action is empty');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Form action not set. Please refresh the page.'
+                });
+                return;
+            }
+
+            // Disable submit button to prevent double submission
+            const submitBtn = form.find('button[type="submit"]');
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...');
+
+            console.log('Sending AJAX request...');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                beforeSend: function(xhr) {
+                    console.log('AJAX beforeSend triggered');
+                },
+                success: function(response, status, xhr) {
+                    console.log('=== AJAX SUCCESS ===');
+                    console.log('Response:', response);
+                    console.log('Status:', status);
+                    console.log('XHR status:', xhr.status);
+
+                    // Close modal properly
+                    const modalEl = document.getElementById('editSpbeBptModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) {
+                            modal.hide();
+                        }
+                        // Force remove backdrop
+                        setTimeout(() => {
+                            $('.modal-backdrop').remove();
+                            $('body').removeClass('modal-open');
+                            $('body').css('padding-right', '');
+                        }, 300);
+                    }
+
+                    // Reload table with null to reset pagination and get fresh data
+                    console.log('Reloading DataTable...');
+                    table.ajax.reload(null, false); // false = keep current page
+
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data SPBE/BPT berhasil diperbarui.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.log('=== AJAX ERROR ===');
+                    console.error('XHR Status:', xhr.status);
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Response text:', xhr.responseText);
+                    console.error('Response headers:', xhr.getAllResponseHeaders());
+
+                    // Re-enable submit button
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html('Simpan Perubahan');
+
+                    let errorMessage = 'Terjadi kesalahan saat memperbarui data.';
+                    let errorTitle = 'Gagal!';
+
+                    if (xhr.status === 419) {
+                        errorTitle = 'Session Expired';
+                        errorMessage = 'Session Anda telah kedaluwarsa. Silakan refresh halaman.';
+                    } else if (xhr.status === 401) {
+                        errorTitle = 'Unauthorized';
+                        errorMessage = 'Anda tidak memiliki izin untuk melakukan aksi ini.';
+                    } else if (xhr.status === 422) {
+                        errorTitle = 'Validasi Gagal';
+                        errorMessage = 'Terdapat kesalahan validasi.';
+                        // Show validation errors
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            let errorList = '<ul>';
+                            for (const field in errors) {
+                                errorList += '<li>' + errors[field][0] + '</li>';
+                            }
+                            errorList += '</ul>';
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: errorTitle,
+                                html: errorList
+                            });
+                            return;
+                        }
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            errorMessage = errorData.message || errorMessage;
+                        } catch (e) {
+                            errorMessage = 'Server error: ' + xhr.status + ' ' + error;
+                        }
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: errorTitle,
+                        text: errorMessage
+                    });
+                },
+                complete: function(xhr, status) {
+                    console.log('=== AJAX COMPLETE ===');
+                    console.log('Final status:', status);
+                    // Re-enable submit button if not already done
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html('Simpan Perubahan');
+                }
+            });
+        });
+
+        // Convert buttons to icons and add event listeners
         table.on('draw', function() {
-            // Convert edit buttons to pencil icon
+            // Convert edit buttons to pencil icon and add click handler
             $('.btn-info').each(function() {
                 if ($(this).find('i').length === 0) {
                     $(this).html('<i class="fas fa-edit"></i>');
                     $(this).addClass('edit-icon');
                     $(this).attr('title', 'Edit');
                 }
+
+                // Add click event for edit button
+                $(this).off('click.edit').on('click.edit', function(e) {
+                    e.preventDefault();
+                    const plantId = $(this).data('plant-id');
+                    console.log('Edit button clicked, plant ID:', plantId);
+
+                    if (plantId && typeof window.openEditModal === 'function') {
+                        window.openEditModal(plantId);
+                    } else {
+                        console.error('Cannot open edit modal - plant ID or function not found');
+                    }
+                });
             });
 
             // Convert delete buttons to trash icon
@@ -390,16 +672,6 @@
     });
 </script>
 
-{{-- Script untuk membuka kembali modal jika ada error validasi --}}
-@if ($errors->any() && session('error_plant_id'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var errorModalId = 'editSpbeBptModal-{{ session('error_plant_id') }}';
-        var errorModal = new bootstrap.Modal(document.getElementById(errorModalId));
-        errorModal.show();
-    });
-</script>
-@endif
 @endpush
 
 

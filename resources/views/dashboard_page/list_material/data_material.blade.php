@@ -1,5 +1,5 @@
 @extends('dashboard_page.main')
-@section('title', 'Data Material - ' . $facility->name)
+@section('title', 'Data Material - ' . $facility->nama_plant)
 
 @section('content')
 
@@ -9,7 +9,7 @@
             <div class="card-header pb-0">
                 
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="mb-0">Daftar Stok Material - {{ $facility->name }}</h3>
+                    <h3 class="mb-0">Daftar Stok Material - {{ $facility->nama_plant }}</h3>
                 </div>
                 
                 <div class="mb-3">
@@ -51,7 +51,58 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Data will be loaded via AJAX -->
+                            @forelse($items as $item)
+                            <tr>
+                                <td class="text-center">{{ $loop->index + 1 }}</td>
+                                <td>
+                                    <span class="badge bg-gradient-info text-white text-xs">{{ $item['nama_material'] }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-gradient-secondary text-white text-xs">{{ $item['kode_material'] }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-secondary text-white text-xs">{{ number_format($item['stok_awal'], 0, ',', '.') }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-primary text-white text-xs">{{ number_format($item['penerimaan_total'], 0, ',', '.') }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-info text-white text-xs">{{ number_format($item['penyaluran_total'], 0, ',', '.') }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-warning text-white text-xs">{{ number_format($item['sales_total'], 0, ',', '.') }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-gradient-success text-white text-xs">{{ number_format($item['stok_akhir'], 0, ',', '.') }} pcs</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary text-white text-xs">
+                                        {{ $item['latest_transaction_date'] ? \Carbon\Carbon::parse($item['latest_transaction_date'])->format('d/m/Y') : '-' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-warning edit-btn" data-item-id="{{ $item['item_id'] }}" title="Edit">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-success transaksi-btn" data-item-id="{{ $item['item_id'] }}" data-nama="{{ $item['nama_material'] }}" data-kode="{{ $item['kode_material'] }}" data-stok="{{ $item['stok_akhir'] }}" title="Transaksi">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                    <form action="{{ route('materials.destroy', $item['item_id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <p class="text-muted mb-0">Belum ada data material di {{ $facility->nama_plant }}.</p>
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -266,107 +317,9 @@
     }
 
     $(document).ready(function() {
+        // Initialize DataTables for non-server-side table
         const table = $('#table-material').DataTable({
-            processing: true,
-            serverSide: true,
             responsive: true,
-            ajax: {
-                url: "{{ route('api.facility.materials', $facility->id) }}",
-                type: "GET",
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                error: function(xhr, error, code) {
-                    console.log('DataTable Error:', xhr.responseText);
-                    console.log('Error details:', error, code);
-                }
-            },
-            columns: [
-                { 
-                    data: null, 
-                    name: 'id', 
-                    searchable: false,
-                    orderable: false,
-                    className: 'text-center',
-                    render: function(data, type, row, meta) {
-                        return meta.row + 1 + meta.settings._iDisplayStart;
-                    }
-                },
-                { 
-                    data: 'nama_material', 
-                    name: 'nama_material',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-info text-white text-xs">' + data + '</span>';
-                    }
-                },
-                { 
-                    data: 'kode_material', 
-                    name: 'kode_material',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + data + '</span>';
-                    }
-                },
-                { 
-                    data: 'stok_awal', 
-                    name: 'stok_awal',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-secondary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
-                    }
-                },
-                { 
-                    data: 'penerimaan_total', 
-                    name: 'penerimaan_total',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-primary text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
-                    }
-                },
-                { 
-                    data: 'penyaluran_total', 
-                    name: 'penyaluran_total',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-info text-white text-xs">' + (data || 0).toLocaleString('id-ID') + ' pcs</span>';
-                    }
-                },
-                { 
-                    data: 'sales_total', 
-                    name: 'sales_total',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-warning text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
-                    }
-                },
-                { 
-                    data: 'stok_akhir', 
-                    name: 'stok_akhir',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        return '<span class="badge bg-gradient-success text-white text-xs">' + data.toLocaleString('id-ID') + ' pcs</span>';
-                    }
-                },
-                { 
-                    data: 'created_at', 
-                    name: 'updated_at',
-                    className: 'text-center',
-                    render: function(data, type, row) {
-                        if (!data) return '-';
-                        // Format the date as 'hari, tanggal bulan tahun' if type is display
-                        if (type === 'display') {
-                            return '<span class="badge bg-secondary text-white text-xs">' + formatDateWithStaleness(data) + '</span>';
-                        }
-                        return '<span class="badge bg-secondary text-white text-xs">' + data + '</span>';
-                    }
-                },
-                { 
-                    data: 'actions', 
-                    name: 'actions',
-                    orderable: false,
-                    searchable: false,
-                    className: 'text-center'
-                }
-            ],
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json',
                 search: "Cari:",
@@ -386,23 +339,29 @@
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                  '<"row"<"col-sm-12"tr>>' +
                  '<"row"<"col-sm-12 d-flex justify-content-center"p><"col-sm-12"i>>',
-            order: [[8, 'desc']], // Default order by last activity date
+            order: [[7, 'desc']], // Default order by last activity date
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
 
         // Edit functionality
-        $('#table-material').on('click', '.edit-btn, .edit-icon', function() {
-            const row = $(this).closest('tr');
-            const rowData = table.row(row).data();
+        $('#table-material').on('click', '.edit-btn', function() {
+            const btn = $(this);
+            const itemId = btn.data('item-id');
+
+            // Get item data from the row
+            const row = btn.closest('tr');
+            const namaMaterial = row.find('td:eq(1) .badge').text().trim();
+            const kodeMaterial = row.find('td:eq(2) .badge').text().trim();
+            const stokAwal = row.find('td:eq(3) .badge').text().replace(' pcs', '').replace(/\./g, '');
 
             // Fill the form with current data
-            $('#edit-nama_material').val(rowData.nama_material);
-            $('#edit-kode_material').val(rowData.kode_material);
-            $('#edit-stok_awal').val(rowData.stok_awal);
+            $('#edit-nama_material').val(namaMaterial);
+            $('#edit-kode_material').val(kodeMaterial);
+            $('#edit-stok_awal').val(stokAwal);
 
             // Set form action to update URL
-            $('#editMaterialForm').attr('action', '/materials/' + rowData.id);
+            $('#editMaterialForm').attr('action', '/materials/' + itemId);
 
             // Show the modal
             const editModal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
@@ -419,7 +378,7 @@
                 title: '⚠️ Peringatan Penting: Hapus Data Permanen!',
                 html: `
                     <p class="text-start">
-                        Penghapusan ini akan menghapus seluruh data material ini dari fasilitas {{ $facility->name }}, termasuk semua riwayat transaksi dan stoknya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
+                        Penghapusan ini akan menghapus seluruh data material ini dari fasilitas {{ $facility->nama_plant }}, termasuk semua riwayat transaksi dan stoknya secara permanen dari database. Tindakan ini <strong>tidak dapat dikembalikan.</strong>
                     </p>
                     <p class="text-start mb-0">
                         <strong>Apakah Anda sudah mengekspor atau mencadangkan data ini?</strong>
@@ -452,19 +411,24 @@
         });
 
         // Process transaction functionality
-        $('#table-material').on('click', '.transaksi-btn, .transaksi-icon', function() {
+        $('#table-material').on('click', '.transaksi-btn', function() {
             try {
-                const rowData = table.row($(this).closest('tr')).data();
-                console.log('Transaction row data:', rowData); // Debug log
+                const btn = $(this);
+                const itemId = btn.data('item-id');
+                const namaMaterial = btn.data('nama');
+                const kodeMaterial = btn.data('kode');
+                const stokAkhir = btn.data('stok');
+
+                console.log('Transaction data:', { itemId, namaMaterial, kodeMaterial, stokAkhir }); // Debug log
 
                 // Fill modal with item info
-                document.getElementById('modal-nama-material').textContent = rowData.nama_material;
-                document.getElementById('modal-kode-material').textContent = rowData.kode_material;
-                document.getElementById('modal-stok-akhir').textContent = rowData.stok_akhir.toLocaleString('id-ID') + ' pcs';
+                document.getElementById('modal-nama-material').textContent = namaMaterial;
+                document.getElementById('modal-kode-material').textContent = kodeMaterial;
+                document.getElementById('modal-stok-akhir').textContent = stokAkhir + ' pcs';
 
                 // Set form data
-                document.getElementById('modal-item-id').value = rowData.id;
-                document.getElementById('modal-kode-material-hidden').value = rowData.kode_material;
+                document.getElementById('modal-item-id').value = itemId;
+                document.getElementById('modal-kode-material-hidden').value = kodeMaterial;
 
                 // Set default date
                 const today = new Date();
@@ -472,32 +436,19 @@
 
                 // Reset form dan set default transaction type
                 document.getElementById('transaksiMaterialForm').reset();
-                document.getElementById('modal-item-id').value = rowData.id;
-                document.getElementById('modal-kode-material-hidden').value = rowData.kode_material;
+                document.getElementById('modal-item-id').value = itemId;
+                document.getElementById('modal-kode-material-hidden').value = kodeMaterial;
                 document.getElementById('tanggal-transaksi').value = today.toISOString().slice(0, 10);
                 document.getElementById('jenis-penyaluran').checked = true;
 
-                // Initialize form UI - ensure global variables are available
-                if (typeof locations !== 'undefined' && typeof currentFacility !== 'undefined') {
+                // Initialize form UI
+                if (typeof window.updateFormUI === 'function') {
                     window.updateFormUI('penyaluran');
-                } else {
-                    console.error('Global variables not initialized yet');
-                    // Wait for DOM to be ready and then initialize
-                    setTimeout(() => {
-                        if (typeof window.updateFormUI === 'function') {
-                            window.updateFormUI('penyaluran');
-                        }
-                    }, 100);
                 }
 
-                // Show modal and ensure form is properly initialized
+                // Show modal
                 const transaksiModal = new bootstrap.Modal(document.getElementById('transaksiMaterialModal'));
                 transaksiModal.show();
-
-                // Ensure form is initialized after modal is shown
-                setTimeout(() => {
-                    window.updateFormUI('penyaluran');
-                }, 200);
             } catch (error) {
                 console.error('Error in transaksi button handler:', error);
                 Swal.fire({
@@ -506,42 +457,6 @@
                     text: 'Terjadi kesalahan saat membuka modal transaksi'
                 });
             }
-        });
-        
-        // Convert text buttons to icons
-        table.on('draw', function() {
-            // Convert edit buttons to pencil icon with yellow color
-            $('.edit-btn, .btn-primary').each(function() {
-                if ($(this).text().trim() === 'Edit' || $(this).text().trim() === 'edit' || $(this).text().trim() === 'Ubah') {
-                    $(this).html('<i class="fas fa-pencil-alt"></i>');
-                    $(this).addClass('edit-icon');
-                    $(this).removeClass('btn-primary');
-                    $(this).addClass('btn-warning'); // Yellow color
-                    $(this).attr('title', 'Edit');
-                }
-            });
-            
-            // Convert transaction buttons to exchange icon with green color
-            $('.transaksi-btn, .btn-success').each(function() {
-                if ($(this).text().trim() === 'Transaksi' || $(this).text().trim() === 'transaksi' || $(this).text().trim() === 'Proses') {
-                    $(this).html('<i class="fas fa-exchange-alt"></i>');
-                    $(this).addClass('transaksi-icon');
-                    $(this).removeClass('btn-success');
-                    $(this).addClass('btn-success'); // Green color
-                    $(this).attr('title', 'Proses Transaksi');
-                }
-            });
-            
-            // Convert delete buttons to trash icon with red color
-            $('.btn-danger').not('.delete-btn').each(function() {
-                if ($(this).text().trim() === 'Hapus' || $(this).text().trim() === 'hapus' || $(this).text().trim() === 'Delete') {
-                    $(this).html('<i class="fas fa-trash"></i>');
-                    $(this).addClass('delete-btn');
-                    $(this).removeClass('btn-danger');
-                    $(this).addClass('btn-danger'); // Red color
-                    $(this).attr('title', 'Hapus');
-                }
-            });
         });
     });
 </script>
@@ -843,8 +758,8 @@
                         showConfirmButton: false
                     }).then(() => {
                         bootstrap.Modal.getInstance(transaksiModal).hide();
-                        // Refresh the DataTable
-                        $('#table-material').DataTable().ajax.reload();
+                        // Reload page to refresh data
+                        window.location.reload();
                     });
                 } else if (result.errors) {
                     let errorMessages = Object.values(result.errors).map(error => `<li>${error[0]}</li>`).join('');
