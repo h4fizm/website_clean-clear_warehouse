@@ -296,4 +296,49 @@ class DashboardController extends Controller
 
         return Excel::download(new AllMaterialStockExport($filters), $filename);
     }
+
+    public function getFacilitiesByMaterial(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'material_base_name' => 'required|string',
+            'kategori_material' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $materialBaseName = $request->input('material_base_name');
+        $kategoriMaterial = $request->input('kategori_material');
+
+        $facilities = Item::query()
+            ->where('nama_material', 'like', $materialBaseName . '%')
+            ->where('kategori_material', $kategoriMaterial)
+            ->where('stok_akhir', '>', 0)
+            ->with('facility') // Eager load the facility relationship
+            ->get();
+
+        $facilitiesData = [];
+        foreach ($facilities as $item) {
+            // Only consider items that are explicitly linked to a facility (SPBE/BPT)
+            // and where the facility type is SPBE or BPT
+            if (!is_null($item->facility_id) && $item->facility && in_array($item->facility->type, ['SPBE', 'BPT'])) {
+                $facilityName = $item->facility->name;
+                if (!isset($facilitiesData[$facilityName])) {
+                    $facilitiesData[$facilityName] = 0;
+                }
+                $facilitiesData[$facilityName] += $item->stok_akhir;
+            }
+        }
+
+        // Sort facilities alphabetically by name
+        ksort($facilitiesData);
+
+        return response()->json([
+            'success' => true,
+            'facilities' => $facilitiesData,
+        ]);
+
+        return response()->json(['success' => true, 'facilities' => $facilities]);
+    }
 }

@@ -267,6 +267,26 @@
     </div>
 </div>
 
+{{-- Modal for Facility List --}}
+<div class="modal fade" id="facilityListModal" tabindex="-1" role="dialog" aria-labelledby="facilityListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="facilityListModalLabel">Daftar Fasilitas</h5>
+                <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="facilityListContent">
+                    {{-- Content will be loaded here by JavaScript --}}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn bg-gradient-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Tabel Data UPP Material --}}
 <div class="row mt-4">
     <div class="col-12">
@@ -450,6 +470,12 @@
         const stockSearchInput = document.getElementById('search-stock-material');
         const stockTitle = document.getElementById('stock-title');
         const materialSuggestionsContainer = document.getElementById('material-suggestions');
+
+        // Elemen untuk Modal Fasilitas
+        const facilityListModalEl = document.getElementById('facilityListModal');
+        const facilityListModal = new bootstrap.Modal(facilityListModalEl);
+        const facilityListContent = document.getElementById('facilityListContent');
+        const facilityListModalLabel = document.getElementById('facilityListModalLabel');
         
         // Elemen untuk Kapasitas
         const capacityInput = document.getElementById('material-capacity-input');
@@ -496,7 +522,6 @@
         function renderStockTable(data) {
             stockTableBody.innerHTML = '';
             
-            // Hapus footer lama jika ada
             const oldFooter = stockTable.querySelector('tfoot');
             if (oldFooter) {
                 oldFooter.remove();
@@ -508,7 +533,6 @@
             const currentYear = today.getFullYear();
             const bulanNama = getMonthName(currentMonth);
 
-            // Menyesuaikan judul tabel
             if (materialName) {
                 stockTitle.innerText = `Stok ${materialName} - ${bulanNama} ${currentYear}`;
                 stockSearchInput.value = materialName;
@@ -516,30 +540,38 @@
                 stockTitle.innerText = `Stok Material Saat Ini - ${bulanNama} ${currentYear}`;
             }
 
-            // Update nilai input kapasitas
             capacityInput.value = data?.capacity ?? 0;
             capacityValueSpan.innerText = `/ ${formatNumber(data?.capacity ?? 0)} pcs`;
 
-            // Render data stok dan hitung total
             if (data && data.stock && data.stock.length > 0) {
                 const stockData = data.stock;
                 let firstRow = true;
-                let totalBaru = 0;
-                let totalBaik = 0;
-                let totalRusak = 0;
-                let totalAfkir = 0;
-                let totalLayakEdar = 0;
+                let totalBaru = 0, totalBaik = 0, totalRusak = 0, totalAfkir = 0, totalLayakEdar = 0;
 
                 stockData.forEach((item) => {
+                    const isGlobal = item.gudang === 'SPBE/BPT (Global)';
+
+                    const baruCell = isGlobal && item.baru > 0 ?
+                        `<a href="#" class="facility-stock-link text-primary fw-bold" data-material="${item.material_name}" data-category="Baru">${formatNumber(item.baru)}</a>` :
+                        formatNumber(item.baru);
+
+                    const baikCell = isGlobal && item.baik > 0 ?
+                        `<a href="#" class="facility-stock-link text-primary fw-bold" data-material="${item.material_name}" data-category="Baik">${formatNumber(item.baik)}</a>` :
+                        formatNumber(item.baik);
+
+                    const rusakCell = isGlobal && item.rusak > 0 ?
+                        `<a href="#" class="facility-stock-link text-primary fw-bold" data-material="${item.material_name}" data-category="Rusak">${formatNumber(item.rusak)}</a>` :
+                        formatNumber(item.rusak);
+
                     const rowHtml = `
                         <tr>
                             ${firstRow ? `<td class="ps-2 text-wrap align-middle" rowspan="${stockData.length}">
                                 <h6 class="text-sm font-weight-bold mb-0">${item.material_name}</h6>
                             </td>` : ''}
                             <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${item.gudang}</span></td>
-                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.baru)}</span></td>
-                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.baik)}</span></td>
-                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.rusak)}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${baruCell}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${baikCell}</span></td>
+                            <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${rusakCell}</span></td>
                             <td class="text-secondary text-center text-xs"><span class="font-weight-bold">${formatNumber(item.afkir)}</span></td>
                             <td class="text-secondary text-center text-xs"><h6 class="text-sm font-weight-bolder mb-0">${formatNumber(item.layak_edar)}</h6></td>
                         </tr>
@@ -547,7 +579,6 @@
                     stockTableBody.insertAdjacentHTML('beforeend', rowHtml);
                     firstRow = false;
 
-                    // Akumulasi total
                     totalBaru += item.baru;
                     totalBaik += item.baik;
                     totalRusak += item.rusak;
@@ -555,8 +586,6 @@
                     totalLayakEdar += item.layak_edar;
                 });
                 
-                // Tambahkan baris total (footer)
-                // ✅ PERBAIKAN: Menambahkan kelas border-0 untuk menghilangkan garis
                 const footerHtml = `
                     <tfoot class="bg-gray-200 text-dark fw-bold border-0">
                         <tr>
@@ -672,6 +701,42 @@
         // 📌 Event input search
         stockSearchInput.addEventListener('keyup', function() { 
             showSuggestions(this.value); 
+        });
+
+        // 📌 Event listener untuk klik pada link stok fasilitas
+        stockTableBody.addEventListener('click', async function(event) {
+            if (event.target.classList.contains('facility-stock-link')) {
+                event.preventDefault();
+
+                const materialName = event.target.dataset.material;
+                const category = event.target.dataset.category;
+
+                facilityListModalLabel.innerText = `Daftar Fasilitas - ${materialName} (${category})`;
+                facilityListContent.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+                facilityListModal.show();
+
+                try {
+                    const response = await fetch(`/api/facilities-by-material?material_base_name=${encodeURIComponent(materialName)}&kategori_material=${encodeURIComponent(category)}`);
+                    const data = await response.json();
+
+                    if (data.success && Object.keys(data.facilities).length > 0) {
+                        let contentHtml = '<ul class="list-group">';
+                        for (const [facility, stock] of Object.entries(data.facilities)) {
+                            contentHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">${facility} <span class="badge bg-primary rounded-pill">${formatNumber(stock)}</span></li>`;
+                        }
+                        contentHtml += '</ul>';
+                        facilityListContent.innerHTML = contentHtml;
+                    } else {
+                        facilityListContent.innerHTML = '<p class="text-center">Tidak ada fasilitas yang memiliki stok untuk material ini.</p>';
+                    }
+                    if (data.debug_info) {
+                        console.log('Debug Info (Raw Items):', data.debug_info);
+                    }
+                } catch (error) {
+                    console.error('Error fetching facility list:', error);
+                    facilityListContent.innerHTML = '<p class="text-center text-danger">Gagal memuat data fasilitas.</p>';
+                }
+            }
         });
 
         // 📌 SweetAlert konfirmasi hapus UPP
